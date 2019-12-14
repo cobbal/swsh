@@ -12,18 +12,14 @@ public protocol CommandResult {
     var command: Command { get }
     var isRunning: Bool { get }
 
-    /// block until command is finished, and return exit code
+    /// Block until command is finished, and return exit code
     func exitCode() -> Int32
+    
+    /// Block and throw an error if exitCode is non-zero
+    func succeed() throws
 }
 
 public extension CommandResult {
-    /// throws CommandFailure if exitCode is non-zero
-    func succeed() throws {
-        if exitCode() != 0 {
-            throw CommandFailure(result: self)
-        }
-    }
-
     func finish() -> Self {
         _ = exitCode()
         return self
@@ -68,7 +64,7 @@ public extension Command {
 
     /// Returns true if the command exited zero
     func runBool() -> Bool {
-        return async().exitCode() == 0
+        async().exitCode() == 0
     }
 
     /// Process > temp file; return file path
@@ -121,12 +117,12 @@ public func cmd(_ command: String, _ arguments: String...) -> BasicCommand {
     return BasicCommand(command, arguments: arguments)
 }
 
-//// StaticString to help preven accidental quoting problems
-//public func cmdf(_ format: StaticString, _ formatArgs: Any...) -> BasicCommand {
-//    let formatStr = format.withUTF8Buffer {
-//        String(decoding: $0, as: UTF8.self)
+//// staticstring to help prevent accidental quoting problems
+//public func cmdf(_ format: staticstring, _ formatargs: any...) -> basiccommand {
+//    let formatstr = format.withutf8buffer {
+//        string(decoding: $0, as: utf8.self)
 //    }
-//
-//    let components = formatStr.components(separatedBy: .whitespacesAndNewlines)
-//
+//    
+//    let components = formatstr.components(separatedby: .whitespacesandnewlines)
+//    
 //}

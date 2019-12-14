@@ -20,10 +20,7 @@ public class Pipeline: Command {
     private struct Result: CommandResult {
         let command: Command
         let results: [CommandResult]
-
-        var isRunning: Bool {
-            return results.contains { $0.isRunning }
-        }
+        var isRunning: Bool { results.contains { $0.isRunning } }
 
         func exitCode() -> Int32 {
             // get the rightmost non-zero exit code, to act similar to bash's pipefail option
@@ -33,6 +30,10 @@ public class Pipeline: Command {
                     code = result.exitCode()
                 }
             }
+        }
+        
+        func succeed() throws {
+            try results.forEach { try $0.succeed() }
         }
     }
 

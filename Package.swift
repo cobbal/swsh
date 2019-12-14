@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
     name: "swsh",
     platforms: [
-        .macOS(.v10_13),
+        .macOS(.v10_14),
     ],
     products: [
         .library(
