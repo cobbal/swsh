@@ -1,59 +1,29 @@
-//
-//  BasicCommand.swift
-//  
-//
-//  Created by Andrew Cobb on 11/8/19.
-//
-
 import Foundation
 
-public class BasicCommand: Command {
+/// Represents an external program invocation. It is the lowest-level command, that will spawn a subprocess when run.
+public class ExternalCommand: Command {
     internal let command: String
     internal let arguments: [String]
+    /// The environment variables the command will be launched with
     public let environment: [String: String]
 
-    /// like "set -x"
+    /// like "set -x", this will cause all external commands to print themselves when they run
     public static var verbose: Bool = false
 
+    /// Creates the command, but does **not** run it
+    /// - Parameter command: The executable to run
+    /// - Parameter arguments: The command line arguments to pass. No substitution is performed
+    /// - Parameter addEnv: Additional environment variable that will be passed in addition to the swsh process's
+    ///   environment
     public init(_ command: String, arguments: [String], addEnv: [String: String] = [:]) {
         self.command = command
         self.arguments = arguments
         self.environment = ProcessInfo.processInfo.environment.merging(addEnv) { $1 }
     }
     
-    public struct ExitCodeFailure: Error, CustomStringConvertible {
-        public let name: String
-        let result: Result
-        
-        public var description: String {
-            "command \"\(name)\" failed with exit code \(result.exitCode())"
-        }
-    }
-
-    public class ProcessLaunchFailure: Error, CommandResult, CustomStringConvertible {
-        public var command: Command
-        public let name: String
-        public let error: Int32
-        public var isRunning: Bool { false }
-        public func exitCode() -> Int32 { error }
-        
-        init(command: BasicCommand, error: Int32) {
-            self.command = command
-            self.name = command.command
-            self.error = error
-        }
-        
-        public var description: String {
-            "failed to launch \"\(name)\" with error code \(error): \(String(cString: strerror(error)))"
-        }
-
-        public func succeed() throws {
-            throw self
-        }
-    }
 
     internal class Result: CommandResult {
-        static let reaperQueue = DispatchQueue(label: "swsh.BasicCommand.Result.reaper")
+        static let reaperQueue = DispatchQueue(label: "swsh.ExternalCommand.Result.reaper")
 
         let name: String
         var command: Command
@@ -62,7 +32,7 @@ public class BasicCommand: Command {
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         let processSource: DispatchSourceProcess
 
-        init(command: BasicCommand, pid: pid_t) {
+        init(command: ExternalCommand, pid: pid_t) {
             self.command = command
             self.name = command.command
             self.pid = pid
@@ -84,8 +54,9 @@ public class BasicCommand: Command {
         }
         
         func succeed() throws {
-            if exitCode() != 0 {
-                throw ExitCodeFailure(name: name, result: self)
+            let err = exitCode()
+            if err != 0 {
+                throw ExitCodeFailure(name: name, exitCode: err)
             }
         }
 
@@ -97,7 +68,7 @@ public class BasicCommand: Command {
     }
 
     public func coreAsync(fdMap: FDMap) -> CommandResult {
-        if BasicCommand.verbose {
+        if ExternalCommand.verbose {
             var stream = FileHandleTextStream(.standardError)
             print("\(command) \(arguments.joined(separator: " "))", to: &stream)
         }
@@ -109,4 +80,18 @@ public class BasicCommand: Command {
             return ProcessLaunchFailure(command: self, error: err)
         }
     }
+}
+
+/// Convenience function for creating an extternal command. Does **not** run the command.
+/// - Parameter command: The executable to run
+/// - Parameter arguments: The command line arguments to pass. No substitution is performed
+public func cmd(_ command: String, arguments: [String]) -> ExternalCommand {
+    return ExternalCommand(command, arguments: arguments)
+}
+
+/// Convenience function for creating an extternal command. Does **not** run the command.
+/// - Parameter command: The executable to run
+/// - Parameter arguments: The command line arguments to pass. No substitution is performed
+public func cmd(_ command: String, _ arguments: String...) -> ExternalCommand {
+    return ExternalCommand(command, arguments: arguments)
 }

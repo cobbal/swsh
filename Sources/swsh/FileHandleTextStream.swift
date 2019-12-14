@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by Andrew Cobb on 11/8/19.
-//
-
 import Foundation
 
 public struct FileHandleTextStream: TextOutputStream {

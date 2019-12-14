@@ -2,10 +2,9 @@ import XCTest
 @testable import swsh
 
 final class swshTests: XCTestCase {
-
     override func setUp() {
         super.setUp()
-        BasicCommand.verbose = true
+        ExternalCommand.verbose = true
     }
 
     func testRunStringSucceeds() {

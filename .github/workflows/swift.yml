@@ -1,12 +1,13 @@
 name: Swift
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
-
     runs-on: macOS-latest
-
     steps:
     - uses: actions/checkout@v1
     - name: Build

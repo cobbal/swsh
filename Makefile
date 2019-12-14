@@ -4,4 +4,7 @@ build:
 test:
 	xcrun --toolchain "Swift Development Snapshot" swift test
 
-.PHONY: build test
+docs:
+	jazzy --module swsh
+
+.PHONY: build test docs

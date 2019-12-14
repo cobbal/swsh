@@ -1,15 +1,11 @@
-//
-//  Command.swift
-//
-//
-//  Created by Andrew Cobb on 11/6/19.
-//
-
 import Foundation
 
+/// Represents a running or finished command
 public protocol CommandResult {
     /// The command that launched this result
     var command: Command { get }
+    
+    /// Returns true if the command is still running
     var isRunning: Bool { get }
 
     /// Block until command is finished, and return exit code
@@ -20,19 +16,24 @@ public protocol CommandResult {
 }
 
 public extension CommandResult {
+    /// Wait for the command to finish, ignoring any exit code
     func finish() -> Self {
         _ = exitCode()
         return self
     }
 }
 
+/// Represents a description of a command that can be executed any number of times, but usually just once.
 public protocol Command: class {
     typealias FDMap = [(src: Int32, dst: Int32)]
-    // These should be a FileHandle or Pipe
+    /// The minimum requirement of a Command is that it can launch itself asynchronously
+    /// - Parameter fdMap: A list of file descriptors to remap. Order matters, same as in bourne-like shells.
+    /// - Returns: a result capable of monitoring the asynchronous command
     func coreAsync(fdMap: FDMap) -> CommandResult
 }
 
 public extension Command {
+    /// Convenience function to create a 2-command pipeline
     static func | (_ left: Self, _ right: Command) -> Command {
         Pipeline(left, right)
     }
@@ -46,8 +47,8 @@ public extension Command {
                                  (stderr, STDERR_FILENO)])
     }
 
-    /// Return stream open on process's stdout
-    func asyncStream(joinErr: Bool = false) throws -> FileHandle {
+    /// Run the command asynchronously, and return a stream open on process's stdout
+    func asyncStream(joinErr: Bool = false) -> FileHandle {
         let pipe = Pipe()
         let pipeFD = pipe.fileHandleForWriting.fileDescriptor
         _ = coreAsync(fdMap: [(STDIN_FILENO, STDIN_FILENO),
@@ -57,17 +58,20 @@ public extension Command {
         return pipe.fileHandleForReading
     }
 
-    /// Run and return nothing if successful
+    /// Run the command synchronously, and return nothing if successful
+    /// - Throws: if command fails
     func run() throws {
         try async().succeed()
     }
 
-    /// Returns true if the command exited zero
+    /// Run the command synchronously, and return true if the command exited zero
     func runBool() -> Bool {
         async().exitCode() == 0
     }
 
-    /// Process > temp file; return file path
+    /// Run the command synchronously, directing the output to a temporary file
+    /// - Returns: URL of temporary file with output of command
+    /// - Throws: if command fails
     func runFile() throws -> URL {
         let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString, isDirectory: false)
         let handle = try FileHandle(forWritingTo: url)
@@ -75,7 +79,11 @@ public extension Command {
         return url
     }
 
-    /// Collect stdout and then return, does not trim (unlike $(...))
+    /// Run the command synchronously, and collect stdout.
+    /// does not trim newlines (unlike $(...))
+    /// - Parameter joinErr: if true, stderr will be collected as well
+    /// - Throws: if command fails
+    /// - Returns: output as Data
     func runData(joinErr: Bool = false) throws -> Data {
         let pipe = Pipe()
         let writeFD = pipe.fileHandleForWriting.fileDescriptor
@@ -86,7 +94,13 @@ public extension Command {
         return data
     }
 
-    /// Collect stdout into a string and return, trimming trailing newlines (like $(...))
+    /// Run the command synchronously, and collect stdout into a string.
+    /// Trims trailing newlines (like $(...))
+    /// - Parameter encoding: the encoding of the output data
+    /// - Parameter joinErr: if true, stderr will be collected as well
+    /// - Throws: if command fails
+    /// - Throws: `InvalidString` if the output isn't valid
+    /// - Returns: output as unicode string
     func runString(encoding: String.Encoding = .utf8, joinErr: Bool = false) throws -> String {
         let data = try runData(joinErr: joinErr)
         guard let string = String(data: data, encoding: encoding) else {
@@ -98,31 +112,16 @@ public extension Command {
         return String(string[...trimStop])
     }
 
-    /// Collect newline-delimited list of strings
+    /// Run the command synchronously, and collect output as a newline-delimited list of strings
+    /// - Throws: if command fails
     func runLines() throws -> [String] {
         try runString().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     }
 
-    /// Collect JSON
+    /// Run the command synchronously, and collect output as a parsed JSON object
+    /// - Throws: if command fails
+    /// - Throws: if the output isn't JSON
     func runJson(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
         try JSONSerialization.jsonObject(with: runData(), options: options)
     }
 }
-
-public func cmd(_ command: String, arguments: [String]) -> BasicCommand {
-    return BasicCommand(command, arguments: arguments)
-}
-
-public func cmd(_ command: String, _ arguments: String...) -> BasicCommand {
-    return BasicCommand(command, arguments: arguments)
-}
-
-//// staticstring to help prevent accidental quoting problems
-//public func cmdf(_ format: staticstring, _ formatargs: any...) -> basiccommand {
-//    let formatstr = format.withutf8buffer {
-//        string(decoding: $0, as: utf8.self)
-//    }
-//    
-//    let components = formatstr.components(separatedby: .whitespacesandnewlines)
-//    
-//}

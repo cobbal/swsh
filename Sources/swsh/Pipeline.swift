@@ -1,12 +1,6 @@
-//
-//  File.swift
-//  
-//
-//  Created by Andrew Cobb on 11/8/19.
-//
-
 import Foundation
 
+/// A `Pipeline` is 0 or more pipes connecting 1 or more subcommands together like the unix `a | b | ...`
 public class Pipeline: Command {
     // Don't want to think about the base case, non-empty pipelines only
     private let first: Command
@@ -22,8 +16,8 @@ public class Pipeline: Command {
         let results: [CommandResult]
         var isRunning: Bool { results.contains { $0.isRunning } }
 
+        /// returns the rightmost non-zero exit code, to act similar to bash's pipefail option
         func exitCode() -> Int32 {
-            // get the rightmost non-zero exit code, to act similar to bash's pipefail option
             results.reduce(into: 0) { code, result in
                 _ = result.finish()
                 if code == 0 {
