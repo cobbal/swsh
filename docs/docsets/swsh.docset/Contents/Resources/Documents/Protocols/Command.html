@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Command Protocol Reference</title>
+    <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/jazzy.js" defer></script>
+    
+  </head>
+  <body>
+    <a name="//apple_ref/swift/Protocol/Command" class="dashAnchor"></a>
+    <a title="Command Protocol Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="../index.html">swsh Docs</a> (85% documented)</p>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="../index.html">swsh Reference</a>
+        <img id="carat" src="../img/carat.png" />
+        Command Protocol Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="../Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Classes/ExternalCommand.html">ExternalCommand</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Classes/Pipeline.html">Pipeline</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Functions.html">Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:4swsh3cmdyAA15ExternalCommandCSS_SSdtF">cmd(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:4swsh3cmd_9argumentsAA15ExternalCommandCSS_SaySSGtF">cmd(_:arguments:)</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Protocols/Command.html">Command</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Protocols/CommandResult.html">CommandResult</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Structs.html">Structures</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Structs/ExitCodeFailure.html">ExitCodeFailure</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/FileHandleTextStream.html">FileHandleTextStream</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/InvalidString.html">InvalidString</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/ProcessLaunchFailure.html">ProcessLaunchFailure</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            <h1>Command</h1>
+              <div class="declaration">
+                <div class="language">
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">protocol</span> <span class="kt">Command</span> <span class="p">:</span> <span class="kt">AnyObject</span></code></pre>
+
+                </div>
+              </div>
+            <p>Represents a description of a command that can be executed any number of times, but usually just once.</p>
+
+          </section>
+          <section class="section task-group-section">
+            <div class="task-group">
+              <ul>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandP5FDMapa"></a>
+                    <a name="//apple_ref/swift/Alias/FDMap" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandP5FDMapa">FDMap</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Undocumented</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">typealias</span> <span class="kt">FDMap</span> <span class="o">=</span> <span class="p">[(</span><span class="nv">src</span><span class="p">:</span> <span class="kt">Int32</span><span class="p">,</span> <span class="nv">dst</span><span class="p">:</span> <span class="kt">Int32</span><span class="p">)]</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandP9coreAsync5fdMapAA0B6Result_pSays5Int32V3src_AH3dsttG_tF"></a>
+                    <a name="//apple_ref/swift/Method/coreAsync(fdMap:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandP9coreAsync5fdMapAA0B6Result_pSays5Int32V3src_AH3dsttG_tF">coreAsync(fdMap:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>The minimum requirement of a Command is that it can launch itself asynchronously</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">coreAsync</span><span class="p">(</span><span class="nv">fdMap</span><span class="p">:</span> <span class="kt"><a href="../Protocols/Command.html#/s:4swsh7CommandP5FDMapa">FDMap</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Protocols/CommandResult.html">CommandResult</a></span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>fdMap</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>A list of file descriptors to remap. Order matters, same as in bourne-like shells.</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>a result capable of monitoring the asynchronous command</p>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE1ooiyAaB_px_AaB_ptFZ"></a>
+                    <a name="//apple_ref/swift/Method/|(_:_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE1ooiyAaB_px_AaB_ptFZ">|(_:_:)</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Convenience function to create a 2-command pipeline</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">static</span> <span class="kd">func</span> <span class="o">|</span> <span class="p">(</span><span class="nv">left</span><span class="p">:</span> <span class="k">Self</span><span class="p">,</span> <span class="nv">right</span><span class="p">:</span> <span class="kt">Command</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">Command</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE11asyncStream7joinErrSo12NSFileHandleCSb_tF"></a>
+                    <a name="//apple_ref/swift/Method/asyncStream(joinErr:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE11asyncStream7joinErrSo12NSFileHandleCSb_tF">asyncStream(joinErr:)</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command asynchronously, and return a stream open on process&rsquo;s stdout</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">asyncStream</span><span class="p">(</span><span class="nv">joinErr</span><span class="p">:</span> <span class="kt">Bool</span> <span class="o">=</span> <span class="kc">false</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">FileHandle</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE3runyyKF"></a>
+                    <a name="//apple_ref/swift/Method/run()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE3runyyKF">run()</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command synchronously, and return nothing if successful</p>
+<div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    if command fails
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">run</span><span class="p">()</span> <span class="k">throws</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE7runBoolSbyF"></a>
+                    <a name="//apple_ref/swift/Method/runBool()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE7runBoolSbyF">runBool()</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command synchronously, and return true if the command exited zero</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">runBool</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kt">Bool</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE7runFile10Foundation3URLVyKF"></a>
+                    <a name="//apple_ref/swift/Method/runFile()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE7runFile10Foundation3URLVyKF">runFile()</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command synchronously, directing the output to a temporary file</p>
+<div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    if command fails
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">runFile</span><span class="p">()</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">URL</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>URL of temporary file with output of command</p>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE7runData7joinErr10Foundation0D0VSb_tKF"></a>
+                    <a name="//apple_ref/swift/Method/runData(joinErr:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE7runData7joinErr10Foundation0D0VSb_tKF">runData(joinErr:)</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command synchronously, and collect stdout.
+does not trim newlines (unlike $(&hellip;))</p>
+<div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    if command fails
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">runData</span><span class="p">(</span><span class="nv">joinErr</span><span class="p">:</span> <span class="kt">Bool</span> <span class="o">=</span> <span class="kc">false</span><span class="p">)</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">Data</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>joinErr</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>if true, stderr will be collected as well</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>output as Data</p>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE9runString8encoding7joinErrS2S10FoundationE8EncodingV_SbtKF"></a>
+                    <a name="//apple_ref/swift/Method/runString(encoding:joinErr:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE9runString8encoding7joinErrS2S10FoundationE8EncodingV_SbtKF">runString(encoding:joinErr:)</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command synchronously, and collect stdout into a string.
+Trims trailing newlines (like $(&hellip;))</p>
+<div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    if command fails
+
+</div><div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    <code><a href="../Structs/InvalidString.html">InvalidString</a></code> if the output isn&rsquo;t valid
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">runString</span><span class="p">(</span><span class="nv">encoding</span><span class="p">:</span> <span class="kt">String</span><span class="o">.</span><span class="kt">Encoding</span> <span class="o">=</span> <span class="o">.</span><span class="n">utf8</span><span class="p">,</span> <span class="nv">joinErr</span><span class="p">:</span> <span class="kt">Bool</span> <span class="o">=</span> <span class="kc">false</span><span class="p">)</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">String</span></code></pre>
+
+                        </div>
+                      </div>
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>encoding</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>the encoding of the output data</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>joinErr</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>if true, stderr will be collected as well</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>output as unicode string</p>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE8runLinesSaySSGyKF"></a>
+                    <a name="//apple_ref/swift/Method/runLines()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE8runLinesSaySSGyKF">runLines()</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command synchronously, and collect output as a newline-delimited list of strings</p>
+<div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    if command fails
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">runLines</span><span class="p">()</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="kt">String</span><span class="p">]</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh7CommandPAAE7runJson7optionsypSo20NSJSONReadingOptionsV_tKF"></a>
+                    <a name="//apple_ref/swift/Method/runJson(options:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh7CommandPAAE7runJson7optionsypSo20NSJSONReadingOptionsV_tKF">runJson(options:)</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Run the command synchronously, and collect output as a parsed JSON object</p>
+<div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    if command fails
+
+</div><div class="aside aside-throws">
+    <p class="aside-title">Throws</p>
+    if the output isn&rsquo;t JSON
+
+</div>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">runJson</span><span class="p">(</span><span class="nv">options</span><span class="p">:</span> <span class="kt">JSONSerialization</span><span class="o">.</span><span class="kt">ReadingOptions</span> <span class="o">=</span> <span class="o">.</span><span class="n">allowFragments</span><span class="p">)</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">Any</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </section>
+        <section id="footer">
+          <p>&copy; 2019 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2019-12-14)</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.0</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</div>
+</html>
