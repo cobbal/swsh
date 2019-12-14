@@ -5,7 +5,6 @@ test:
 	xcrun --toolchain "Swift Development Snapshot" swift test
 
 docs:
-	rm -rf docs
-	jazzy --module swsh
+	jazzy --clean --hide-documentation-coverage --module swsh
 
 .PHONY: build test docs

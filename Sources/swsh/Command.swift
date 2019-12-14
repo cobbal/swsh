@@ -111,11 +111,20 @@ public extension Command {
         }
         return String(string[...trimStop])
     }
-
-    /// Run the command synchronously, and collect output as a newline-delimited list of strings
+    
+    /// Run the command synchronously, and collect output line-by-line as a list of strings
     /// - Throws: if command fails
-    func runLines() throws -> [String] {
-        try runString().split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+    func runLines(encoding: String.Encoding = .utf8) throws -> [String] {
+        try runString(encoding: encoding).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+    }
+
+    /// Run the command synchronously, and collect output as a list of strings
+    /// - Parameter delimiter: Character to split string by
+    /// - Throws: if command fails
+    func runList(delimiter: Character, encoding: String.Encoding = .utf8) throws -> [String] {
+        try runString(encoding: encoding)
+            .split(separator: delimiter, omittingEmptySubsequences: false)
+            .map(String.init)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object
