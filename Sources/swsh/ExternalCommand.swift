@@ -20,7 +20,7 @@ public class ExternalCommand: Command {
         self.arguments = arguments
         self.environment = ProcessInfo.processInfo.environment.merging(addEnv) { $1 }
     }
-    
+
 
     internal class Result: CommandResult {
         static let reaperQueue = DispatchQueue(label: "swsh.ExternalCommand.Result.reaper")
@@ -52,13 +52,8 @@ public class ExternalCommand: Command {
         var isRunning: Bool {
             Self.reaperQueue.sync { _exitCode == nil }
         }
-        
-        func succeed() throws {
-            let err = exitCode()
-            if err != 0 {
-                throw ExitCodeFailure(name: name, exitCode: err)
-            }
-        }
+
+        func succeed() throws { try defaultSucceed(name: name) }
 
         func exitCode() -> Int32 {
             _exitSemaphore.wait()
@@ -77,7 +72,7 @@ public class ExternalCommand: Command {
         case .success(let pid):
             return Result(command: self, pid: pid)
         case .error(let err):
-            return ProcessLaunchFailure(command: self, error: err)
+            return SyscallError(name: "launching \"\(command)\"", command: self, error: err)
         }
     }
 }

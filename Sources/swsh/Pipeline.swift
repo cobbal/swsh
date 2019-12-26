@@ -25,7 +25,7 @@ public class Pipeline: Command {
                 }
             }
         }
-        
+
         func succeed() throws {
             try results.forEach { try $0.succeed() }
         }
@@ -43,5 +43,14 @@ public class Pipeline: Command {
             results.append(command.coreAsync(fdMap: fdMap))
         }
         return Result(command: self, results: results)
+    }
+}
+
+public extension Command {
+    // MARK: - Pipes
+    
+    /// Convenience function to create a 2-command pipeline
+    static func | (_ left: Self, _ right: Command) -> Command {
+        Pipeline(left, right)
     }
 }

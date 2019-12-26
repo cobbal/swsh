@@ -3,7 +3,7 @@ import XCTest
 #if !canImport(ObjectiveC)
 public func allTests() -> [XCTestCaseEntry] {
     return [
-        testCase(swshTests.allTests),
+        // TODO: statically generate all tests here
     ]
 }
 #endif

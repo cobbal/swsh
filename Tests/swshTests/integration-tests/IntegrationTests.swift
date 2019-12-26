@@ -1,7 +1,7 @@
 import XCTest
 @testable import swsh
 
-final class swshTests: XCTestCase {
+final class IntegrationTests: XCTestCase {
     override func setUp() {
         super.setUp()
         ExternalCommand.verbose = true
@@ -26,7 +26,7 @@ final class swshTests: XCTestCase {
     func testRunBoolFalse() {
         XCTAssertFalse(cmd("false").runBool())
     }
-    
+
     func testFalseRun() {
         XCTAssertThrowsError(try cmd("false").run()) { error in
             XCTAssertEqual("\(error)", "command \"false\" failed with exit code 256")
@@ -37,18 +37,18 @@ final class swshTests: XCTestCase {
         XCTAssertFalse((cmd("false") | cmd("true")).runBool())
         XCTAssertFalse((cmd("true") | cmd("false")).runBool())
     }
-    
+
     func testAbsPath() {
         XCTAssertFalse(cmd("/usr/bin/false").runBool())
     }
-    
+
     func testNonExistantProgram() {
         let binary = "/usr/bin/\(UUID())"
         XCTAssertThrowsError(try cmd(binary).run()) { error in
-            XCTAssertEqual("\(error)", "failed to launch \"\(binary)\" with error code 2: No such file or directory")
+            XCTAssertEqual("\(error)", "launching \"\(binary)\" failed with error code 2: No such file or directory")
         }
     }
-    
+
     func testNonExistantProgramInPipeline() {
         let binary = "/usr/bin/\(UUID())"
         XCTAssertFalse((cmd(binary) | cmd("cat")).runBool())

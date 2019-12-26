@@ -4,13 +4,13 @@ import Foundation
 public protocol CommandResult {
     /// The command that launched this result
     var command: Command { get }
-    
+
     /// Returns true if the command is still running
     var isRunning: Bool { get }
 
     /// Block until command is finished, and return exit code
     func exitCode() -> Int32
-    
+
     /// Block and throw an error if exitCode is non-zero
     func succeed() throws
 }
@@ -20,6 +20,14 @@ public extension CommandResult {
     func finish() -> Self {
         _ = exitCode()
         return self
+    }
+
+    /// A default implementation that can be used for succeed
+    func defaultSucceed(name: String = "\(Self.self)") throws {
+        let err = exitCode()
+        if err != 0 {
+            throw ExitCodeFailure(name: name, exitCode: err)
+        }
     }
 }
 
@@ -33,18 +41,15 @@ public protocol Command: class {
 }
 
 public extension Command {
-    /// Convenience function to create a 2-command pipeline
-    static func | (_ left: Self, _ right: Command) -> Command {
-        Pipeline(left, right)
-    }
+    // MARK: - Running
 
     internal func async(stdin: Int32 = STDIN_FILENO,
                         stdout: Int32 = STDOUT_FILENO,
                         stderr: Int32 = STDERR_FILENO) -> CommandResult
     {
-        return coreAsync(fdMap: [(stdin, STDIN_FILENO),
-                                 (stdout, STDOUT_FILENO),
-                                 (stderr, STDERR_FILENO)])
+        coreAsync(fdMap: [(stdin, STDIN_FILENO),
+                          (stdout, STDOUT_FILENO),
+                          (stderr, STDERR_FILENO)])
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
@@ -111,7 +116,7 @@ public extension Command {
         }
         return String(string[...trimStop])
     }
-    
+
     /// Run the command synchronously, and collect output line-by-line as a list of strings
     /// - Throws: if command fails
     func runLines(encoding: String.Encoding = .utf8) throws -> [String] {
@@ -132,5 +137,13 @@ public extension Command {
     /// - Throws: if the output isn't JSON
     func runJson(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
         try JSONSerialization.jsonObject(with: runData(), options: options)
+    }
+
+    /// Run the command synchronously, and collect output as a parsed JSON object
+    /// - Throws: if command fails
+    /// - Throws: if parsing fails
+    func runJson<D : Decodable>(_ type: D.Type, decoder: JSONDecoder? = nil) throws -> D {
+        let decoder = decoder ?? JSONDecoder()
+        return try decoder.decode(type, from: runData())
     }
 }
