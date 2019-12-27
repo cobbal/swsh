@@ -1,6 +1,6 @@
 # swsh
 
-![](https://github.com/cobbal/swsh/workflows/tests/badge.svg) [![](docs/badge.svg)][2] [![](https://codecov.io/gh/cobbal/swsh/branch/master/graph/badge.svg)](https://codecov.io/gh/cobbal/swsh)
+[![](https://github.com/cobbal/swsh/workflows/tests/badge.svg)][3] [![](docs/badge.svg)][2] [![](https://codecov.io/gh/cobbal/swsh/branch/master/graph/badge.svg)][4]
 
 A shell-scripting library for Swift, inspired by [scsh][2].
 
@@ -25,3 +25,5 @@ try! (cmd("false") | cmd("cat")).run()
 
 [1]: https://scsh.net/
 [2]: https://cobbal.github.io/swsh/
+[3]: https://github.com/cobbal/swsh/actions?query=workflow%3Atests+branch%3Amaster
+[4]: https://codecov.io/gh/cobbal/swsh
