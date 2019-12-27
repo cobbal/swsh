@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>FileHandleTextStream Structure Reference</title>
+    <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
+    <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
+    <meta charset='utf-8'>
+    <script src="../js/jquery.min.js" defer></script>
+    <script src="../js/jazzy.js" defer></script>
+    
+  </head>
+  <body>
+    <a name="//apple_ref/swift/Struct/FileHandleTextStream" class="dashAnchor"></a>
+    <a title="FileHandleTextStream Structure Reference"></a>
+    <header>
+      <div class="content-wrapper">
+        <p><a href="../index.html">swsh Docs</a> (100% documented)</p>
+      </div>
+    </header>
+    <div class="content-wrapper">
+      <p id="breadcrumbs">
+        <a href="../index.html">swsh Reference</a>
+        <img id="carat" src="../img/carat.png" />
+        FileHandleTextStream Structure Reference
+      </p>
+    </div>
+    <div class="content-wrapper">
+      <nav class="sidebar">
+        <ul class="nav-groups">
+          <li class="nav-group-name">
+            <a href="../Classes.html">Classes</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Classes/ExternalCommand.html">ExternalCommand</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Classes/Pipeline.html">Pipeline</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Classes/SyscallError.html">SyscallError</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Functions.html">Functions</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:4swsh3cmdyAA7Command_pSS_SSdtF">cmd(_:_:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:4swsh3cmd_9argumentsAA7Command_pSS_SaySSGtF">cmd(_:arguments:)</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Functions.html#/s:4swsh1ooiyAA7Command_pAaC_p_AaC_ptF">|(_:_:)</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Protocols.html">Protocols</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Protocols/Command.html">Command</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Protocols/CommandResult.html">CommandResult</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-group-name">
+            <a href="../Structs.html">Structures</a>
+            <ul class="nav-group-tasks">
+              <li class="nav-group-task">
+                <a href="../Structs/ExitCodeFailure.html">ExitCodeFailure</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/FileHandleTextStream.html">FileHandleTextStream</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/InvalidString.html">InvalidString</a>
+              </li>
+              <li class="nav-group-task">
+                <a href="../Structs/StringEncodingError.html">StringEncodingError</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article class="main-content">
+        <section>
+          <section class="section">
+            <h1>FileHandleTextStream</h1>
+              <div class="declaration">
+                <div class="language">
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">struct</span> <span class="kt">FileHandleTextStream</span> <span class="p">:</span> <span class="kt">TextOutputStream</span></code></pre>
+
+                </div>
+              </div>
+            <p>A wrapper to convert a <code>FileHandle</code> into a <code>TextOutputStream</code></p>
+
+          </section>
+          <section class="section task-group-section">
+            <div class="task-group">
+              <ul>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh20FileHandleTextStreamV6handleSo06NSFileC0Cvp"></a>
+                    <a name="//apple_ref/swift/Property/handle" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh20FileHandleTextStreamV6handleSo06NSFileC0Cvp">handle</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>the underlying handle</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">handle</span><span class="p">:</span> <span class="kt">FileHandle</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh20FileHandleTextStreamV8encodingSS10FoundationE8EncodingVvp"></a>
+                    <a name="//apple_ref/swift/Property/encoding" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh20FileHandleTextStreamV8encodingSS10FoundationE8EncodingVvp">encoding</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>the encoding used to write to the handle</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">encoding</span><span class="p">:</span> <span class="kt">String</span><span class="o">.</span><span class="kt">Encoding</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh20FileHandleTextStreamV_8encodingACSo06NSFileC0C_SS10FoundationE8EncodingVtcfc"></a>
+                    <a name="//apple_ref/swift/Method/init(_:encoding:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh20FileHandleTextStreamV_8encodingACSo06NSFileC0C_SS10FoundationE8EncodingVtcfc">init(_:encoding:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Create a text stream that writes to the filehandle using the specified encoding</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="nf">init</span><span class="p">(</span><span class="n">_</span> <span class="nv">handle</span><span class="p">:</span> <span class="kt">FileHandle</span><span class="p">,</span> <span class="nv">encoding</span><span class="p">:</span> <span class="kt">String</span><span class="o">.</span><span class="kt">Encoding</span> <span class="o">=</span> <span class="o">.</span><span class="n">utf8</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:s16TextOutputStreamP5writeyySSF"></a>
+                    <a name="//apple_ref/swift/Method/write(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:s16TextOutputStreamP5writeyySSF">write(_:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">write</span><span class="p">(</span><span class="n">_</span> <span class="nv">string</span><span class="p">:</span> <span class="kt">String</span><span class="p">)</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+        </section>
+        <section id="footer">
+          <p>&copy; 2019 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2019-12-27)</p>
+          <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.0</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
+        </section>
+      </article>
+    </div>
+  </body>
+</div>
+</html>
