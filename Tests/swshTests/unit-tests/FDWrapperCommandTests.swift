@@ -152,16 +152,12 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
         XCTAssertEqual(handleString(), "{\"foo\":\"bar\"}")
     }
 
-    func testInputEncodableSuccess() throws {
+    func testInputEncodable() throws {
         try succeed(inner.inputJSON(from: ["foo": "bar"]))
         XCTAssertEqual(handleString(), "{\"foo\":\"bar\"}")
     }
 
-    func testInputEncodableFailure() {
-        failure(try inner.inputJSON(from: Date()))
-    }
-
-    func testInputFromFileSuccess() throws {
+    func testInputFromFile() throws {
         try succeed(inner.input(fromFile: tmpPath))
         XCTAssertEqual(handleString(), "Hello")
     }
