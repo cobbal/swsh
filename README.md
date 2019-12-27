@@ -1,6 +1,6 @@
 # swsh
 
-[![](https://github.com/cobbal/swsh/workflows/tests/badge.svg?branch=master)][3] [![](docs/badge.svg)][2] [![](https://codecov.io/gh/cobbal/swsh/branch/master/graph/badge.svg)][4]
+[![](https://github.com/cobbal/swsh/workflows/tests/badge.svg)][3] [![](docs/badge.svg)][2] [![](https://codecov.io/gh/cobbal/swsh/branch/master/graph/badge.svg)][4]
 
 A shell-scripting library for Swift, inspired by [scsh][2].
 
