@@ -1,6 +1,6 @@
 import Foundation
 
-/// A `Pipeline` is 0 or more pipes connecting 1 or more subcommands together like the unix `a | b | ...`
+/// A `Pipeline` is 0 or more pipes connecting 1 or more subcommands together like bash's `a | b | ...`
 public class Pipeline: Command {
     // Don't want to think about the base case, non-empty pipelines only
     private let first: Command
@@ -47,11 +47,14 @@ public class Pipeline: Command {
     }
 }
 
-public extension Command {
-    // MARK: - Pipes
+/// Convenience function to create a 2-command pipeline
+public func |(_ left: Command, _ right: Command) -> Command { Pipeline(left, right) }
 
-    /// Convenience function to create a 2-command pipeline
-    static func | (_ left: Self, _ right: Command) -> Command {
-        Pipeline(left, right)
-    }
-}
+/// :nodoc:
+public func |<R: Command>(_ left: Command, _ right: R) -> Command { Pipeline(left, right) }
+
+/// :nodoc:
+public func |<L: Command>(_ left: L, _ right: Command) -> Command { Pipeline(left, right) }
+
+/// :nodoc:
+public func |<L: Command, R: Command>(_ left: L, _ right: R) -> Command { Pipeline(left, right) }
