@@ -7,10 +7,21 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Install jazzy
-      run: gem install jazzy
+
+    - name: Cache Gems
+      id: cache-gems
+      uses: actions/cache@v1
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-gems
+
+    - name: Build Gems
+      if: steps.cache-gems.outputs.cache-hit != 'true'
+      run: bundle install --deployment
+
     - name: build docs
       run: make docs
+
     - name: deploy
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
