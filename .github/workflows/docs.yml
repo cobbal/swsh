@@ -1,0 +1,18 @@
+name: docs
+
+on: push
+
+jobs:
+  build-and-deploy:
+    runs-on: macOS-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install jazzy
+      run: gem install jazzy
+    - name: build docs
+      run: make docs
+    - name: deploy
+      uses: JamesIves/github-pages-deploy-action@releases/v3
+      with:
+        BRANCH: gh-pages
+        FOLDER: docs
