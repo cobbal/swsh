@@ -11,14 +11,23 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: Cache Gems
+    - name: Cache gems
       id: cache-gems
       uses: actions/cache@v1
       with:
         path: vendor/bundle
         key: ${{ runner.os }}-gems
 
-    - name: Build Gems
+    - name: Bundle config
+      run: |-
+        mkdir -p .bundle
+        cat <<EOF > .bundle/config
+        ---
+        BUNDLE_FROZEN: "true"
+        BUNDLE_PATH: "vendor/bundle"
+        EOF
+
+    - name: Build gems
       if: steps.cache-gems.outputs.cache-hit != 'true'
       run: bundle install --deployment
 

@@ -5,8 +5,9 @@ test: build
 	swift test --enable-test-discovery --enable-code-coverage
 
 docs:
-	bundle exec jazzy --clean --module swsh
-	mkdir -p docs/docs; cp docs/badge.svg docs/docs/
+	bundle exec jazzy --clean \
+	    --module swsh \
+	    --github_url https://github.com/cobbal/swsh
 
 coverage.lcov:
 	xcrun llvm-cov export \

@@ -38,5 +38,5 @@ try! (cmd("false") | cmd("cat")).run()
 [scsh]: https://scsh.net/
 
 [ci-badge]: https://github.com/cobbal/swsh/workflows/tests/badge.svg
-[docs-badge]: https://cobbal.github.io/swsh/docs/badge.svg
+[docs-badge]: https://cobbal.github.io/swsh/badge.svg
 [cov-badge]: https://codecov.io/gh/cobbal/swsh/branch/master/graph/badge.svg
