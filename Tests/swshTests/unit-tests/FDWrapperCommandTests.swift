@@ -8,8 +8,8 @@ final class FDWrapperCommandTests: XCTestCase {
     lazy var invalidCmd = FDWrapperCommand( inner: inner, opening: "\(UUID())", toHandle: 0, oflag: O_RDONLY)
 
     func result() throws -> (outer: FDWrapperCommand.Result, inner: MockCommand.Result) {
-        let result = try XCTUnwrap(cmd.coreAsync(fdMap: [(src: 3, dst: 5)]) as? FDWrapperCommand.Result)
-        let innerResult = try XCTUnwrap(result.innerResult as? MockCommand.Result)
+        let result = try unwrap(cmd.coreAsync(fdMap: [(src: 3, dst: 5)]) as? FDWrapperCommand.Result)
+        let innerResult = try unwrap(result.innerResult as? MockCommand.Result)
         return (outer: result, inner: innerResult)
     }
 
@@ -26,7 +26,7 @@ final class FDWrapperCommandTests: XCTestCase {
     }
 
     func testInvalidCoreAsync() throws {
-        let result = try XCTUnwrap(invalidCmd.coreAsync(fdMap: []) as? SyscallError)
+        let result = try unwrap(invalidCmd.coreAsync(fdMap: []) as? SyscallError)
         XCTAssert(result.command === invalidCmd)
         XCTAssertEqual(result.error, ENOENT)
     }
@@ -67,14 +67,14 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     }
 
     func succeed(_ cmd: Command) throws {
-        outerResult = try XCTUnwrap(cmd.async() as? FDWrapperCommand.Result)
-        innerResult = try XCTUnwrap(outerResult.innerResult as? MockCommand.Result)
+        outerResult = try unwrap(cmd.async() as? FDWrapperCommand.Result)
+        innerResult = try unwrap(outerResult.innerResult as? MockCommand.Result)
     }
 
     func failure(_ cmd: @autoclosure () throws -> Command, file: StaticString = #file, line: UInt = #line) {
         do {
             let result = try cmd()
-            error = try XCTUnwrap(result.async() as? Error, file: file, line: line)
+            error = try unwrap(result.async() as? Error, file: file, line: line)
         } catch let e {
             error = e
         }
