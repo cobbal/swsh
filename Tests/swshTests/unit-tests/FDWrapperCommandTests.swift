@@ -28,7 +28,7 @@ final class FDWrapperCommandTests: XCTestCase {
     func testInvalidCoreAsync() throws {
         let result = try unwrap(invalidCmd.coreAsync(fdMap: []) as? SyscallError)
         XCTAssert(result.command === invalidCmd)
-        XCTAssertEqual(result.error, ENOENT)
+        XCTAssertEqual(result.errno, ENOENT)
     }
 
     func testResultSucceeds() throws {
@@ -99,7 +99,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
 
     func testOutputCreatingFileFailure() throws {
         failure(inner.output(creatingFile: tmpPath))
-        XCTAssertEqual(syscallError.error, EEXIST)
+        XCTAssertEqual(syscallError.errno, EEXIST)
     }
 
     func testOutputOverwritingFile() throws {
@@ -123,7 +123,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     func testOutputAppendingNoCreateFail() throws {
         deleteTmp()
         failure(inner.append(toFile: tmpPath, createFile: false))
-        XCTAssertEqual(syscallError.error, ENOENT)
+        XCTAssertEqual(syscallError.errno, ENOENT)
     }
 
     func testOutputAppendingCreate() throws {

@@ -1,8 +1,10 @@
 # swsh
 
+![](https://github.com/cobbal/swsh/workflows/tests/badge.svg) ![](docs/badge.svg)
+
 A shell-scripting library for Swift, inspired by [scsh][2].
 
-swsh makes writing shell scripts more fun by exchanging bash (or similar) for a better thought-out language like Swift. In the process, 
+swsh makes writing shell scripts more fun by exchanging bash (or similar) for a better thought-out language like Swift. In the process,
 a small amount of conciseness is traded for better quoting, error handling, and access to libraries.
 
 Some poorly thought out examples:

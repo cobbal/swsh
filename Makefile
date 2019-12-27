@@ -1,10 +1,10 @@
 build:
-	xcrun --toolchain "Swift Development Snapshot" swift build
+	xcrun swift build
 
-test:
-	xcrun --toolchain "Swift Development Snapshot" swift test
+test: build
+	xcrun swift test
 
 docs:
-	jazzy --clean --hide-documentation-coverage --module swsh
+	jazzy --clean --module swsh
 
 .PHONY: build test docs

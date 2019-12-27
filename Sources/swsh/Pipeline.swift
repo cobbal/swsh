@@ -6,6 +6,7 @@ public class Pipeline: Command {
     private let first: Command
     private let rest: [Command]
 
+    /// Create a pipeline from 1 or more sub-commands
     public init(_ first: Command, _ rest: Command...) {
         self.first = first
         self.rest = rest
@@ -48,7 +49,7 @@ public class Pipeline: Command {
 
 public extension Command {
     // MARK: - Pipes
-    
+
     /// Convenience function to create a 2-command pipeline
     static func | (_ left: Self, _ right: Command) -> Command {
         Pipeline(left, right)

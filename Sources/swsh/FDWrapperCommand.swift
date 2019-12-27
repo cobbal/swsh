@@ -28,7 +28,7 @@ internal class FDWrapperCommand: Command {
         self.init(inner: inner) { command in
             let fd = open(path, oflag, 0o666)
             guard fd >= 0 else {
-                return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, error: errno))
+                return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, errno: errno))
             }
             let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
             return .success(fdMap: [(src: fd, dst: dstFd)], ref: handle)

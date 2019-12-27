@@ -72,7 +72,7 @@ public class ExternalCommand: Command {
         case .success(let pid):
             return Result(command: self, pid: pid)
         case .error(let err):
-            return SyscallError(name: "launching \"\(command)\"", command: self, error: err)
+            return SyscallError(name: "launching \"\(command)\"", command: self, errno: err)
         }
     }
 }
