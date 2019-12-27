@@ -8,8 +8,10 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Build
-      run: swift build --enable-code-coverage -v
+      run: make build
     - name: Run tests
-      run: swift test --enable-code-coverage -v
+      run: make test
+    - name: Generate coverage
+      run: make coverage.lcov
     - name: Upload coverage
       run: bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
