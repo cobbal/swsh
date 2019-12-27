@@ -9,3 +9,4 @@ docs/docsets
 coverage.lcov
 vendor
 .bundle
+docs
