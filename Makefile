@@ -5,7 +5,7 @@ test: build
 	swift test --enable-test-discovery --enable-code-coverage
 
 docs:
-	jazzy --clean --module swsh
+	bundle exec jazzy --clean --module swsh
 	mkdir -p docs/docs; cp docs/badge.svg docs/docs/
 
 coverage.lcov:

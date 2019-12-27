@@ -7,3 +7,6 @@ DerivedData
 docs/undocumented.json
 docs/docsets
 coverage.lcov
+vendor
+.bundle
+docs
