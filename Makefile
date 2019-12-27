@@ -6,6 +6,7 @@ test: build
 
 docs:
 	jazzy --clean --module swsh
+	mkdir -p docs/docs; cp docs/badge.svg docs/docs/
 
 coverage.lcov:
 	xcrun llvm-cov export \
