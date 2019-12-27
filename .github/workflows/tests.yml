@@ -15,3 +15,5 @@ jobs:
       run: make coverage.lcov
     - name: Upload coverage
       run: bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
