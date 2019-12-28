@@ -1,5 +1,5 @@
-import XCTest
 @testable import swsh
+import XCTest
 
 final class IntegrationTests: XCTestCase {
     override func setUp() {

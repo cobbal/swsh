@@ -1,36 +1,5 @@
 import Foundation
 
-/// Represents a running or finished command
-public protocol CommandResult {
-    /// The command that launched this result
-    var command: Command { get }
-
-    /// Returns true if the command is still running
-    var isRunning: Bool { get }
-
-    /// Block until command is finished, and return exit code
-    func exitCode() -> Int32
-
-    /// Block and throw an error if exitCode is non-zero
-    func succeed() throws
-}
-
-public extension CommandResult {
-    /// Wait for the command to finish, ignoring any exit code
-    func finish() -> Self {
-        _ = exitCode()
-        return self
-    }
-
-    /// A default implementation that can be used for succeed
-    func defaultSucceed(name: String = "\(Self.self)") throws {
-        let err = exitCode()
-        if err != 0 {
-            throw ExitCodeFailure(name: name, exitCode: err)
-        }
-    }
-}
-
 /// Represents a description of a command that can be executed any number of times, but usually just once.
 public protocol Command: class {
     /// A list of file descriptor remappings. Order matters, same as in bash
@@ -42,12 +11,13 @@ public protocol Command: class {
     func coreAsync(fdMap: FDMap) -> CommandResult
 }
 
-public extension Command {
+extension Command {
     // MARK: - Running
 
-    internal func async(stdin: Int32 = STDIN_FILENO,
-                        stdout: Int32 = STDOUT_FILENO,
-                        stderr: Int32 = STDERR_FILENO
+    internal func async(
+      stdin: Int32 = STDIN_FILENO,
+      stdout: Int32 = STDOUT_FILENO,
+      stderr: Int32 = STDERR_FILENO
     ) -> CommandResult {
         coreAsync(fdMap: [
                     (stdin, STDIN_FILENO),
@@ -84,7 +54,8 @@ public extension Command {
     /// - Returns: URL of temporary file with output of command
     /// - Throws: if command fails
     func runFile() throws -> URL {
-        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString, isDirectory: false)
+        let url = URL(fileURLWithPath: NSTemporaryDirectory())
+          .appendingPathComponent(UUID().uuidString, isDirectory: false)
         let handle = try FileHandle(forWritingTo: url)
         try async(stdout: handle.fileDescriptor).succeed()
         return url

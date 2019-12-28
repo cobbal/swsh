@@ -1,0 +1,46 @@
+disabled_rules:
+  - todo
+  - nesting
+  - cyclomatic_complexity
+  - file_length
+  - type_body_length
+  - identifier_name
+  - function_parameter_count
+opt_in_rules:
+  - closure_spacing
+  - empty_collection_literal
+  - no_extension_access_modifier
+  - file_header
+  - file_name
+  - file_types_order
+  - implicit_return
+  - lower_acl_than_parent
+  - multiline_literal_brackets
+  - multiline_parameters
+  - multiline_parameters_brackets
+  - number_separator
+  - override_in_extension
+  - pattern_matching_keywords
+  - sorted_imports
+  - unneeded_parentheses_in_closure_argument
+  - unused_import
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - xct_specific_matcher
+  - yoda_condition
+included:
+excluded:
+line_length: 120
+function_body_length: 100
+type_name:
+  min_length: 3
+  max_length: 50
+identifier_name:
+  allowed_symbols: "_"
+  min_length: 1
+  max_length: 50
+trailing_comma:
+  mandatory_comma: true
+file_name:
+  excluded:
+    - Errors.swift

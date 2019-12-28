@@ -47,19 +47,19 @@ internal class FDWrapperCommand: Command {
 
     func coreAsync(fdMap incoming: FDMap) -> CommandResult {
         switch fdMapMaker(self) {
-        case .success(let fdMap, let ref):
+        case let .success(fdMap, ref):
             return Result(
                 innerResult: inner.coreAsync(fdMap: fdMap + incoming),
                 command: self,
                 ref: ref
             )
-        case .failure(let result):
+        case let .failure(result):
             return result
         }
     }
 }
 
-public extension Command {
+extension Command {
     // MARK: - Output redirection
 
     /// Bind output to a file. Similar to ">" in bash, but will not overwrite the file

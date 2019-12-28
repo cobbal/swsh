@@ -1,6 +1,6 @@
-import XCTest
 import ObjectiveC
 @testable import swsh
+import XCTest
 
 final class FDWrapperCommandTests: XCTestCase {
     let inner = MockCommand()
@@ -58,7 +58,8 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     var handle: FileHandle! { (innerResult?.fdMap[0].src).map { FileHandle(fileDescriptor: $0) } }
 
     // note: fresh between tests
-    let tmpUrl = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString, isDirectory: false)
+    let tmpUrl = URL(fileURLWithPath: NSTemporaryDirectory())
+      .appendingPathComponent(UUID().uuidString, isDirectory: false)
     lazy var tmpPath = tmpUrl.path
 
     override func setUp() {
