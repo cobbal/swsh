@@ -32,13 +32,13 @@ jobs:
       run: bundle install --deployment
 
     - name: build docs
-      run: make docs
+      run: make docs/swsh-master
 
     - name: Deploy
       env:
         ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
         PUBLISH_BRANCH: gh-pages
-        PUBLISH_DIR: ./docs
+        PUBLISH_DIR: ./docs/swsh-master
         SCRIPT_MODE: true
       run: |-
         set -euxo pipefail

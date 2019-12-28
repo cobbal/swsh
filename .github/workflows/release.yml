@@ -1,0 +1,49 @@
+name: release
+on:
+  repository_dispatch:
+    types: [semantic-release]
+jobs:
+  release:
+    runs-on: macOS-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+
+    - name: Cache gems
+      id: cache-gems
+      uses: actions/cache@v1
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-gems
+
+    - name: Bundle config
+      run: |-
+        mkdir -p .bundle
+        cat <<EOF > .bundle/config
+        ---
+        BUNDLE_FROZEN: "true"
+        BUNDLE_PATH: "vendor/bundle"
+        EOF
+
+    - name: Build gems
+      if: steps.cache-gems.outputs.cache-hit != 'true'
+      run: bundle install --deployment
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12
+
+    - name: Install node modules
+      run: |-
+        npm install -g semantic-release \
+          @semantic-release/changelog \
+          @semantic-release/commit-analyzer \
+          @semantic-release/exec \
+          @semantic-release/git \
+          @semantic-release/release-notes-generator
+
+    - name: Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: npx semantic-release

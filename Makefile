@@ -4,10 +4,15 @@ build:
 test: build
 	swift test --enable-test-discovery --enable-code-coverage
 
-docs:
+docs: docs/swsh-master
+
+docs/swsh-%: docs-phony
 	bundle exec jazzy --clean \
-	    --module swsh \
-	    --github_url https://github.com/cobbal/swsh
+	  --module-version $* \
+	  --output $@
+
+docs-%.tar.xz: docs/swsh-%
+	tar cJf $@ -C docs swsh-$*
 
 lint:
 	swiftlint lint --strict --quiet
@@ -21,4 +26,4 @@ coverage.lcov:
 		-object=$$(find .build/debug/*.xctest/Contents/MacOS -type f -depth 1) -format=lcov \
 		> coverage.lcov
 
-.PHONY: build test docs lint
+.PHONY: build test lint docs-phony

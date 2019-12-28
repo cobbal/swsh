@@ -7,23 +7,28 @@ import Glibc
 #warning("TODO: never been tested, probably broken")
 #endif
 
+/// A process spawned with `posix_spawn`
 public enum PosixSpawn {
-    enum Result {
-        case success(pid_t)
-        case error(Int32)
-    }
+    /// A successful spawn with child process pid
+    case success(pid_t)
+    /// A failed spawn with error `errno`
+    case error(errno: Int32)
 
-    /// low level code to spawn a process
-    /// fdMap is a list of file descriptor remappings, src -> dst (can be equal)
-    /// Note: all unmapped descriptors will be closed
-    /// Returns pid of spawned process
-    static func spawn(
+    /// Spawns a subprocess.
+    /// - Note: all unmapped descriptors will be closed
+    /// - Parameter command: process to spawn
+    /// - Parameter arguments: arguments to pass
+    /// - Parameter env: all environment variables for subprocess
+    /// - Parameter fdMap: a list of file descriptor remappings, src -> dst (can be equal)
+    /// - Parameter pathResolve: if true, search for executable in PATH
+    /// - Returns: pid of spawned process or error if failed
+    public static func spawn(
       command: String,
       arguments: [String],
       env: [String: String],
       fdMap: Command.FDMap,
       pathResolve: Bool = true
-    ) -> Result {
+    ) -> PosixSpawn {
         var fileActions: posix_spawn_file_actions_t?
         posix_spawn_file_actions_init(&fileActions)
         defer { posix_spawn_file_actions_destroy(&fileActions) }
@@ -56,7 +61,7 @@ public enum PosixSpawn {
         let spawn_fn = pathResolve ? posix_spawnp : posix_spawn
         let res = spawn_fn(&pid, cCommand, &fileActions, &attrs, cArgs, cEnv)
         guard res == 0 else {
-            return .error(res)
+            return .error(errno: res)
         }
 
         return .success(pid)
