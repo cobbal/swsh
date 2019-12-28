@@ -1,6 +1,12 @@
 {
   "warnings": [
-
+    {
+      "file": "/Users/runner/runners/2.163.1/work/swsh/swsh/Sources/swsh/PosixSpawn.swift",
+      "line": 10,
+      "symbol": "PosixSpawn",
+      "symbol_kind": "source.lang.swift.decl.enum",
+      "warning": "undocumented"
+    }
   ],
   "source_directory": "/Users/runner/runners/2.163.1/work/swsh/swsh"
 }
