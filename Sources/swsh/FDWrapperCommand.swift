@@ -105,7 +105,7 @@ public extension Command {
     /// Bind stdin to contents of data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     func input(_ data: Data, fd: Int32 = STDIN_FILENO) -> Command {
-        FDWrapperCommand(inner: self) { command in
+        FDWrapperCommand(inner: self) { _ in
             let pipe = Pipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
             let writeHandle = pipe.fileHandleForWriting
@@ -137,7 +137,7 @@ public extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     /// - Parameter encoder: JSONEncoder to use
     /// - Throws: if encoding fails
-    func inputJSON<E : Encodable>(
+    func inputJSON<E: Encodable>(
         from object: E,
         fd: Int32 = STDIN_FILENO,
         encoder: JSONEncoder = .init()

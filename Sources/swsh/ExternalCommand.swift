@@ -21,14 +21,13 @@ public class ExternalCommand: Command {
         self.environment = ProcessInfo.processInfo.environment.merging(addEnv) { $1 }
     }
 
-
     internal class Result: CommandResult {
         static let reaperQueue = DispatchQueue(label: "swsh.ExternalCommand.Result.reaper")
 
         let name: String
         var command: Command
         let pid: pid_t
-        private var _exitCode: Int32? = nil
+        private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         let processSource: DispatchSourceProcess
 

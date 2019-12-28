@@ -47,20 +47,24 @@ public extension Command {
 
     internal func async(stdin: Int32 = STDIN_FILENO,
                         stdout: Int32 = STDOUT_FILENO,
-                        stderr: Int32 = STDERR_FILENO) -> CommandResult
-    {
-        coreAsync(fdMap: [(stdin, STDIN_FILENO),
-                          (stdout, STDOUT_FILENO),
-                          (stderr, STDERR_FILENO)])
+                        stderr: Int32 = STDERR_FILENO
+    ) -> CommandResult {
+        coreAsync(fdMap: [
+                    (stdin, STDIN_FILENO),
+                    (stdout, STDOUT_FILENO),
+                    (stderr, STDERR_FILENO),
+                  ])
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
     func asyncStream(joinErr: Bool = false) -> FileHandle {
         let pipe = Pipe()
         let pipeFD = pipe.fileHandleForWriting.fileDescriptor
-        _ = coreAsync(fdMap: [(STDIN_FILENO, STDIN_FILENO),
-                              (pipeFD, STDOUT_FILENO),
-                              (joinErr ? pipeFD : STDERR_FILENO, STDERR_FILENO)])
+        _ = coreAsync(fdMap: [
+                        (STDIN_FILENO, STDIN_FILENO),
+                        (pipeFD, STDOUT_FILENO),
+                        (joinErr ? pipeFD : STDERR_FILENO, STDERR_FILENO),
+                      ])
         close(pipeFD)
         return pipe.fileHandleForReading
     }
@@ -144,7 +148,7 @@ public extension Command {
     /// Run the command synchronously, and collect output as a parsed JSON object
     /// - Throws: if command fails
     /// - Throws: if parsing fails
-    func runJson<D : Decodable>(_ type: D.Type, decoder: JSONDecoder? = nil) throws -> D {
+    func runJson<D: Decodable>(_ type: D.Type, decoder: JSONDecoder? = nil) throws -> D {
         let decoder = decoder ?? JSONDecoder()
         return try decoder.decode(type, from: runData())
     }

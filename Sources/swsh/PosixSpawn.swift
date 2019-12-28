@@ -20,13 +20,13 @@ func spawn(command: String,
            arguments: [String],
            env: [String: String],
            fdMap: Command.FDMap,
-           pathResolve: Bool = true) -> SpawnResult
-{
-    var fileActions: posix_spawn_file_actions_t? = nil
+           pathResolve: Bool = true
+) -> SpawnResult {
+    var fileActions: posix_spawn_file_actions_t?
     posix_spawn_file_actions_init(&fileActions)
     defer { posix_spawn_file_actions_destroy(&fileActions) }
 
-    var attrs: posix_spawnattr_t? = nil
+    var attrs: posix_spawnattr_t?
     posix_spawnattr_init(&attrs)
     defer { posix_spawnattr_destroy(&attrs) }
 
@@ -39,7 +39,7 @@ func spawn(command: String,
 
     let cCommand = command.withCString(strdup)
     var cArgs = [cCommand]
-    cArgs.append(contentsOf:arguments.map { $0.withCString(strdup) })
+    cArgs.append(contentsOf: arguments.map { $0.withCString(strdup) })
     cArgs.append(nil)
 
     var cEnv = env.map { "\($0)=\($1)".withCString(strdup) }
