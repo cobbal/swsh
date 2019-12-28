@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>ExternalCommand Class Reference</title>
+    <title>PosixSpawn Enumeration Reference</title>
     <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
     <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
     <meta charset='utf-8'>
@@ -10,8 +10,8 @@
     
   </head>
   <body>
-    <a name="//apple_ref/swift/Class/ExternalCommand" class="dashAnchor"></a>
-    <a title="ExternalCommand Class Reference"></a>
+    <a name="//apple_ref/swift/Enum/PosixSpawn" class="dashAnchor"></a>
+    <a title="PosixSpawn Enumeration Reference"></a>
     <header>
       <div class="content-wrapper">
         <p><a href="../index.html">swsh master Docs</a> (100% documented)</p>
@@ -22,7 +22,7 @@
       <p id="breadcrumbs">
         <a href="../index.html">swsh Reference</a>
         <img id="carat" src="../img/carat.png" />
-        ExternalCommand Class Reference
+        PosixSpawn Enumeration Reference
       </p>
     </div>
     <div class="content-wrapper">
@@ -97,14 +97,14 @@
       <article class="main-content">
         <section>
           <section class="section">
-            <h1>ExternalCommand</h1>
+            <h1>PosixSpawn</h1>
               <div class="declaration">
                 <div class="language">
-                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">ExternalCommand</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/Command.html">Command</a></span></code></pre>
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">enum</span> <span class="kt">PosixSpawn</span></code></pre>
 
                 </div>
               </div>
-            <p>Represents an external program invocation. It is the lowest-level command, that will spawn a subprocess when run.</p>
+            <p>A process spawned with <code>posix_spawn</code></p>
 
           </section>
           <section class="section task-group-section">
@@ -113,9 +113,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:4swsh15ExternalCommandC11environmentSDyS2SGvp"></a>
-                    <a name="//apple_ref/swift/Property/environment" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh15ExternalCommandC11environmentSDyS2SGvp">environment</a>
+                    <a name="/s:4swsh10PosixSpawnO7successyACs5Int32VcACmF"></a>
+                    <a name="//apple_ref/swift/Element/success(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh10PosixSpawnO7successyACs5Int32VcACmF">success(_:)</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -123,14 +123,14 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>The environment variables the command will be launched with</p>
+                        <p>A successful spawn with child process pid</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">environment</span><span class="p">:</span> <span class="p">[</span><span class="kt">String</span> <span class="p">:</span> <span class="kt">String</span><span class="p">]</span></code></pre>
+                          <pre class="highlight swift"><code><span class="k">case</span> <span class="nf">success</span><span class="p">(</span><span class="n">pid_t</span><span class="p">)</span></code></pre>
 
                         </div>
                       </div>
@@ -140,9 +140,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:4swsh15ExternalCommandC7verboseSbvpZ"></a>
-                    <a name="//apple_ref/swift/Variable/verbose" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh15ExternalCommandC7verboseSbvpZ">verbose</a>
+                    <a name="/s:4swsh10PosixSpawnO5erroryACs5Int32V_tcACmF"></a>
+                    <a name="//apple_ref/swift/Element/error(errno:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh10PosixSpawnO5erroryACs5Int32V_tcACmF">error(errno:)</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -150,14 +150,14 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>like &ldquo;set -x&rdquo;, this will cause all external commands to print themselves when they run</p>
+                        <p>A failed spawn with error <code>errno</code></p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">static</span> <span class="k">var</span> <span class="nv">verbose</span><span class="p">:</span> <span class="kt">Bool</span></code></pre>
+                          <pre class="highlight swift"><code><span class="k">case</span> <span class="nf">error</span><span class="p">(</span><span class="nv">errno</span><span class="p">:</span> <span class="kt">Int32</span><span class="p">)</span></code></pre>
 
                         </div>
                       </div>
@@ -167,9 +167,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:4swsh15ExternalCommandC_9arguments6addEnvACSS_SaySSGSDyS2SGtcfc"></a>
-                    <a name="//apple_ref/swift/Method/init(_:arguments:addEnv:)" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh15ExternalCommandC_9arguments6addEnvACSS_SaySSGSDyS2SGtcfc">init(_:arguments:addEnv:)</a>
+                    <a name="/s:4swsh10PosixSpawnO5spawn7command9arguments3env5fdMap11pathResolveACSS_SaySSGSDyS2SGSays5Int32V3src_AM3dsttGSbtFZ"></a>
+                    <a name="//apple_ref/swift/Method/spawn(command:arguments:env:fdMap:pathResolve:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh10PosixSpawnO5spawn7command9arguments3env5fdMap11pathResolveACSS_SaySSGSDyS2SGSays5Int32V3src_AM3dsttGSbtFZ">spawn(command:arguments:env:fdMap:pathResolve:)</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -177,14 +177,25 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>Creates the command, but does <strong>not</strong> run it</p>
+                        <p>Spawns a subprocess.</p>
+<div class="aside aside-note">
+    <p class="aside-title">Note</p>
+    all unmapped descriptors will be closed
+
+</div>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="nf">init</span><span class="p">(</span><span class="n">_</span> <span class="nv">command</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span> <span class="nv">arguments</span><span class="p">:</span> <span class="p">[</span><span class="kt">String</span><span class="p">],</span> <span class="nv">addEnv</span><span class="p">:</span> <span class="p">[</span><span class="kt">String</span> <span class="p">:</span> <span class="kt">String</span><span class="p">]</span> <span class="o">=</span> <span class="p">[:])</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kd">func</span> <span class="nf">spawn</span><span class="p">(</span>
+  <span class="nv">command</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="nv">arguments</span><span class="p">:</span> <span class="p">[</span><span class="kt">String</span><span class="p">],</span>
+  <span class="nv">env</span><span class="p">:</span> <span class="p">[</span><span class="kt">String</span><span class="p">:</span> <span class="kt">String</span><span class="p">],</span>
+  <span class="nv">fdMap</span><span class="p">:</span> <span class="kt"><a href="../Protocols/Command.html">Command</a></span><span class="o">.</span><span class="kt">FDMap</span><span class="p">,</span>
+  <span class="nv">pathResolve</span><span class="p">:</span> <span class="kt">Bool</span> <span class="o">=</span> <span class="kc">true</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">PosixSpawn</span></code></pre>
 
                         </div>
                       </div>
@@ -200,7 +211,7 @@
                               </td>
                               <td>
                                 <div>
-                                  <p>The executable to run</p>
+                                  <p>process to spawn</p>
                                 </div>
                               </td>
                             </tr>
@@ -212,51 +223,52 @@
                               </td>
                               <td>
                                 <div>
-                                  <p>The command line arguments to pass. No substitution is performed</p>
+                                  <p>arguments to pass</p>
                                 </div>
                               </td>
                             </tr>
                             <tr>
                               <td>
                                 <code>
-                                <em>addEnv</em>
+                                <em>env</em>
                                 </code>
                               </td>
                               <td>
                                 <div>
-                                  <p>Additional environment variable that will be passed in addition to the swsh process&rsquo;s
-environment</p>
+                                  <p>all environment variables for subprocess</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>fdMap</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>a list of file descriptor remappings, src -&gt; dst (can be equal)</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>pathResolve</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>if true, search for executable in PATH</p>
                                 </div>
                               </td>
                             </tr>
                           </tbody>
                         </table>
                       </div>
-                    </section>
-                  </div>
-                </li>
-                <li class="item">
-                  <div>
-                    <code>
-                    <a name="/s:4swsh7CommandP9coreAsync5fdMapAA0B6Result_pSays5Int32V3src_AH3dsttG_tF"></a>
-                    <a name="//apple_ref/swift/Method/coreAsync(fdMap:)" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh7CommandP9coreAsync5fdMapAA0B6Result_pSays5Int32V3src_AH3dsttG_tF">coreAsync(fdMap:)</a>
-                    </code>
-                  </div>
-                  <div class="height-container">
-                    <div class="pointer-container"></div>
-                    <section class="section">
-                      <div class="pointer"></div>
-                      <div class="abstract">
-                        
-                      </div>
-                      <div class="declaration">
-                        <h4>Declaration</h4>
-                        <div class="language">
-                          <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">coreAsync</span><span class="p">(</span><span class="nv">fdMap</span><span class="p">:</span> <span class="kt">FDMap</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Protocols/CommandResult.html">CommandResult</a></span></code></pre>
-
-                        </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>pid of spawned process or error if failed</p>
                       </div>
                     </section>
                   </div>
