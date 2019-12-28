@@ -48,13 +48,13 @@ public class Pipeline: Command {
 }
 
 /// Convenience function to create a 2-command pipeline
-public func |(_ left: Command, _ right: Command) -> Command { Pipeline(left, right) }
+public func | (_ left: Command, _ right: Command) -> Command { Pipeline(left, right) }
 
 /// :nodoc:
-public func |<R: Command>(_ left: Command, _ right: R) -> Command { Pipeline(left, right) }
+public func | <R: Command>(_ left: Command, _ right: R) -> Command { Pipeline(left, right) }
 
 /// :nodoc:
-public func |<L: Command>(_ left: L, _ right: Command) -> Command { Pipeline(left, right) }
+public func | <L: Command>(_ left: L, _ right: Command) -> Command { Pipeline(left, right) }
 
 /// :nodoc:
-public func |<L: Command, R: Command>(_ left: L, _ right: R) -> Command { Pipeline(left, right) }
+public func | <L: Command, R: Command>(_ left: L, _ right: R) -> Command { Pipeline(left, right) }

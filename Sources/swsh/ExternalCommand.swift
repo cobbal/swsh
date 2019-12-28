@@ -21,14 +21,13 @@ public class ExternalCommand: Command {
         self.environment = ProcessInfo.processInfo.environment.merging(addEnv) { $1 }
     }
 
-
     internal class Result: CommandResult {
         static let reaperQueue = DispatchQueue(label: "swsh.ExternalCommand.Result.reaper")
 
         let name: String
         var command: Command
         let pid: pid_t
-        private var _exitCode: Int32? = nil
+        private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         let processSource: DispatchSourceProcess
 
@@ -37,7 +36,7 @@ public class ExternalCommand: Command {
             self.name = command.command
             self.pid = pid
 
-            processSource = DispatchSource.makeProcessSource( identifier: pid, eventMask: .exit, queue: Self.reaperQueue)
+            processSource = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: Self.reaperQueue)
             processSource.setEventHandler { [weak self, processSource] in
                 var status: Int32 = 0
                 waitpid(pid, &status, 0)
@@ -68,7 +67,7 @@ public class ExternalCommand: Command {
             print("\(command) \(arguments.joined(separator: " "))", to: &stream)
         }
 
-        switch spawn(command: command, arguments: arguments, env: environment, fdMap: fdMap) {
+        switch PosixSpawn.spawn(command: command, arguments: arguments, env: environment, fdMap: fdMap) {
         case .success(let pid):
             return Result(command: self, pid: pid)
         case .error(let err):

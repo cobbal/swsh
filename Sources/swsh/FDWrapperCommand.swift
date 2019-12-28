@@ -47,19 +47,19 @@ internal class FDWrapperCommand: Command {
 
     func coreAsync(fdMap incoming: FDMap) -> CommandResult {
         switch fdMapMaker(self) {
-        case .success(let fdMap, let ref):
+        case let .success(fdMap, ref):
             return Result(
                 innerResult: inner.coreAsync(fdMap: fdMap + incoming),
                 command: self,
                 ref: ref
             )
-        case .failure(let result):
+        case let .failure(result):
             return result
         }
     }
 }
 
-public extension Command {
+extension Command {
     // MARK: - Output redirection
 
     /// Bind output to a file. Similar to ">" in bash, but will not overwrite the file
@@ -105,7 +105,7 @@ public extension Command {
     /// Bind stdin to contents of data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     func input(_ data: Data, fd: Int32 = STDIN_FILENO) -> Command {
-        FDWrapperCommand(inner: self) { command in
+        FDWrapperCommand(inner: self) { _ in
             let pipe = Pipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
             let writeHandle = pipe.fileHandleForWriting
@@ -137,7 +137,7 @@ public extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     /// - Parameter encoder: JSONEncoder to use
     /// - Throws: if encoding fails
-    func inputJSON<E : Encodable>(
+    func inputJSON<E: Encodable>(
         from object: E,
         fd: Int32 = STDIN_FILENO,
         encoder: JSONEncoder = .init()

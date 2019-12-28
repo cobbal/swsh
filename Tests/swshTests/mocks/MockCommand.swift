@@ -1,10 +1,10 @@
-import XCTest
 @testable import swsh
+import XCTest
 
 class MockCommand: Command, Equatable {
-    public class Result: CommandResult, Equatable {
+    class Result: CommandResult, Equatable {
         public var command: Command
-        private var _exitCode: Int32? = nil
+        private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         public var fdMap: FDMap
 

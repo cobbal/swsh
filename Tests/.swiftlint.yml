@@ -1,0 +1,5 @@
+disabled_rules:
+  - force_try
+  - explicit_acl
+  - file_types_order
+  - lower_acl_than_parent

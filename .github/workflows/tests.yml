@@ -7,6 +7,10 @@ jobs:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
+    - name: Brew install
+      run: brew install swiftlint
+    - name: Lint
+      run: make lint
     - name: Build
       run: make build
     - name: Run tests
