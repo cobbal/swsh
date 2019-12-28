@@ -1,8 +1,7 @@
 name: release
-on: push
-# on:
-#   repository_dispatch:
-#     types: [semantic-release]
+on:
+  repository_dispatch:
+    types: [semantic-release]
 jobs:
   release:
     runs-on: macOS-latest
