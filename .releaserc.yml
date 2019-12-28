@@ -9,4 +9,9 @@ plugins:
     - "@semantic-release/git"
     - assets:
         - CHANGELOG.md
-  - "@semantic-release/github"
+  -
+    - "@semantic-release/github"
+    - assets: ["docs-*.tar.xz"]
+  -
+    - "@semantic-release/exec"
+    - prepareCmd: "make docs-${nextRelease.version}.tar.xz"

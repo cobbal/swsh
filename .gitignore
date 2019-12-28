@@ -10,3 +10,4 @@ coverage.lcov
 vendor
 .bundle
 docs
+docs.tar.xz

@@ -4,10 +4,13 @@ build:
 test: build
 	swift test --enable-test-discovery --enable-code-coverage
 
-docs:
+docs/swsh-%:
 	bundle exec jazzy --clean \
-	    --module swsh \
-	    --github_url https://github.com/cobbal/swsh
+	  --module-version $* \
+	  --output $@
+
+docs-%.tar.xz: docs/swsh-%
+	tar cJf $@ -C docs swsh-$*
 
 lint:
 	swiftlint lint --strict --quiet
