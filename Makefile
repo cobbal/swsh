@@ -9,9 +9,10 @@ docs: docs/swsh-master
 docs/swsh-%: docs-phony
 	bundle exec jazzy --clean \
 	  --module-version $* \
-	  --output $@
+	  --output $@ \
+	  --docset-path ../../$@.docset
 
-docs-%.tar.xz: docs/swsh-%
+swist-%.tar.xz: docs/swsh-%
 	tar cJf $@ -C docs swsh-$*
 
 lint:
