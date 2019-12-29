@@ -2,16 +2,23 @@
 import XCTest
 
 class MockCommand: Command, Equatable {
-    class Result: CommandResult, Equatable {
+    class Result: CommandResult {
         public var command: Command
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         public var fdMap: FDMap
+        public var handles: [Int32: FileHandle]
 
         public init(command: Command, fdMap: FDMap) {
             self.command = command
             self.fdMap = fdMap
+            handles = [Int32: FileHandle]()
+            for (src, dst) in fdMap {
+                handles[dst] = handles[src] ?? FileHandle(fileDescriptor: dup(src), closeOnDealloc: true)
+            }
         }
+
+        subscript(_ fd: Int32) -> FileHandle! { handles[fd] }
 
         public func setExit(code: Int32) {
             let old = _exitCode
@@ -29,12 +36,14 @@ class MockCommand: Command, Equatable {
         }
 
         func succeed() throws { try defaultSucceed() }
-
-        static func == (lhs: Result, rhs: Result) -> Bool { lhs === rhs }
     }
 
+    var resultCallback: ((Result) -> Void)?
+
     func coreAsync(fdMap: FDMap) -> CommandResult {
-        return Result(command: self, fdMap: fdMap)
+        let result = Result(command: self, fdMap: fdMap)
+        resultCallback?(result)
+        return result
     }
 
     static func == (lhs: MockCommand, rhs: MockCommand) -> Bool { lhs === rhs }

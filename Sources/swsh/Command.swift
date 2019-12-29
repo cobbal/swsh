@@ -56,8 +56,7 @@ extension Command {
     func runFile() throws -> URL {
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
           .appendingPathComponent(UUID().uuidString, isDirectory: false)
-        let handle = try FileHandle(forWritingTo: url)
-        try async(stdout: handle.fileDescriptor).succeed()
+        try self.output(creatingFile: url.path).run()
         return url
     }
 
@@ -98,15 +97,6 @@ extension Command {
     /// - Throws: if command fails
     func runLines(encoding: String.Encoding = .utf8) throws -> [String] {
         try runString(encoding: encoding).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-    }
-
-    /// Run the command synchronously, and collect output as a list of strings
-    /// - Parameter delimiter: Character to split string by
-    /// - Throws: if command fails
-    func runList(delimiter: Character, encoding: String.Encoding = .utf8) throws -> [String] {
-        try runString(encoding: encoding)
-            .split(separator: delimiter, omittingEmptySubsequences: false)
-            .map(String.init)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object
