@@ -14,16 +14,17 @@ public protocol Command: class {
 extension Command {
     // MARK: - Running
 
+    /// Run the command asynchronously, inheriting or overwriting the standard file descriptors
     public func async(
       stdin: Int32 = STDIN_FILENO,
       stdout: Int32 = STDOUT_FILENO,
       stderr: Int32 = STDERR_FILENO
     ) -> CommandResult {
         coreAsync(fdMap: [
-                    (stdin, STDIN_FILENO),
-                    (stdout, STDOUT_FILENO),
-                    (stderr, STDERR_FILENO),
-                  ])
+            (stdin, STDIN_FILENO),
+            (stdout, STDOUT_FILENO),
+            (stderr, STDERR_FILENO),
+        ])
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
@@ -31,10 +32,10 @@ extension Command {
         let pipe = Pipe()
         let pipeFD = pipe.fileHandleForWriting.fileDescriptor
         _ = coreAsync(fdMap: [
-                        (STDIN_FILENO, STDIN_FILENO),
-                        (pipeFD, STDOUT_FILENO),
-                        (joinErr ? pipeFD : STDERR_FILENO, STDERR_FILENO),
-                      ])
+            (STDIN_FILENO, STDIN_FILENO),
+            (pipeFD, STDOUT_FILENO),
+            (joinErr ? pipeFD : STDERR_FILENO, STDERR_FILENO),
+        ])
         close(pipeFD)
         return pipe.fileHandleForReading
     }
