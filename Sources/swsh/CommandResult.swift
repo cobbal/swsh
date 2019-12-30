@@ -24,6 +24,7 @@ public protocol CommandResult {
 
 extension CommandResult {
     /// Wait for the command to finish, ignoring any exit code
+    @discardableResult
     func finish() -> Self {
         _ = exitCode()
         return self
