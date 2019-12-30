@@ -14,7 +14,7 @@ public protocol Command: class {
 extension Command {
     // MARK: - Running
 
-    internal func async(
+    public func async(
       stdin: Int32 = STDIN_FILENO,
       stdout: Int32 = STDOUT_FILENO,
       stderr: Int32 = STDERR_FILENO
@@ -27,7 +27,7 @@ extension Command {
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
-    func asyncStream(joinErr: Bool = false) -> FileHandle {
+    public func asyncStream(joinErr: Bool = false) -> FileHandle {
         let pipe = Pipe()
         let pipeFD = pipe.fileHandleForWriting.fileDescriptor
         _ = coreAsync(fdMap: [
@@ -41,19 +41,19 @@ extension Command {
 
     /// Run the command synchronously, and return nothing if successful
     /// - Throws: if command fails
-    func run() throws {
+    public func run() throws {
         try async().succeed()
     }
 
     /// Run the command synchronously, and return true if the command exited zero
-    func runBool() -> Bool {
+    public func runBool() -> Bool {
         async().exitCode() == 0
     }
 
     /// Run the command synchronously, directing the output to a temporary file
     /// - Returns: URL of temporary file with output of command
     /// - Throws: if command fails
-    func runFile() throws -> URL {
+    public func runFile() throws -> URL {
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
           .appendingPathComponent(UUID().uuidString, isDirectory: false)
         try self.output(creatingFile: url.path).run()
@@ -65,7 +65,7 @@ extension Command {
     /// - Parameter joinErr: if true, stderr will be collected as well
     /// - Throws: if command fails
     /// - Returns: output as Data
-    func runData(joinErr: Bool = false) throws -> Data {
+    public func runData(joinErr: Bool = false) throws -> Data {
         let pipe = Pipe()
         let writeFD = pipe.fileHandleForWriting.fileDescriptor
         let result = async(stdout: writeFD, stderr: joinErr ? writeFD : STDERR_FILENO)
@@ -82,7 +82,7 @@ extension Command {
     /// - Throws: if command fails
     /// - Throws: `InvalidString` if the output isn't valid
     /// - Returns: output as unicode string
-    func runString(encoding: String.Encoding = .utf8, joinErr: Bool = false) throws -> String {
+    public func runString(encoding: String.Encoding = .utf8, joinErr: Bool = false) throws -> String {
         let data = try runData(joinErr: joinErr)
         guard let string = String(data: data, encoding: encoding) else {
             throw InvalidString(data: data, encoding: encoding)
@@ -95,21 +95,21 @@ extension Command {
 
     /// Run the command synchronously, and collect output line-by-line as a list of strings
     /// - Throws: if command fails
-    func runLines(encoding: String.Encoding = .utf8) throws -> [String] {
+    public func runLines(encoding: String.Encoding = .utf8) throws -> [String] {
         try runString(encoding: encoding).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object
     /// - Throws: if command fails
     /// - Throws: if the output isn't JSON
-    func runJson(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
+    public func runJson(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
         try JSONSerialization.jsonObject(with: runData(), options: options)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object
     /// - Throws: if command fails
     /// - Throws: if parsing fails
-    func runJson<D: Decodable>(_ type: D.Type, decoder: JSONDecoder? = nil) throws -> D {
+    public func runJson<D: Decodable>(_ type: D.Type, decoder: JSONDecoder? = nil) throws -> D {
         let decoder = decoder ?? JSONDecoder()
         return try decoder.decode(type, from: runData())
     }

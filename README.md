@@ -19,6 +19,8 @@ try! rot13.input("secret message").runString()
 
 try! (rot13.input("secret") | rot13).runString()
 // -> "secret"
+try! (rot13 | rot13).input("secret").runString()
+// -> "secret"
 
 try! (cmd("ls") | cmd("sort", "-n")).runLines()
 // -> ["1.sh", "9.sh", "10.sh"]

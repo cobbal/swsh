@@ -1,10 +1,34 @@
-@testable import swsh
+import swsh
 import XCTest
 
 final class IntegrationTests: XCTestCase {
     override func setUp() {
         super.setUp()
         ExternalCommand.verbose = true
+    }
+
+    func testReadmeExamples() {
+        let rot13 = cmd("tr", "a-z", "n-za-m")
+        XCTAssertEqual(
+            try! rot13.input("secret message").runString(),
+            "frperg zrffntr")
+
+        XCTAssertEqual(
+            try! (rot13.input("secret") | rot13).runString(),
+            "secret")
+        XCTAssertEqual(
+            try! (rot13 | rot13).input("secret").runString(),
+            "secret")
+
+//        XCTAssertEqual(
+//            try! (cmd("ls") | cmd("sort", "-n")).runLines(),
+//            ["1.sh", "9.sh", "10.sh"])
+
+        XCTAssertEqual(
+            ["hello", "world", ""].map { cmd("test", "-z", $0).runBool() },
+            [false, false, true])
+
+        XCTAssertThrowsError(try (cmd("false") | cmd("cat")).run())
     }
 
     func testRunStringSucceeds() {

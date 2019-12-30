@@ -65,14 +65,14 @@ extension Command {
     /// Bind output to a file. Similar to ">" in bash, but will not overwrite the file
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
-    func output(creatingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
+    public func output(creatingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
         FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_EXCL | O_WRONLY)
     }
 
     /// Bind output to a file, creating if needed. Similar to ">" in bash
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
-    func output(overwritingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
+    public func output(overwritingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
         FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_TRUNC | O_WRONLY)
     }
 
@@ -81,7 +81,7 @@ extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
     /// - Parameter createFile: fail if the file doesn't exist
     /// - Throws: FileDoesntExist if createFile is false, and the file doesn't exist
-    func append(toFile path: String, fd: Int32 = STDOUT_FILENO, createFile: Bool = true) -> Command {
+    public func append(toFile path: String, fd: Int32 = STDOUT_FILENO, createFile: Bool = true) -> Command {
         var flags = O_APPEND | O_WRONLY
         if createFile {
             flags |= O_CREAT
@@ -95,7 +95,7 @@ extension Command {
     /// - Parameter encoding: how encoding the outgoing data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     /// - Throws
-    func input(_ string: String, encoding: String.Encoding = .utf8, fd: Int32 = STDIN_FILENO) throws -> Command {
+    public func input(_ string: String, encoding: String.Encoding = .utf8, fd: Int32 = STDIN_FILENO) throws -> Command {
         guard let data = string.data(using: encoding) else {
             throw StringEncodingError(string: string, encoding: encoding)
         }
@@ -104,7 +104,7 @@ extension Command {
 
     /// Bind stdin to contents of data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
-    func input(_ data: Data, fd: Int32 = STDIN_FILENO) -> Command {
+    public func input(_ data: Data, fd: Int32 = STDIN_FILENO) -> Command {
         FDWrapperCommand(inner: self) { _ in
             let pipe = Pipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
@@ -124,7 +124,7 @@ extension Command {
     /// - Parameter json: Anything `JSONSerialization` can deal with
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     /// - Throws: if encoding fails
-    func input(
+    public func input(
         withJSONObject json: Any,
         fd: Int32 = STDIN_FILENO,
         options: JSONSerialization.WritingOptions = .fragmentsAllowed
@@ -137,7 +137,7 @@ extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     /// - Parameter encoder: JSONEncoder to use
     /// - Throws: if encoding fails
-    func inputJSON<E: Encodable>(
+    public func inputJSON<E: Encodable>(
         from object: E,
         fd: Int32 = STDIN_FILENO,
         encoder: JSONEncoder = .init()
@@ -147,7 +147,7 @@ extension Command {
 
     /// Bind stdin to a file, similar to `< file` in bash
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
-    func input(fromFile path: String, fd: Int32 = STDIN_FILENO) -> Command {
+    public func input(fromFile path: String, fd: Int32 = STDIN_FILENO) -> Command {
         FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_RDONLY)
     }
 }

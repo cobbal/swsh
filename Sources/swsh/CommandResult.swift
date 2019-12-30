@@ -25,13 +25,13 @@ public protocol CommandResult {
 extension CommandResult {
     /// Wait for the command to finish, ignoring any exit code
     @discardableResult
-    func finish() -> Self {
+    public func finish() -> Self {
         _ = exitCode()
         return self
     }
 
     /// A default implementation that can be used for succeed
-    func defaultSucceed(name: String = "\(Self.self)") throws {
+    public func defaultSucceed(name: String = "\(Self.self)") throws {
         let err = exitCode()
         if err != 0 {
             throw ExitCodeFailure(name: name, exitCode: err)
