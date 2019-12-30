@@ -1,6 +1,12 @@
 {
   "warnings": [
-
+    {
+      "file": "/Users/runner/runners/2.163.1/work/swsh/swsh/Sources/swsh/Command.swift",
+      "line": 17,
+      "symbol": "Command.async(stdin:stdout:stderr:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    }
   ],
   "source_directory": "/Users/runner/runners/2.163.1/work/swsh/swsh"
 }

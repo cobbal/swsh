@@ -13,7 +13,7 @@
     <a title="swsh  Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="index.html">swsh master Docs</a> (100% documented)</p>
+        <p><a href="index.html">swsh master Docs</a> (98% documented)</p>
         <p class="header-right"><a href="https://github.com/cobbal/swsh"><img src="img/gh.png"/>View on GitHub</a></p>
       </div>
     </header>
@@ -116,6 +116,8 @@ a small amount of conciseness is traded for better quoting, error handling, and 
 <span class="c1">// -&gt; "frperg zrffntr"</span>
 
 <span class="nf">try</span><span class="o">!</span> <span class="p">(</span><span class="n">rot13</span><span class="o">.</span><span class="nf">input</span><span class="p">(</span><span class="s">"secret"</span><span class="p">)</span> <span class="o">|</span> <span class="n">rot13</span><span class="p">)</span><span class="o">.</span><span class="nf">runString</span><span class="p">()</span>
+<span class="c1">// -&gt; "secret"</span>
+<span class="nf">try</span><span class="o">!</span> <span class="p">(</span><span class="n">rot13</span> <span class="o">|</span> <span class="n">rot13</span><span class="p">)</span><span class="o">.</span><span class="nf">input</span><span class="p">(</span><span class="s">"secret"</span><span class="p">)</span><span class="o">.</span><span class="nf">runString</span><span class="p">()</span>
 <span class="c1">// -&gt; "secret"</span>
 
 <span class="nf">try</span><span class="o">!</span> <span class="p">(</span><span class="nf">cmd</span><span class="p">(</span><span class="s">"ls"</span><span class="p">)</span> <span class="o">|</span> <span class="nf">cmd</span><span class="p">(</span><span class="s">"sort"</span><span class="p">,</span> <span class="s">"-n"</span><span class="p">))</span><span class="o">.</span><span class="nf">runLines</span><span class="p">()</span>
