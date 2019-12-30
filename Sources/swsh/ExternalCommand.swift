@@ -31,6 +31,11 @@ public class ExternalCommand: Command {
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         let processSource: DispatchSourceProcess
 
+        // C macros are unfortunately not bridged to swift, borrowed from Foundation/Process
+        private static func WIFEXITED(_ status: Int32) -> Bool { _WSTATUS(status) == 0 }
+        private static func _WSTATUS(_ status: Int32) -> Int32 { status & 0x7f }
+        private static func WEXITSTATUS(_ status: Int32) -> Int32 { (status >> 8) & 0xff }
+
         init(command: ExternalCommand, pid: pid_t) {
             self.command = command
             self.name = command.command
@@ -40,9 +45,11 @@ public class ExternalCommand: Command {
             processSource.setEventHandler { [weak self, processSource] in
                 var status: Int32 = 0
                 waitpid(pid, &status, 0)
-                self?._exitCode = status
-                self?._exitSemaphore.signal()
-                processSource.cancel()
+                if Self.WIFEXITED(status) {
+                    self?._exitCode = Self.WEXITSTATUS(status)
+                    self?._exitSemaphore.signal()
+                    processSource.cancel()
+                }
             }
             processSource.activate()
             kill(pid, SIGCONT)

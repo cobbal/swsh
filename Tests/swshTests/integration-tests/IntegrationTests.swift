@@ -53,7 +53,7 @@ final class IntegrationTests: XCTestCase {
 
     func testFalseRun() {
         XCTAssertThrowsError(try cmd("false").run()) { error in
-            XCTAssertEqual("\(error)", "command \"false\" failed with exit code 256")
+            XCTAssertEqual("\(error)", "command \"false\" failed with exit code 1")
         }
     }
 
