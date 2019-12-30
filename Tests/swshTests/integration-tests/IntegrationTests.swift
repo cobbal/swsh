@@ -53,4 +53,31 @@ final class IntegrationTests: XCTestCase {
         let binary = "/usr/bin/\(UUID())"
         XCTAssertFalse((cmd(binary) | cmd("cat")).runBool())
     }
+
+    func testCmdArgList() throws {
+        let args = ["%s, %s, %s\\n", "1", "2 3", "4"]
+        let str = try cmd("printf", arguments: args).runString()
+        XCTAssertEqual(str, "1, 2 3, 4")
+    }
+
+    func testFailureIsntRunning() {
+        let binary = "/usr/bin/\(UUID())"
+        let res = cmd(binary).async()
+        XCTAssertFalse(res.isRunning)
+        XCTAssert(res is Error)
+    }
+
+    func testIsRunning() throws {
+        let pipe = Pipe()
+        let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fileDescriptor)
+        XCTAssertTrue(proc.isRunning)
+        pipe.fileHandleForWriting.closeFile()
+        try proc.succeed()
+    }
+
+    func testOverwriteEnv() throws {
+        let unique = UUID().uuidString
+        let res = try cmd("bash", "-c", "echo $USER", addEnv: ["USER": unique]).runString()
+        XCTAssertEqual(res, unique)
+    }
 }

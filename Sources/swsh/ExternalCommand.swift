@@ -79,13 +79,13 @@ public class ExternalCommand: Command {
 /// Convenience function for creating an extternal command. Does **not** run the command.
 /// - Parameter command: The executable to run
 /// - Parameter arguments: The command line arguments to pass. No substitution is performed
-public func cmd(_ command: String, arguments: [String]) -> Command {
-    return ExternalCommand(command, arguments: arguments)
+public func cmd(_ command: String, arguments: [String], addEnv: [String: String] = [:]) -> Command {
+    return ExternalCommand(command, arguments: arguments, addEnv: addEnv)
 }
 
 /// Convenience function for creating an extternal command. Does **not** run the command.
 /// - Parameter command: The executable to run
 /// - Parameter arguments: The command line arguments to pass. No substitution is performed
-public func cmd(_ command: String, _ arguments: String...) -> Command {
-    return ExternalCommand(command, arguments: arguments)
+public func cmd(_ command: String, _ arguments: String..., addEnv: [String: String] = [:]) -> Command {
+    return ExternalCommand(command, arguments: arguments, addEnv: addEnv)
 }
