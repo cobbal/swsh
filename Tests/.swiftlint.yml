@@ -3,3 +3,4 @@ disabled_rules:
   - explicit_acl
   - file_types_order
   - lower_acl_than_parent
+  - force_cast
