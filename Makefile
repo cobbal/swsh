@@ -12,7 +12,7 @@ docs/swsh-%: docs-phony
 	  --output $@ \
 	  --docset-path ../../$@.docset
 
-swist-%.tar.xz: docs/swsh-%
+swsh-%.tar.xz: docs/swsh-%
 	tar cJf $@ -C docs swsh-$*
 
 lint:
