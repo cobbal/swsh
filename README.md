@@ -32,7 +32,7 @@ try! (cmd("ls") | cmd("sort", "-n")).runLines()
 // -> [false, false, true]
 
 try! (cmd("false") | cmd("cat")).run()
-// Fatal error: 'try!' expression unexpectedly raised an error: command "false" failed with exit code 256
+// Fatal error: 'try!' expression unexpectedly raised an error: command "false" failed with exit code 1
 ```
 
 [Full documentation][docs]
