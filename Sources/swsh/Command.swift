@@ -97,7 +97,8 @@ extension Command {
     /// Run the command synchronously, and collect output line-by-line as a list of strings
     /// - Throws: if command fails
     public func runLines(encoding: String.Encoding = .utf8) throws -> [String] {
-        return try runString(encoding: encoding).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        let lines = try runString(encoding: encoding).split(separator: "\n", omittingEmptySubsequences: false)
+        return lines.map(String.init)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object

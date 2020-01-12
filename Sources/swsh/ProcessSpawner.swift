@@ -6,6 +6,14 @@ import Darwin.C
 import Glibc
 #endif
 
+/// The result of a spawn
+public enum SpawnResult {
+    /// A successful spawn with child process pid
+    case success(pid_t)
+    /// A failed spawn with error `errno`
+    case error(errno: Int32)
+}
+
 /// The low-level interface to spawn a process
 public protocol ProcessSpawner {
     /// Spawns a subprocess.
@@ -33,12 +41,4 @@ public protocol ProcessSpawner {
       queue: DispatchQueue,
       callback: @escaping (Int32) -> Void
     )
-}
-
-/// The result of a spawn
-public enum SpawnResult {
-    /// A successful spawn with child process pid
-    case success(pid_t)
-    /// A failed spawn with error `errno`
-    case error(errno: Int32)
 }
