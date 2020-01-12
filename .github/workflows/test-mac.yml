@@ -1,16 +1,10 @@
-name: tests
-
+name: test-mac
 on: push
-
 jobs:
-  test-macos:
+  test-mac:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
-    - name: Brew install
-      run: brew install swiftlint
-    - name: Lint
-      run: make lint
     - name: Build
       run: make build
     - name: Run tests
@@ -33,22 +27,3 @@ jobs:
       run: bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  test-linux:
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v1
-    - name: Install swift
-      run: |-
-        set -euxo pipefail
-        # https://tecadmin.net/install-swift-ubuntu-1804-bionic/
-        sudo apt-get install clang
-        curl -o swift.tgz https://swift.org/builds/swift-5.0.2-release/ubuntu1804/swift-5.0.2-RELEASE/swift-5.0.2-RELEASE-ubuntu18.04.tar.gz
-        tar xzf swift.tgz
-        sudo mv swift-5.0.2-RELEASE-ubuntu18.04 /usr/share/swift
-        PATH="/usr/share/swift/usr/bin:$PATH" swift --version
-    - name: Build
-      run: |-
-        PATH="/usr/share/swift/usr/bin:$PATH" swift build -v
-    - name: Run tests
-      run: |-
-        PATH="/usr/share/swift/usr/bin:$PATH" swift test -v
