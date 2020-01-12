@@ -47,7 +47,6 @@ public class ExternalCommand: Command {
                 self?._exitSemaphore.signal()
             }
 
-            print("pid = \(pid)")
             kill(pid, SIGCONT)
         }
 

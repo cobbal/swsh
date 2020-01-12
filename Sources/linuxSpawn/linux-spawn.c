@@ -1,3 +1,5 @@
+#ifdef __linux__
+
 #define _GNU_SOURCE
 #include <unistd.h>
 #include <signal.h>
@@ -8,7 +10,7 @@
 #include <stdlib.h>
 #include <strings.h>
 
-#include "include/spawn.h"
+#include "include/linux-spawn.h"
 
 // I sometimes hate linux...
 int spawn(pid_t *pidp,
@@ -85,3 +87,5 @@ int spawnWait(pid_t pid) {
     } while (!WIFEXITED(status));
     return WEXITSTATUS(status);
 }
+
+#endif // __linux__

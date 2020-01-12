@@ -1,3 +1,5 @@
+#ifdef __linux__
+
 #include <stdint.h>
 #include <termios.h>
 
@@ -9,3 +11,5 @@ int spawn(pid_t *pid,
           _Bool pathResolve);
 
 int spawnWait(pid_t pid);
+
+#endif // __linux__

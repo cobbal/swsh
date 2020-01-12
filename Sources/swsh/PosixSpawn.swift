@@ -1,13 +1,13 @@
-import Foundation
-
 #if canImport(Darwin)
+
+import Foundation
 import Darwin.C
 private let empty_file_actions: posix_spawn_file_actions_t? = nil
 private let empty_spawnattrs: posix_spawnattr_t? = nil
 
 /// A process spawned with `posix_spawn`
-public enum PosixSpawn: ProcessSpawner {
-    func spawn(
+public struct PosixSpawn: ProcessSpawner {
+    public func spawn(
       command: String,
       arguments: [String],
       env: [String: String],
@@ -53,25 +53,26 @@ public enum PosixSpawn: ProcessSpawner {
     }
 
     // C macros are unfortunately not bridged to swift, borrowed from Foundation/Process
-    private static func WIFEXITED(_ status: Int32) -> Bool { _WSTATUS(status) == 0 }
-    private static func _WSTATUS(_ status: Int32) -> Int32 { status & 0x7f }
-    private static func WEXITSTATUS(_ status: Int32) -> Int32 { (status >> 8) & 0xff }
+    private static func WIFEXITED(_ status: Int32) -> Bool { return _WSTATUS(status) == 0 }
+    private static func _WSTATUS(_ status: Int32) -> Int32 { return status & 0x7f }
+    private static func WEXITSTATUS(_ status: Int32) -> Int32 { return (status >> 8) & 0xff }
 
-    func reapAsync(
+    public func reapAsync(
       pid: pid_t,
       queue: DispatchQueue,
       callback: @escaping (Int32) -> Void
     ) {
-        processSource = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: Self.reaperQueue)
+        let processSource = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: queue)
         processSource.setEventHandler { [processSource] in
             var status: Int32 = 0
             waitpid(pid, &status, 0)
             if Self.WIFEXITED(status) {
-                callback(WEXITSTATUS(status))
+                callback(PosixSpawn.WEXITSTATUS(status))
                 processSource.cancel()
             }
         }
         processSource.activate()
     }
 }
+
 #endif
