@@ -18,7 +18,7 @@ class MockCommand: Command, Equatable {
             }
         }
 
-        subscript(_ fd: Int32) -> FileHandle! { handles[fd] }
+        subscript(_ fd: Int32) -> FileHandle! { return handles[fd] }
 
         public func setExit(code: Int32) {
             let old = _exitCode
@@ -28,7 +28,7 @@ class MockCommand: Command, Equatable {
             }
         }
 
-        public var isRunning: Bool { _exitCode == nil }
+        public var isRunning: Bool { return _exitCode == nil }
         func exitCode() -> Int32 {
             _exitSemaphore.wait()
             _exitSemaphore.signal()
@@ -46,5 +46,5 @@ class MockCommand: Command, Equatable {
         return result
     }
 
-    static func == (lhs: MockCommand, rhs: MockCommand) -> Bool { lhs === rhs }
+    static func == (lhs: MockCommand, rhs: MockCommand) -> Bool { return lhs === rhs }
 }

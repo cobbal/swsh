@@ -40,8 +40,8 @@ internal class FDWrapperCommand: Command {
         let command: Command
         let ref: Any?
 
-        var isRunning: Bool { innerResult.isRunning }
-        func exitCode() -> Int32 { innerResult.exitCode() }
+        var isRunning: Bool { return innerResult.isRunning }
+        func exitCode() -> Int32 { return innerResult.exitCode() }
         func succeed() throws { try innerResult.succeed() }
     }
 
@@ -66,14 +66,14 @@ extension Command {
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
     public func output(creatingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
-        FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_EXCL | O_WRONLY)
+        return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_EXCL | O_WRONLY)
     }
 
     /// Bind output to a file, creating if needed. Similar to ">" in bash
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
     public func output(overwritingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
-        FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_TRUNC | O_WRONLY)
+        return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_TRUNC | O_WRONLY)
     }
 
     /// Bind output to end of a file. Similar to ">>" in bash
@@ -105,7 +105,7 @@ extension Command {
     /// Bind stdin to contents of data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     public func input(_ data: Data, fd: Int32 = STDIN_FILENO) -> Command {
-        FDWrapperCommand(inner: self) { _ in
+        return FDWrapperCommand(inner: self) { _ in
             let pipe = Pipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
             let writeHandle = pipe.fileHandleForWriting
@@ -127,9 +127,9 @@ extension Command {
     public func input(
         withJSONObject json: Any,
         fd: Int32 = STDIN_FILENO,
-        options: JSONSerialization.WritingOptions = .fragmentsAllowed
+        options: JSONSerialization.WritingOptions = .init()
     ) throws -> Command {
-        input(try JSONSerialization.data(withJSONObject: json, options: options), fd: fd)
+        return input(try JSONSerialization.data(withJSONObject: json, options: options), fd: fd)
     }
 
     /// Bind stdin to the the JSON representation of a JSON-encodable value
@@ -142,12 +142,12 @@ extension Command {
         fd: Int32 = STDIN_FILENO,
         encoder: JSONEncoder = .init()
     ) throws -> Command {
-        input(try encoder.encode(object), fd: fd)
+        return input(try encoder.encode(object), fd: fd)
     }
 
     /// Bind stdin to a file, similar to `< file` in bash
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     public func input(fromFile path: String, fd: Int32 = STDIN_FILENO) -> Command {
-        FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_RDONLY)
+        return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_RDONLY)
     }
 }

@@ -1,43 +1,28 @@
 import Foundation
 
-#if os(OSX)
+#if canImport(Darwin)
 import Darwin.C
-#else
-import Glibc
-#warning("TODO: never been tested, probably broken")
-#endif
+private let empty_file_actions: posix_spawn_file_actions_t? = nil
+private let empty_spawnattrs: posix_spawnattr_t? = nil
 
 /// A process spawned with `posix_spawn`
-public enum PosixSpawn {
-    /// A successful spawn with child process pid
-    case success(pid_t)
-    /// A failed spawn with error `errno`
-    case error(errno: Int32)
-
-    /// Spawns a subprocess.
-    /// - Note: all unmapped descriptors will be closed
-    /// - Parameter command: process to spawn
-    /// - Parameter arguments: arguments to pass
-    /// - Parameter env: all environment variables for subprocess
-    /// - Parameter fdMap: a list of file descriptor remappings, src -> dst (can be equal)
-    /// - Parameter pathResolve: if true, search for executable in PATH
-    /// - Returns: pid of spawned process or error if failed
-    public static func spawn(
+public enum PosixSpawn: ProcessSpawner {
+    func spawn(
       command: String,
       arguments: [String],
       env: [String: String],
       fdMap: Command.FDMap,
-      pathResolve: Bool = true
-    ) -> PosixSpawn {
-        var fileActions: posix_spawn_file_actions_t?
+      pathResolve: Bool
+    ) -> SpawnResult {
+        var fileActions = empty_file_actions
         posix_spawn_file_actions_init(&fileActions)
         defer { posix_spawn_file_actions_destroy(&fileActions) }
 
-        var attrs: posix_spawnattr_t?
+        var attrs = empty_spawnattrs
         posix_spawnattr_init(&attrs)
         defer { posix_spawnattr_destroy(&attrs) }
 
-        // Don't implicitly dunplicate descriptors
+        // Don't implicitly duplicate descriptors
         // Start suspended to avoid race condition with the handler setup
         posix_spawnattr_setflags(&attrs, Int16(POSIX_SPAWN_CLOEXEC_DEFAULT | POSIX_SPAWN_START_SUSPENDED))
         for (srcFd, dstFd) in fdMap {
@@ -66,4 +51,27 @@ public enum PosixSpawn {
 
         return .success(pid)
     }
+
+    // C macros are unfortunately not bridged to swift, borrowed from Foundation/Process
+    private static func WIFEXITED(_ status: Int32) -> Bool { _WSTATUS(status) == 0 }
+    private static func _WSTATUS(_ status: Int32) -> Int32 { status & 0x7f }
+    private static func WEXITSTATUS(_ status: Int32) -> Int32 { (status >> 8) & 0xff }
+
+    func reapAsync(
+      pid: pid_t,
+      queue: DispatchQueue,
+      callback: @escaping (Int32) -> Void
+    ) {
+        processSource = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: Self.reaperQueue)
+        processSource.setEventHandler { [processSource] in
+            var status: Int32 = 0
+            waitpid(pid, &status, 0)
+            if Self.WIFEXITED(status) {
+                callback(WEXITSTATUS(status))
+                processSource.cancel()
+            }
+        }
+        processSource.activate()
+    }
 }
+#endif

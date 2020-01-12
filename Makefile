@@ -1,8 +1,8 @@
 build:
-	swift build --enable-test-discovery
+	swift build # --enable-test-discovery
 
 test: build
-	swift test --enable-test-discovery --enable-code-coverage
+	swift test --enable-code-coverage
 
 docs: docs/swsh-master
 

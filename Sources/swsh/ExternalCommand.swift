@@ -10,6 +10,8 @@ public class ExternalCommand: Command {
     /// like "set -x", this will cause all external commands to print themselves when they run
     public static var verbose: Bool = false
 
+    internal var spawner: ProcessSpawner
+
     /// Creates the command, but does **not** run it
     /// - Parameter command: The executable to run
     /// - Parameter arguments: The command line arguments to pass. No substitution is performed
@@ -19,6 +21,11 @@ public class ExternalCommand: Command {
         self.command = command
         self.arguments = arguments
         self.environment = ProcessInfo.processInfo.environment.merging(addEnv) { $1 }
+        #if canImport(Darwin)
+        self.spawner = PosixSpawn()
+        #elseif canImport(Glibc)
+        self.spawner = LinuxSpawn()
+        #endif
     }
 
     internal class Result: CommandResult {
@@ -29,34 +36,23 @@ public class ExternalCommand: Command {
         let pid: pid_t
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
-        let processSource: DispatchSourceProcess
-
-        // C macros are unfortunately not bridged to swift, borrowed from Foundation/Process
-        private static func WIFEXITED(_ status: Int32) -> Bool { _WSTATUS(status) == 0 }
-        private static func _WSTATUS(_ status: Int32) -> Int32 { status & 0x7f }
-        private static func WEXITSTATUS(_ status: Int32) -> Int32 { (status >> 8) & 0xff }
 
         init(command: ExternalCommand, pid: pid_t) {
             self.command = command
             self.name = command.command
             self.pid = pid
 
-            processSource = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: Self.reaperQueue)
-            processSource.setEventHandler { [weak self, processSource] in
-                var status: Int32 = 0
-                waitpid(pid, &status, 0)
-                if Self.WIFEXITED(status) {
-                    self?._exitCode = Self.WEXITSTATUS(status)
-                    self?._exitSemaphore.signal()
-                    processSource.cancel()
-                }
+            command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] in
+                self?._exitCode = $0
+                self?._exitSemaphore.signal()
             }
-            processSource.activate()
+
+            print("pid = \(pid)")
             kill(pid, SIGCONT)
         }
 
         var isRunning: Bool {
-            Self.reaperQueue.sync { _exitCode == nil }
+            return Result.reaperQueue.sync { _exitCode == nil }
         }
 
         func succeed() throws { try defaultSucceed(name: name) }
@@ -64,7 +60,7 @@ public class ExternalCommand: Command {
         func exitCode() -> Int32 {
             _exitSemaphore.wait()
             _exitSemaphore.signal()
-            return Self.reaperQueue.sync { _exitCode! }
+            return Result.reaperQueue.sync { _exitCode! }
         }
     }
 
@@ -74,7 +70,13 @@ public class ExternalCommand: Command {
             print("\(command) \(arguments.joined(separator: " "))", to: &stream)
         }
 
-        switch PosixSpawn.spawn(command: command, arguments: arguments, env: environment, fdMap: fdMap) {
+        switch spawner.spawn(
+          command: command,
+          arguments: arguments,
+          env: environment,
+          fdMap: fdMap,
+          pathResolve: true
+        ) {
         case .success(let pid):
             return Result(command: self, pid: pid)
         case .error(let err):

@@ -20,7 +20,7 @@ extension Command {
       stdout: Int32 = STDOUT_FILENO,
       stderr: Int32 = STDERR_FILENO
     ) -> CommandResult {
-        coreAsync(fdMap: [
+        return coreAsync(fdMap: [
             (stdin, STDIN_FILENO),
             (stdout, STDOUT_FILENO),
             (stderr, STDERR_FILENO),
@@ -48,7 +48,7 @@ extension Command {
 
     /// Run the command synchronously, and return true if the command exited zero
     public func runBool() -> Bool {
-        async().exitCode() == 0
+        return async().exitCode() == 0
     }
 
     /// Run the command synchronously, directing the output to a temporary file
@@ -97,14 +97,14 @@ extension Command {
     /// Run the command synchronously, and collect output line-by-line as a list of strings
     /// - Throws: if command fails
     public func runLines(encoding: String.Encoding = .utf8) throws -> [String] {
-        try runString(encoding: encoding).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        return try runString(encoding: encoding).split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object
     /// - Throws: if command fails
     /// - Throws: if the output isn't JSON
     public func runJson(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
-        try JSONSerialization.jsonObject(with: runData(), options: options)
+        return try JSONSerialization.jsonObject(with: runData(), options: options)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object

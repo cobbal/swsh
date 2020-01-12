@@ -63,7 +63,7 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testAbsPath() {
-        XCTAssertFalse(cmd("/usr/bin/false").runBool())
+        XCTAssertTrue(cmd("/bin/sh", "-c", "true").runBool())
     }
 
     func testNonExistantProgram() {
