@@ -3,7 +3,7 @@ name: tests
 on: push
 
 jobs:
-  build-and-test:
+  test-macos:
     runs-on: macOS-latest
     steps:
     - uses: actions/checkout@v1
@@ -21,3 +21,22 @@ jobs:
       run: bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  test-linux:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install swift
+      run: |-
+        set -euxo pipefail
+        # https://tecadmin.net/install-swift-ubuntu-1804-bionic/
+        sudo apt-get install clang
+        curl -o swift.tgz https://swift.org/builds/swift-5.1.3-release/ubuntu1804/swift-5.1.3-RELEASE/swift-5.1.3-RELEASE-ubuntu18.04.tar.gz
+        tar xzf swift.tgz
+        sudo mv swift-5.1.3-RELEASE-ubuntu18.04 /usr/share/swift
+        PATH="/usr/share/swift/usr/bin:$PATH" swift --version
+    - name: Build
+      run: |-
+        PATH="/usr/share/swift/usr/bin:$PATH" swift build -v
+    - name: Run tests
+      run: |-
+        PATH="/usr/share/swift/usr/bin:$PATH" swift test -v
