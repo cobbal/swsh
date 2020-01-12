@@ -34,7 +34,7 @@ public struct LinuxSpawn: ProcessSpawner {
         }
 
         var pid = pid_t()
-        let res = linuxSpawn.spawn(&pid, cCommand, cArgs, cEnv, UnsafeMutablePointer(mutating: cFdMap), true)
+        let res = linuxSpawn.spawn(cCommand, cArgs, cEnv, UnsafeMutablePointer(mutating: cFdMap), &pid)
         guard res == 0 else {
             return .error(errno: res)
         }

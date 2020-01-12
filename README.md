@@ -42,7 +42,7 @@ try! (cmd("false") | cmd("cat")).run()
 [cov]: https://codecov.io/gh/cobbal/swsh
 [scsh]: https://scsh.net/
 
-[ci-badge]: https://github.com/cobbal/swsh/workflows/test-static/badge.svg
+[ci-badge-static]: https://github.com/cobbal/swsh/workflows/test-static/badge.svg
 [ci-badge-mac]: https://github.com/cobbal/swsh/workflows/test-mac/badge.svg
 [ci-badge-linux]: https://github.com/cobbal/swsh/workflows/test-linux/badge.svg
 [docs-badge]: https://cobbal.github.io/swsh/badge.svg

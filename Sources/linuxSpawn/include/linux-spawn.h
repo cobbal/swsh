@@ -3,12 +3,13 @@
 #include <stdint.h>
 #include <termios.h>
 
-int spawn(pid_t *pid,
-          const char *file,
-          char *const argv[], // NULL terminated
-          char *const envp[], // NULL terminated
-          int32_t *const fdMap,  // -1 terminated
-          _Bool pathResolve);
+int spawn(
+    const char *command,
+    char *const argv[],
+    char *const envp[],
+    int32_t *const fdMap,
+    pid_t *child_pid_out
+);
 
 int spawnWait(pid_t pid);
 
