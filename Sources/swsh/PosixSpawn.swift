@@ -1,7 +1,8 @@
 #if canImport(Darwin)
 
-import Foundation
 import Darwin.C
+import Foundation
+
 private let empty_file_actions: posix_spawn_file_actions_t? = nil
 private let empty_spawnattrs: posix_spawnattr_t? = nil
 
