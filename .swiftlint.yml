@@ -13,7 +13,7 @@ opt_in_rules:
   - file_header
   - file_name
   - file_types_order
-  - implicit_return
+# - implicit_return
   - lower_acl_than_parent
   - multiline_literal_brackets
   - multiline_parameters
@@ -44,3 +44,4 @@ trailing_comma:
 file_name:
   excluded:
     - Errors.swift
+    - XCTestManifests.swift

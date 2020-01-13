@@ -1,4 +1,3 @@
-import ObjectiveC
 @testable import swsh
 import XCTest
 
@@ -54,8 +53,8 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     var outerResult: FDWrapperCommand.Result!
     var innerResult: MockCommand.Result!
     var error: Error!
-    var syscallError: SyscallError! { error as? SyscallError }
-    var handle: FileHandle! { (innerResult?.fdMap[0].src).map { FileHandle(fileDescriptor: $0) } }
+    var syscallError: SyscallError! { return error as? SyscallError }
+    var handle: FileHandle! { return (innerResult?.fdMap[0].src).map { FileHandle(fileDescriptor: $0) } }
 
     // note: fresh between tests
     let tmpUrl = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -135,7 +134,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     // MARK: - Input
 
     func handleString() -> String {
-        String(data: handle.readDataToEndOfFile(), encoding: .utf8)!
+        return String(data: handle.readDataToEndOfFile(), encoding: .utf8)!
     }
 
     func testInputStringSuccess() throws {

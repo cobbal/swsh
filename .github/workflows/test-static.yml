@@ -1,0 +1,25 @@
+name: test-static
+on: push
+jobs:
+  test-static:
+    runs-on: macOS-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Brew install
+      run: brew install swiftlint
+    - name: Lint
+      run: make lint
+    - name: Build
+      run: make build
+    - name: Check linux tests
+      run: |-
+        linuxTestGenFiles=(Tests/LinuxMain.swift Tests/swshTests/XCTestManifests.swift)
+        shasum "${linuxTestGenFiles[@]}" > /tmp/linux_start
+        make test-and-generate-linux-tests
+        shasum "${linuxTestGenFiles[@]}" > /tmp/linux_end
+        diff /tmp/linux_start /tmp/linux_end || {
+            cat /tmp/linux_start /tmp/linux_end
+            echo "Linux tests not updated!"
+            echo 'Please run "make test-and-generate-linux-tests"'
+            exit 1
+        }

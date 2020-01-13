@@ -25,7 +25,7 @@ public struct ExitCodeFailure: Error, CustomStringConvertible {
     public let exitCode: Int32
 
     public var description: String {
-        "command \"\(name)\" failed with exit code \(exitCode)"
+        return "command \"\(name)\" failed with exit code \(exitCode)"
     }
 }
 
@@ -38,8 +38,8 @@ public class SyscallError: Error, CommandResult, CustomStringConvertible {
     public let errno: Int32
 
     public let command: Command
-    public var isRunning: Bool { false }
-    public func exitCode() -> Int32 { -1 }
+    public var isRunning: Bool { return false }
+    public func exitCode() -> Int32 { return -1 }
 
     init(name: String, command: Command, errno: Int32) {
         self.name = name
@@ -48,7 +48,7 @@ public class SyscallError: Error, CommandResult, CustomStringConvertible {
     }
 
     public var description: String {
-        "\(name) failed with error code \(errno): \(String(cString: strerror(errno)))"
+        return "\(name) failed with error code \(errno): \(String(cString: strerror(errno)))"
     }
 
     public func succeed() throws {

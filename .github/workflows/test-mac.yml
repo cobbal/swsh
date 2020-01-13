@@ -1,0 +1,29 @@
+name: test-mac
+on: push
+jobs:
+  test-mac:
+    runs-on: macOS-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build
+      run: make build
+    - name: Run tests
+      run: make test
+    - name: Check linux tests
+      run: |-
+        linuxTestGenFiles=(Tests/LinuxMain.swift Tests/swshTests/XCTestManifests.swift)
+        shasum "${linuxTestGenFiles[@]}" > /tmp/linux_start
+        make test-and-generate-linux-tests
+        shasum "${linuxTestGenFiles[@]}" > /tmp/linux_end
+        diff /tmp/linux_start /tmp/linux_end || {
+            cat /tmp/linux_start /tmp/linux_end
+            echo "Linux tests not updated!"
+            echo 'Please run "make test-and-generate-linux-tests"'
+            exit 1
+        }
+    - name: Generate coverage
+      run: make coverage.lcov
+    - name: Upload coverage
+      run: bash <(curl -s https://codecov.io/bash) || echo 'Codecov failed to upload'
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
