@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Pipeline Class Reference</title>
+    <title>PosixSpawn Structure Reference</title>
     <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
     <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
     <meta charset='utf-8'>
@@ -10,8 +10,8 @@
     
   </head>
   <body>
-    <a name="//apple_ref/swift/Class/Pipeline" class="dashAnchor"></a>
-    <a title="Pipeline Class Reference"></a>
+    <a name="//apple_ref/swift/Struct/PosixSpawn" class="dashAnchor"></a>
+    <a title="PosixSpawn Structure Reference"></a>
     <header>
       <div class="content-wrapper">
         <p><a href="../index.html">swsh master Docs</a> (100% documented)</p>
@@ -22,7 +22,7 @@
       <p id="breadcrumbs">
         <a href="../index.html">swsh Reference</a>
         <img id="carat" src="../img/carat.png" />
-        Pipeline Class Reference
+        PosixSpawn Structure Reference
       </p>
     </div>
     <div class="content-wrapper">
@@ -106,14 +106,14 @@
       <article class="main-content">
         <section>
           <section class="section">
-            <h1>Pipeline</h1>
+            <h1>PosixSpawn</h1>
               <div class="declaration">
                 <div class="language">
-                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">class</span> <span class="kt">Pipeline</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/Command.html">Command</a></span></code></pre>
+                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">struct</span> <span class="kt">PosixSpawn</span> <span class="p">:</span> <span class="kt"><a href="../Protocols/ProcessSpawner.html">ProcessSpawner</a></span></code></pre>
 
                 </div>
               </div>
-            <p>A <code>Pipeline</code> is 0 or more pipes connecting 1 or more subcommands together like bash&rsquo;s <code>a | b | ...</code></p>
+            <p>A process spawned with <code>posix_spawn</code></p>
 
           </section>
           <section class="section task-group-section">
@@ -122,36 +122,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:4swsh8PipelineCyAcA7Command_p_AaD_pdtcfc"></a>
-                    <a name="//apple_ref/swift/Method/init(_:_:)" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh8PipelineCyAcA7Command_p_AaD_pdtcfc">init(_:_:)</a>
-                    </code>
-                  </div>
-                  <div class="height-container">
-                    <div class="pointer-container"></div>
-                    <section class="section">
-                      <div class="pointer"></div>
-                      <div class="abstract">
-                        <p>Create a pipeline from 1 or more sub-commands</p>
-
-                      </div>
-                      <div class="declaration">
-                        <h4>Declaration</h4>
-                        <div class="language">
-                          <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="nf">init</span><span class="p">(</span><span class="n">_</span> <span class="nv">first</span><span class="p">:</span> <span class="kt"><a href="../Protocols/Command.html">Command</a></span><span class="p">,</span> <span class="n">_</span> <span class="nv">rest</span><span class="p">:</span> <span class="kt"><a href="../Protocols/Command.html">Command</a></span><span class="o">...</span><span class="p">)</span></code></pre>
-
-                        </div>
-                      </div>
-                    </section>
-                  </div>
-                </li>
-                <li class="item">
-                  <div>
-                    <code>
-                    <a name="/s:4swsh7CommandP9coreAsync5fdMapAA0B6Result_pSays5Int32V3src_AH3dsttG_tF"></a>
-                    <a name="//apple_ref/swift/Method/coreAsync(fdMap:)" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh7CommandP9coreAsync5fdMapAA0B6Result_pSays5Int32V3src_AH3dsttG_tF">coreAsync(fdMap:)</a>
+                    <a name="/s:4swsh14ProcessSpawnerP5spawn7command9arguments3env5fdMap11pathResolveAA11SpawnResultOSS_SaySSGSDyS2SGSays5Int32V3src_AO3dsttGSbtF"></a>
+                    <a name="//apple_ref/swift/Method/spawn(command:arguments:env:fdMap:pathResolve:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh14ProcessSpawnerP5spawn7command9arguments3env5fdMap11pathResolveAA11SpawnResultOSS_SaySSGSDyS2SGSays5Int32V3src_AO3dsttGSbtF">spawn(command:arguments:env:fdMap:pathResolve:)</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -165,7 +138,43 @@
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">coreAsync</span><span class="p">(</span><span class="n">fdMap</span> <span class="nv">baseFDMap</span><span class="p">:</span> <span class="kt">FDMap</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Protocols/CommandResult.html">CommandResult</a></span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">spawn</span><span class="p">(</span>
+  <span class="nv">command</span><span class="p">:</span> <span class="kt">String</span><span class="p">,</span>
+  <span class="nv">arguments</span><span class="p">:</span> <span class="p">[</span><span class="kt">String</span><span class="p">],</span>
+  <span class="nv">env</span><span class="p">:</span> <span class="p">[</span><span class="kt">String</span><span class="p">:</span> <span class="kt">String</span><span class="p">],</span>
+  <span class="nv">fdMap</span><span class="p">:</span> <span class="kt"><a href="../Protocols/Command.html">Command</a></span><span class="o">.</span><span class="kt">FDMap</span><span class="p">,</span>
+  <span class="nv">pathResolve</span><span class="p">:</span> <span class="kt">Bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Enums/SpawnResult.html">SpawnResult</a></span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh14ProcessSpawnerP9reapAsync3pid5queue8callbackys5Int32V_So012OS_dispatch_G0CyAIctF"></a>
+                    <a name="//apple_ref/swift/Method/reapAsync(pid:queue:callback:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh14ProcessSpawnerP9reapAsync3pid5queue8callbackys5Int32V_So012OS_dispatch_G0CyAIctF">reapAsync(pid:queue:callback:)</a>
+                    </code>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">reapAsync</span><span class="p">(</span>
+  <span class="nv">pid</span><span class="p">:</span> <span class="n">pid_t</span><span class="p">,</span>
+  <span class="nv">queue</span><span class="p">:</span> <span class="kt">DispatchQueue</span><span class="p">,</span>
+  <span class="nv">callback</span><span class="p">:</span> <span class="kd">@escaping</span> <span class="p">(</span><span class="kt">Int32</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">Void</span>
+<span class="p">)</span></code></pre>
 
                         </div>
                       </div>
