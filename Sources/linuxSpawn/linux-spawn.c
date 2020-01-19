@@ -32,17 +32,16 @@ int spawn(
     const char *command,
     char *const argv[],
     char *const envp[],
-    int32_t *const fdMap,
+    const int32_t *fdMap,
     pid_t *child_pid_out
 ) {
     // First, create a table for fast lookup if an FD is a source and/or a
     // destination for dup
-    int fdlimit = (int)sysconf(_SC_OPEN_MAX);
-    const int SRC = 1;
-    const int DST = 2;
-    uint8_t mentionedFds[fdlimit];
-    bzero(mentionedFds, sizeof(mentionedFds));
-    for (int32_t *p = fdMap; *p != -1; p += 2) {
+    long fdlimit = sysconf(_SC_OPEN_MAX);
+    const uint8_t SRC = 1;
+    const uint8_t DST = 2;
+    uint8_t *mentionedFds = calloc(fdlimit, sizeof(uint8_t));
+    for (const int32_t *p = fdMap; *p != -1; p += 2) {
         mentionedFds[p[0]] |= SRC;
         mentionedFds[p[1]] |= DST;
     }
@@ -53,6 +52,7 @@ int spawn(
     // it's closed silently, it's a successful exec. If not, it will send an
     // error code.
     if (pipe2(pipeFds, O_CLOEXEC) != 0) {
+        free(mentionedFds);
         return errno;
     }
 
@@ -61,7 +61,7 @@ int spawn(
 
         // Find an FD to store our pipe in that won't interfere with fdMap
         int writePipe = -1;
-        for (int i = 0; i < fdlimit; i++) {
+        for (long i = 0; i < fdlimit; i++) {
             if (!mentionedFds[i]) {
                 if (i == pipeFds[i]) {
                     // pipe picked a good fd, nothing to do
@@ -79,7 +79,7 @@ int spawn(
             goto err;
         }
         // do the actual fd remapping
-        for (int32_t *p = fdMap; *p != -1; p += 2) {
+        for (const int32_t *p = fdMap; *p != -1; p += 2) {
             if (dup2(p[0], p[1]) < 0) {
                 goto err;
             }
@@ -112,6 +112,7 @@ int spawn(
         *child_pid_out = pid;
     }
     close(pipeFds[0]);
+    free(mentionedFds);
     return ret;
 }
 

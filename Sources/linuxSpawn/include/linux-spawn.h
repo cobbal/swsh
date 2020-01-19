@@ -7,7 +7,7 @@ int spawn(
     const char *command,
     char *const argv[],
     char *const envp[],
-    int32_t *const fdMap,
+    const int32_t *fdMap,
     pid_t *child_pid_out
 );
 
