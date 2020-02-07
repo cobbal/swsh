@@ -11,7 +11,7 @@ plugins:
         - CHANGELOG.md
   -
     - "@semantic-release/github"
-    - assets: ["docs-*.tar.xz"]
+    - assets: ["swsh-*.tar.xz"]
   -
     - "@semantic-release/exec"
-    - prepareCmd: "make docs-${nextRelease.version}.tar.xz"
+    - prepareCmd: "make swsh-${nextRelease.version}.tar.xz"
