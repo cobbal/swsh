@@ -37,6 +37,9 @@ try! (cmd("false") | cmd("cat")).run()
 
 [Full documentation][docs]
 
+## Acknowledgements
+I would like to thank the same people that scsh does.
+
 [ci-tests]: https://github.com/cobbal/swsh/actions?query=branch%3Amaster
 [docs]: https://cobbal.github.io/swsh/
 [cov]: https://codecov.io/gh/cobbal/swsh
