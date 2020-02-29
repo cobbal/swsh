@@ -12,7 +12,9 @@ A shell-scripting library for Swift, inspired by [scsh][scsh].
 swsh makes writing shell scripts more fun by exchanging bash (or similar) for a better thought-out language like Swift. In the process,
 a small amount of conciseness is traded for better quoting, error handling, and access to libraries.
 
-Some poorly thought out examples:
+An example in actual use: [suggest-lint-fix.swift](https://github.com/instructure/canvas-ios/blob/master/scripts/build_automation/suggest-lint-fix.swift)
+
+Some toy examples:
 ```swift
 import swsh
 
