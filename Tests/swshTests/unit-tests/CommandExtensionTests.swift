@@ -143,29 +143,29 @@ class CommandExtensionTests: XCTestCase {
         }
     }
 
-    func testRunJson() {
+    func testRunJSON() {
         str = "{\"x\": [1, 2]}"
         withAsyncEcho(cmd) {
-            XCTAssertEqual(try $0.runJson() as? [String: [Int]], ["x": [1, 2]])
+            XCTAssertEqual(try $0.runJSON() as? [String: [Int]], ["x": [1, 2]])
         }
     }
 
-    func testInvalidJson() {
+    func testInvalidJSON() {
         withAsyncEcho(cmd) {
-            XCTAssertThrowsError(try $0.runJson())
+            XCTAssertThrowsError(try $0.runJSON())
         }
     }
 
-    func testJsonDecodable() {
+    func testJSONDecodable() {
         str = "{\"x\": [1, 2]}"
         withAsyncEcho(cmd) {
-            XCTAssertEqual(try $0.runJson([String: [Int]].self), ["x": [1, 2]])
+            XCTAssertEqual(try $0.runJSON([String: [Int]].self), ["x": [1, 2]])
         }
     }
 
-    func testInvalidJsonDecodable() {
+    func testInvalidJSONDecodable() {
         withAsyncEcho(cmd) {
-            XCTAssertThrowsError(try $0.runJson(Int.self))
+            XCTAssertThrowsError(try $0.runJSON(Int.self))
         }
     }
 }

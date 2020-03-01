@@ -104,14 +104,14 @@ extension Command {
     /// Run the command synchronously, and collect output as a parsed JSON object
     /// - Throws: if command fails
     /// - Throws: if the output isn't JSON
-    public func runJson(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
+    public func runJSON(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
         return try JSONSerialization.jsonObject(with: runData(), options: options)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object
     /// - Throws: if command fails
     /// - Throws: if parsing fails
-    public func runJson<D: Decodable>(_ type: D.Type, decoder: JSONDecoder? = nil) throws -> D {
+    public func runJSON<D: Decodable>(_ type: D.Type, decoder: JSONDecoder? = nil) throws -> D {
         let decoder = decoder ?? JSONDecoder()
         return try decoder.decode(type, from: runData())
     }
