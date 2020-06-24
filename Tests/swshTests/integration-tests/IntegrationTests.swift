@@ -68,8 +68,12 @@ final class IntegrationTests: XCTestCase {
 
     func testNonExistantProgram() {
         let binary = "/usr/bin/\(UUID())"
+        let expected = "launching \"\(binary)\" failed with error code 2: No such file or directory"
         XCTAssertThrowsError(try cmd(binary).run()) { error in
-            XCTAssertEqual("\(error)", "launching \"\(binary)\" failed with error code 2: No such file or directory")
+            XCTAssertEqual("\(error)", expected)
+        }
+        XCTAssertThrowsError(try cmd(binary).async().kill()) { error in
+            XCTAssertEqual("\(error)", expected)
         }
     }
 
@@ -117,5 +121,13 @@ final class IntegrationTests: XCTestCase {
         XCTAssertThrowsError(try res.kill()) { error in
             XCTAssertEqual("\(error)", "kill failed with error code 3: No such process")
         }
+    }
+
+    func testKillStop() throws {
+        let res = try (cmd("bash", "-c", "while true; do sleep 1; done") | cmd("cat") | cmd("cat")).input("").async()
+        try res.kill(signal: SIGSTOP)
+        XCTAssert(res.isRunning)
+        try res.kill(signal: SIGKILL)
+        XCTAssertEqual(res.exitCode(), 1)
     }
 }
