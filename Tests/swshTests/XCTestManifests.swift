@@ -82,6 +82,7 @@ extension IntegrationTests {
         ("testIsRunning", testIsRunning),
         ("testKillDeadProcess", testKillDeadProcess),
         ("testKillRunningProcess", testKillRunningProcess),
+        ("testKillStop", testKillStop),
         ("testNonExistantProgram", testNonExistantProgram),
         ("testNonExistantProgramInPipeline", testNonExistantProgramInPipeline),
         ("testOverwriteEnv", testOverwriteEnv),
