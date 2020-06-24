@@ -118,10 +118,14 @@ int spawn(
 
 int spawnWait(pid_t pid) {
     int status;
-    do {
+    while (true) {
         waitpid(pid, &status, 0);
-    } while (!WIFEXITED(status));
-    return WEXITSTATUS(status);
+        if WIFEXITED(status) {
+            return WEXITSTATUS(status);
+        } else if WIFSIGNALED(status) {
+            return 1;
+        }
+    }
 }
 
 #endif // __linux__
