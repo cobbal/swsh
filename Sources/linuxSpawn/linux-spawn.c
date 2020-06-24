@@ -118,7 +118,7 @@ int spawn(
 
 int spawnWait(pid_t pid) {
     int status;
-    while (true) {
+    while (1) {
         waitpid(pid, &status, 0);
         if WIFEXITED(status) {
             return WEXITSTATUS(status);
