@@ -30,6 +30,18 @@ public class Pipeline: Command {
         func succeed() throws {
             try results.forEach { try $0.succeed() }
         }
+
+        func kill(signal: Int32) throws {
+            var signalError: Error?
+            for result in results {
+                do {
+                    try result.kill(signal: signal)
+                } catch let error {
+                    signalError = signalError ?? error
+                }
+            }
+            try signalError.map { throw $0 }
+        }
     }
 
     public func coreAsync(fdMap baseFDMap: FDMap) -> CommandResult {

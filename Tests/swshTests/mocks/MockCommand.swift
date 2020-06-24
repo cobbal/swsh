@@ -3,14 +3,15 @@ import XCTest
 
 class MockCommand: Command, Equatable {
     class Result: CommandResult {
-        public var command: Command
+        private var _command: MockCommand
+        public var command: Command { _command }
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         public var fdMap: FDMap
         public var handles: [Int32: FileHandle]
 
-        public init(command: Command, fdMap: FDMap) {
-            self.command = command
+        public init(command: MockCommand, fdMap: FDMap) {
+            _command = command
             self.fdMap = fdMap
             handles = [Int32: FileHandle]()
             for (src, dst) in fdMap {
@@ -36,8 +37,15 @@ class MockCommand: Command, Equatable {
         }
 
         func succeed() throws { try defaultSucceed() }
+
+        func kill(signal: Int32) throws {
+            if let error = _command.killResponse {
+                throw error
+            }
+        }
     }
 
+    public var killResponse: Error?
     var resultCallback: ((Result) -> Void)?
 
     func coreAsync(fdMap: FDMap) -> CommandResult {

@@ -20,6 +20,9 @@ public protocol CommandResult {
 
     /// Block and throw an error if exitCode is non-zero
     func succeed() throws
+
+    /// Sends a signal to a process,
+    func kill(signal: Int32) throws
 }
 
 extension CommandResult {
@@ -36,5 +39,9 @@ extension CommandResult {
         if err != 0 {
             throw ExitCodeFailure(name: name, exitCode: err)
         }
+    }
+
+    public func kill() throws {
+        try kill(signal: SIGKILL)
     }
 }

@@ -43,6 +43,7 @@ internal class FDWrapperCommand: Command {
         var isRunning: Bool { return innerResult.isRunning }
         func exitCode() -> Int32 { return innerResult.exitCode() }
         func succeed() throws { try innerResult.succeed() }
+        func kill(signal: Int32) throws { try innerResult.kill(signal: signal) }
     }
 
     func coreAsync(fdMap incoming: FDMap) -> CommandResult {

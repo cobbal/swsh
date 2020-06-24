@@ -54,4 +54,8 @@ public class SyscallError: Error, CommandResult, CustomStringConvertible {
     public func succeed() throws {
         throw self
     }
+
+    public func kill(signal: Int32) throws {
+        throw self
+    }
 }

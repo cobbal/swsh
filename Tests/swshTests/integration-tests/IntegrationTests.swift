@@ -104,4 +104,18 @@ final class IntegrationTests: XCTestCase {
         let res = try cmd("bash", "-c", "echo $USER", addEnv: ["USER": unique]).runString()
         XCTAssertEqual(res, unique)
     }
+
+    func testKillRunningProcess() throws {
+        let res = cmd("bash", "-c", "while true; do sleep 1; done").async()
+        try res.kill()
+        XCTAssertEqual(res.exitCode(), 1)
+    }
+
+    func testKillDeadProcess() throws {
+        let res = cmd("true").async()
+        try res.succeed()
+        XCTAssertThrowsError(try res.kill()) { error in
+            XCTAssertEqual("\(error)", "kill failed with error code 3: No such process")
+        }
+    }
 }
