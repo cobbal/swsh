@@ -57,6 +57,7 @@ public struct PosixSpawn: ProcessSpawner {
     private static func WIFEXITED(_ status: Int32) -> Bool { return _WSTATUS(status) == 0 }
     private static func _WSTATUS(_ status: Int32) -> Int32 { return status & 0x7f }
     private static func WEXITSTATUS(_ status: Int32) -> Int32 { return (status >> 8) & 0xff }
+    private static func WIFSIGNALED(_ status: Int32) -> Bool { _WSTATUS(status) != _WSTOPPED && _WSTATUS(status) != 0 }
 
     public func reapAsync(
       pid: pid_t,
@@ -69,6 +70,9 @@ public struct PosixSpawn: ProcessSpawner {
             waitpid(pid, &status, 0)
             if Self.WIFEXITED(status) {
                 callback(PosixSpawn.WEXITSTATUS(status))
+                processSource.cancel()
+            } else if Self.WIFSIGNALED(status) {
+                callback(1)
                 processSource.cancel()
             }
         }

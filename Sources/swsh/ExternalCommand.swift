@@ -47,11 +47,17 @@ public class ExternalCommand: Command {
                 self?._exitSemaphore.signal()
             }
 
-            kill(pid, SIGCONT)
+            try? kill(signal: SIGCONT)
         }
 
         var isRunning: Bool {
             return Result.reaperQueue.sync { _exitCode == nil }
+        }
+
+        func kill(signal: Int32) throws {
+            guard Foundation.kill(pid, signal) == 0 else {
+                throw SyscallError(name: "kill", command: command, errno: errno)
+            }
         }
 
         func succeed() throws { try defaultSucceed(name: name) }

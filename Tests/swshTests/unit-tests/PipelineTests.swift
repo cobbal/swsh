@@ -61,12 +61,29 @@ class PipelineTests: XCTestCase {
     }
 
     func testPipeSyntax() throws {
-        let cmd0 = MockCommand()
-        let cmd1 = MockCommand()
-
         let pipe = try unwrap(cmd0 | cmd1 as? Pipeline)
 
         XCTAssertEqual(pipe.first as? MockCommand, cmd0)
         XCTAssertEqual(pipe.rest as? [MockCommand], [cmd1])
+    }
+
+    func testPipeKillSuccess() throws {
+        try pipeline.async().kill()
+    }
+
+    class AnError: Error, Equatable {
+        static func == (lhs: AnError, rhs: AnError) -> Bool { lhs.id == rhs.id }
+        let id = UUID()
+    }
+
+    func testPipeKillFailure() throws {
+        let err1 = AnError()
+        let err2 = AnError()
+        cmd1.killResponse = err1
+        cmd2.killResponse = err2
+
+        XCTAssertThrowsError(try pipeline.async().kill()) { error in
+            XCTAssertEqual(error as? AnError, err1)
+        }
     }
 }

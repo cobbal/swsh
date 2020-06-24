@@ -84,13 +84,21 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
         try? FileManager.default.removeItem(at: tmpUrl)
     }
 
+    func close() {
+        if #available(OSX 10.15, *) {
+            try? handle.close()
+        } else {
+            handle.closeFile()
+        }
+    }
+
     // MARK: - Output redirection
 
     func testOutputCreatingFileSuccess() throws {
         deleteTmp()
         try succeed(inner.output(creatingFile: tmpPath))
         handle.write("Hello".data(using: .utf8)!)
-        handle.closeFile()
+        close()
         innerResult.setExit(code: 0)
         try outerResult.succeed()
 
@@ -105,7 +113,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     func testOutputOverwritingFile() throws {
         try succeed(inner.output(overwritingFile: tmpPath))
         handle.write("Hiya".data(using: .utf8)!)
-        handle.closeFile()
+        close()
         innerResult.setExit(code: 0)
         try outerResult.succeed()
 
@@ -115,7 +123,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     func testOutputAppendingNoCreateSuccess() throws {
         try succeed(inner.append(toFile: tmpPath, createFile: false))
         handle.write("Hiya".data(using: .utf8)!)
-        handle.closeFile()
+        close()
 
         XCTAssertEqual(try String(contentsOf: tmpUrl), "HelloHiya")
     }
