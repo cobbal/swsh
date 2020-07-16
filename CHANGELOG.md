@@ -1,3 +1,15 @@
+# [1.0.0](https://github.com/cobbal/swsh/compare/v0.2.0...v1.0.0) (2020-07-16)
+
+
+### Features
+
+* killing processes ([a787f6a](https://github.com/cobbal/swsh/commit/a787f6af1ac64ecdce8ab62a35b6bbb73f13e4ae))
+
+
+### BREAKING CHANGES
+
+* `runJson` has been renamed to `runJSON`
+
 # [0.2.0](https://github.com/cobbal/swsh/compare/v0.1.0...v0.2.0) (2020-02-07)
 
 
