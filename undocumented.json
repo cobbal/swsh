@@ -1,12 +1,12 @@
 {
   "warnings": [
     {
-      "file": "/Users/runner/runners/2.263.0/work/swsh/swsh/Sources/swsh/CommandResult.swift",
+      "file": "/Users/runner/work/swsh/swsh/Sources/swsh/CommandResult.swift",
       "line": 44,
       "symbol": "CommandResult.kill()",
       "symbol_kind": "source.lang.swift.decl.function.method.instance",
       "warning": "undocumented"
     }
   ],
-  "source_directory": "/Users/runner/runners/2.263.0/work/swsh/swsh"
+  "source_directory": "/Users/runner/work/swsh/swsh"
 }
