@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/cobbal/swsh/compare/v1.0.0...v1.0.1) (2020-07-20)
+
+
+### Bug Fixes
+
+* default kill signal should be TERM ([639a7af](https://github.com/cobbal/swsh/commit/639a7af5161297bb4958f0e8d2974d4f712cc33e))
+
 # [1.0.0](https://github.com/cobbal/swsh/compare/v0.2.0...v1.0.0) (2020-07-16)
 
 
