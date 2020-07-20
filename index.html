@@ -139,7 +139,7 @@ a small amount of conciseness is traded for better quoting, error handling, and 
 <span class="c1">// -&gt; [false, false, true]</span>
 
 <span class="nf">try</span><span class="o">!</span> <span class="p">(</span><span class="nf">cmd</span><span class="p">(</span><span class="s">"false"</span><span class="p">)</span> <span class="o">|</span> <span class="nf">cmd</span><span class="p">(</span><span class="s">"cat"</span><span class="p">))</span><span class="o">.</span><span class="nf">run</span><span class="p">()</span>
-<span class="c1">// Fatal error: 'try!' expression unexpectedly raised an error: command "false" failed with exit code 256</span>
+<span class="c1">// Fatal error: 'try!' expression unexpectedly raised an error: command "false" failed with exit code 1</span>
 </code></pre>
 
 <p><a href="https://cobbal.github.io/swsh/">Full documentation</a></p>
