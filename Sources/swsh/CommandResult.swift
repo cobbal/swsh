@@ -42,6 +42,6 @@ extension CommandResult {
     }
 
     public func kill() throws {
-        try kill(signal: SIGKILL)
+        try kill(signal: SIGTERM)
     }
 }
