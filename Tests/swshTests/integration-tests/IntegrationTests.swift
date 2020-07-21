@@ -130,4 +130,9 @@ final class IntegrationTests: XCTestCase {
         try res.kill(signal: SIGKILL)
         XCTAssertEqual(res.exitCode(), 1)
     }
+
+    func testCombineOutput() throws {
+        let res = try cmd("sh", "-c", "echo out; echo error >&2").combineError.runString()
+        XCTAssertEqual(res, "out\nerror")
+    }
 }
