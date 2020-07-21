@@ -43,6 +43,8 @@ extension FDWrapperCommandExtensionsTests {
     //   `swift test --generate-linuxmain`
     // to regenerate.
     static let __allTests__FDWrapperCommandExtensionsTests = [
+        ("testCombineError", testCombineError),
+        ("testDuplicateFd", testDuplicateFd),
         ("testInputEncodable", testInputEncodable),
         ("testInputFromFile", testInputFromFile),
         ("testInputJSON", testInputJSON),
@@ -77,6 +79,7 @@ extension IntegrationTests {
     static let __allTests__IntegrationTests = [
         ("testAbsPath", testAbsPath),
         ("testCmdArgList", testCmdArgList),
+        ("testCombineOutput", testCombineOutput),
         ("testFailureIsntRunning", testFailureIsntRunning),
         ("testFalseRun", testFalseRun),
         ("testIsRunning", testIsRunning),

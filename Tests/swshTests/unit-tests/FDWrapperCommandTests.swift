@@ -19,9 +19,9 @@ final class FDWrapperCommandTests: XCTestCase {
     func testValidCoreAsync() throws {
         let map = try result().inner.fdMap
         XCTAssertEqual(map.count, 2)
-        XCTAssertEqual(map[0].dst, 0)
-        XCTAssertEqual(map[1].src, 3)
-        XCTAssertEqual(map[1].dst, 5)
+        XCTAssertEqual(map[1].dst, 0)
+        XCTAssertEqual(map[0].src, 3)
+        XCTAssertEqual(map[0].dst, 5)
     }
 
     func testInvalidCoreAsync() throws {
@@ -54,7 +54,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     var innerResult: MockCommand.Result!
     var error: Error!
     var syscallError: SyscallError! { return error as? SyscallError }
-    var handle: FileHandle! { return (innerResult?.fdMap[0].src).map { FileHandle(fileDescriptor: $0) } }
+    var handle: FileHandle! { return (innerResult?.fdMap.last?.src).map { FileHandle(fileDescriptor: $0) } }
 
     // note: fresh between tests
     let tmpUrl = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -137,6 +137,18 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     func testOutputAppendingCreate() throws {
         deleteTmp()
         try succeed(inner.append(toFile: tmpPath))
+    }
+
+    func testDuplicateFd() throws {
+        try succeed(inner.duplicateFd(source: 42, destination: 35))
+        XCTAssertEqual(innerResult.fdMap.last?.src, 42)
+        XCTAssertEqual(innerResult.fdMap.last?.dst, 35)
+    }
+
+    func testCombineError() throws {
+        try succeed(inner.combineError)
+        XCTAssertEqual(innerResult.fdMap.last?.src, 1)
+        XCTAssertEqual(innerResult.fdMap.last?.dst, 2)
     }
 
     // MARK: - Input

@@ -50,7 +50,7 @@ internal class FDWrapperCommand: Command {
         switch fdMapMaker(self) {
         case let .success(fdMap, ref):
             return Result(
-                innerResult: inner.coreAsync(fdMap: fdMap + incoming),
+                innerResult: inner.coreAsync(fdMap: incoming + fdMap),
                 command: self,
                 ref: ref
             )
@@ -88,6 +88,20 @@ extension Command {
             flags |= O_CREAT
         }
         return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: flags)
+    }
+
+    /// Duplicate a file handle. In bash, this is expressed like "2>&1". See also dup2(2)
+    /// - Parameter srcFd: File descriptor to duplicate
+    /// - Parameter dstFd: Descriptor of new, duplicated handle
+    public func duplicateFd(source srcFd: Int32, destination dstFd: Int32) -> Command {
+        return FDWrapperCommand(inner: self) { _ in
+            return .success(fdMap: [(src: srcFd, dst: dstFd)], ref: nil)
+        }
+    }
+
+    /// Redirect standard error to standard output. "2>&1" in bash
+    public var combineError: Command {
+        return duplicateFd(source: STDOUT_FILENO, destination: STDERR_FILENO)
     }
 
     // MARK: - Input
