@@ -33,7 +33,11 @@ class CommandExtensionTests: XCTestCase {
         cmd.resultCallback = nil
     }
 
-    func withAsyncEcho(_ cmd: MockCommand, fds: [Int32] = [1], block: @escaping (MockCommand) throws -> Void) {
+    func withAsyncEcho(
+        _ cmd: MockCommand,
+        fds: [FileDescriptor] = [.stdout],
+        block: @escaping (MockCommand) throws -> Void
+    ) {
         withAsyncResult(cmd, block) { res in
             for fd in fds {
                 res[fd].write(self.data)
@@ -45,8 +49,7 @@ class CommandExtensionTests: XCTestCase {
 
     func testAsync() throws {
         let res = try unwrap(cmd.async(stdin: 4, stdout: 5, stderr: 6) as? MockCommand.Result)
-        XCTAssertEqual(res.fdMap.map { $0.src }, [4, 5, 6])
-        XCTAssertEqual(res.fdMap.map { $0.dst }, [0, 1, 2])
+        XCTAssertEqual(res.fdMap, [0: 4, 1: 5, 2: 6])
     }
 
     func testAsyncStream() {
@@ -56,15 +59,6 @@ class CommandExtensionTests: XCTestCase {
         res[1].closeFile()
         res[2].closeFile()
         XCTAssertEqual(handle.readDataToEndOfFile(), data)
-    }
-
-    func testAsyncStreamJoin() {
-        let (res, handle) = withResult(cmd) { cmd.asyncStream(joinErr: true) }
-        res[1].write(data)
-        res[2].write(data)
-        res[1].closeFile()
-        res[2].closeFile()
-        XCTAssertEqual(handle.readDataToEndOfFile(), data + data)
     }
 
     func testRunSucceeds() {
@@ -104,21 +98,9 @@ class CommandExtensionTests: XCTestCase {
         }
     }
 
-    func testRunDataJoin() {
-        withAsyncEcho(cmd, fds: [1, 2]) {
-            XCTAssertEqual(try $0.runData(joinErr: true), self.data + self.data)
-        }
-    }
-
     func testRunString() {
         withAsyncEcho(cmd) {
             XCTAssertEqual(try $0.runString(), "hello")
-        }
-    }
-
-    func testRunStringJoin() {
-        withAsyncEcho(cmd, fds: [1, 2]) {
-            XCTAssertEqual(try $0.runString(joinErr: true), "hello\nhello")
         }
     }
 

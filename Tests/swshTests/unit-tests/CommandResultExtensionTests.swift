@@ -2,7 +2,7 @@
 import XCTest
 
 class CommandResultExtensionTests: XCTestCase {
-    let res = MockCommand.Result(command: MockCommand(), fdMap: [])
+    let res = MockCommand.Result(command: MockCommand(), fdMap: [:])
 
     func testFinish() {
         res.setExit(code: 2)

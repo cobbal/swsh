@@ -46,13 +46,12 @@ public class Pipeline: Command {
 
     public func coreAsync(fdMap baseFDMap: FDMap) -> CommandResult {
         let pipes = rest.map { _ in Pipe() }
-        let inputs = [STDIN_FILENO] + pipes.map { $0.fileHandleForReading.fileDescriptor }
-        let outputs = pipes.map { $0.fileHandleForWriting.fileDescriptor } + [STDOUT_FILENO]
+        let inputs = [.stdin] + pipes.map { $0.fileHandleForReading.fd }
+        let outputs = pipes.map { $0.fileHandleForWriting.fd } + [.stdout]
         var results = [CommandResult]()
         for (command, (input, output)) in zip([first] + rest, zip(inputs, outputs)) {
             var fdMap = baseFDMap
-            fdMap.append((input, STDIN_FILENO))
-            fdMap.append((output, STDOUT_FILENO))
+            fdMap = fdMap.compose([.stdin: input, .stdout: output])
             results.append(command.coreAsync(fdMap: fdMap))
         }
         return Result(command: self, results: results)

@@ -28,7 +28,7 @@ public protocol ProcessSpawner {
       command: String,
       arguments: [String],
       env: [String: String],
-      fdMap: Command.FDMap,
+      fdMap: FDMap,
       pathResolve: Bool
     ) -> SpawnResult
 

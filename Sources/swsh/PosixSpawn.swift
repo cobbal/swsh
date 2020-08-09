@@ -12,7 +12,7 @@ public struct PosixSpawn: ProcessSpawner {
       command: String,
       arguments: [String],
       env: [String: String],
-      fdMap: Command.FDMap,
+      fdMap: FDMap,
       pathResolve: Bool
     ) -> SpawnResult {
         var fileActions = empty_file_actions
@@ -26,8 +26,13 @@ public struct PosixSpawn: ProcessSpawner {
         // Don't implicitly duplicate descriptors
         // Start suspended to avoid race condition with the handler setup
         posix_spawnattr_setflags(&attrs, Int16(POSIX_SPAWN_CLOEXEC_DEFAULT | POSIX_SPAWN_START_SUSPENDED))
-        for (srcFd, dstFd) in fdMap {
-            posix_spawn_file_actions_adddup2(&fileActions, srcFd, dstFd)
+        for op in fdMap.createFdOperations() {
+            switch op {
+            case let .dup(src, dst):
+                posix_spawn_file_actions_adddup2(&fileActions, src, dst)
+            case let .close(fd):
+                posix_spawn_file_actions_addclose(&fileActions, fd)
+            }
         }
 
         let cCommand = command.withCString(strdup)

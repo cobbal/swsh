@@ -22,9 +22,9 @@
 ///  - Parameter envp: null terminated list of all environment variables to pass
 ///    to command. (Passed directly to `execvpe`)
 ///  - Parameter fdMap: a list of mappings from parent FDs to be inherited by child
-///    FDs. Any FD not listed as a dst will be closed for the child. The list
-///    must be -1 terminated, and in the format:
-///    `{ src_0, dst_0, src_1, dst_1, ..., src_n, dst_n, -1 }`
+///    FDs. Any FD not listed as a dst will be closed for the child. To close a descriptor,
+///    set src to -1. The list must be in the format:
+///    `{ src_0, dst_0, src_1, dst_1, ..., src_n, dst_n }`
 ///  - Returns: 0 if successful, an error code if an operation failed.
 ///  - Parameter child_pid_out: non-null, pid of child process will be written
 ///    to this pointer if successful.
@@ -33,6 +33,7 @@ int spawn(
     char *const argv[],
     char *const envp[],
     const int32_t *fdMap,
+    size_t fdMapCount,
     pid_t *child_pid_out
 ) {
     // First, create a table for fast lookup if an FD is a source and/or a
@@ -41,9 +42,13 @@ int spawn(
     const uint8_t SRC = 1;
     const uint8_t DST = 2;
     uint8_t *mentionedFds = calloc(fdlimit, sizeof(uint8_t));
-    for (const int32_t *p = fdMap; *p != -1; p += 2) {
-        mentionedFds[p[0]] |= SRC;
-        mentionedFds[p[1]] |= DST;
+    for (size_t i = 0; i < fdMapCount; i++) {
+        int32_t src = fdMap[2 * i];
+        int32_t dst = fdMap[2 * i + 1];
+        if (src >= 0) {
+            mentionedFds[src] |= SRC;
+        }
+        mentionedFds[dst] |= DST;
     }
 
     int pid;
@@ -79,9 +84,15 @@ int spawn(
             goto err;
         }
         // do the actual fd remapping
-        for (const int32_t *p = fdMap; *p != -1; p += 2) {
-            if (dup2(p[0], p[1]) < 0) {
-                goto err;
+        for (size_t i = 0; i < fdMapCount; i++) {
+            int32_t src = fdMap[2 * i];
+            int32_t dst = fdMap[2 * i + 1];
+            if (src >= 0) {
+                if (dup2(src, dst) < 0) {
+                    goto err;
+                }
+            } else {
+                close(dst);
             }
         }
         for (int i = 0; i < fdlimit; i++) {

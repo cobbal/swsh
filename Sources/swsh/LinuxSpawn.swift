@@ -10,15 +10,20 @@ public struct LinuxSpawn: ProcessSpawner {
       command: String,
       arguments: [String],
       env: [String: String],
-      fdMap: Command.FDMap,
+      fdMap: FDMap,
       pathResolve: Bool
     ) -> SpawnResult {
         var cFdMap = [Int32]()
-        for (srcFd, dstFd) in fdMap {
-            cFdMap.append(srcFd)
-            cFdMap.append(dstFd)
+        for op in fdMap.createFdOperations() {
+            switch op {
+            case let .dup(src, dst):
+                cFdMap.append(src)
+                cFdMap.append(dst)
+            case let .close(fd):
+                cFdMap.append(-1)
+                cFdMap.append(fd)
+            }
         }
-        cFdMap.append(-1)
 
         let cCommand = command.withCString(strdup)
         var cArgs = [cCommand]
@@ -34,7 +39,11 @@ public struct LinuxSpawn: ProcessSpawner {
         }
 
         var pid = pid_t()
-        let res = linuxSpawn.spawn(cCommand, cArgs, cEnv, UnsafeMutablePointer(mutating: cFdMap), &pid)
+        let res = linuxSpawn.spawn(
+            cCommand, cArgs, cEnv,
+            UnsafeMutablePointer(mutating: cFdMap), cFdMap.count / 2,
+            &pid
+        )
         guard res == 0 else {
             return .error(errno: res)
         }
