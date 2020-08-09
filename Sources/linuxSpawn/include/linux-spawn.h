@@ -1,6 +1,7 @@
 #ifdef __linux__
 
 #include <stdint.h>
+#include <unistd.h>
 #include <termios.h>
 
 int spawn(
@@ -8,6 +9,7 @@ int spawn(
     char *const argv[],
     char *const envp[],
     const int32_t *fdMap,
+    size_t fdMapCount,
     pid_t *child_pid_out
 );
 

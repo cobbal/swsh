@@ -24,14 +24,14 @@ internal class FDWrapperCommand: Command {
         self.fdMapMaker = fdMapMaker
     }
 
-    convenience init(inner: Command, opening path: String, toHandle dstFd: Int32, oflag: Int32) {
+    convenience init(inner: Command, opening path: String, toHandle dstFd: FileDescriptor, oflag: Int32) {
         self.init(inner: inner) { command in
             let fd = open(path, oflag, 0o666)
             guard fd >= 0 else {
                 return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, errno: errno))
             }
             let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
-            return .success(fdMap: [(src: fd, dst: dstFd)], ref: handle)
+            return .success(fdMap: [dstFd: FileDescriptor(fd)], ref: handle)
         }
     }
 
@@ -50,7 +50,7 @@ internal class FDWrapperCommand: Command {
         switch fdMapMaker(self) {
         case let .success(fdMap, ref):
             return Result(
-                innerResult: inner.coreAsync(fdMap: incoming + fdMap),
+                innerResult: inner.coreAsync(fdMap: incoming.compose(fdMap)),
                 command: self,
                 ref: ref
             )
@@ -66,14 +66,14 @@ extension Command {
     /// Bind output to a file. Similar to ">" in bash, but will not overwrite the file
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
-    public func output(creatingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
+    public func output(creatingFile path: String, fd: FileDescriptor = .stdout) -> Command {
         return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_EXCL | O_WRONLY)
     }
 
     /// Bind output to a file, creating if needed. Similar to ">" in bash
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
-    public func output(overwritingFile path: String, fd: Int32 = STDOUT_FILENO) -> Command {
+    public func output(overwritingFile path: String, fd: FileDescriptor = .stdout) -> Command {
         return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_TRUNC | O_WRONLY)
     }
 
@@ -82,7 +82,7 @@ extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
     /// - Parameter createFile: fail if the file doesn't exist
     /// - Throws: FileDoesntExist if createFile is false, and the file doesn't exist
-    public func append(toFile path: String, fd: Int32 = STDOUT_FILENO, createFile: Bool = true) -> Command {
+    public func append(toFile path: String, fd: FileDescriptor = .stdout, createFile: Bool = true) -> Command {
         var flags = O_APPEND | O_WRONLY
         if createFile {
             flags |= O_CREAT
@@ -93,15 +93,15 @@ extension Command {
     /// Duplicate a file handle. In bash, this is expressed like "2>&1". See also dup2(2)
     /// - Parameter srcFd: File descriptor to duplicate
     /// - Parameter dstFd: Descriptor of new, duplicated handle
-    public func duplicateFd(source srcFd: Int32, destination dstFd: Int32) -> Command {
+    public func duplicateFd(source srcFd: FileDescriptor, destination dstFd: FileDescriptor) -> Command {
         return FDWrapperCommand(inner: self) { _ in
-            return .success(fdMap: [(src: srcFd, dst: dstFd)], ref: nil)
+            return .success(fdMap: [dstFd: srcFd], ref: nil)
         }
     }
 
     /// Redirect standard error to standard output. "2>&1" in bash
     public var combineError: Command {
-        return duplicateFd(source: STDOUT_FILENO, destination: STDERR_FILENO)
+        return duplicateFd(source: .stdout, destination: .stderr)
     }
 
     // MARK: - Input
@@ -110,7 +110,11 @@ extension Command {
     /// - Parameter encoding: how encoding the outgoing data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     /// - Throws
-    public func input(_ string: String, encoding: String.Encoding = .utf8, fd: Int32 = STDIN_FILENO) throws -> Command {
+    public func input(
+        _ string: String,
+        encoding: String.Encoding = .utf8,
+        fd: FileDescriptor = .stdin
+    ) throws -> Command {
         guard let data = string.data(using: encoding) else {
             throw StringEncodingError(string: string, encoding: encoding)
         }
@@ -119,7 +123,7 @@ extension Command {
 
     /// Bind stdin to contents of data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
-    public func input(_ data: Data, fd: Int32 = STDIN_FILENO) -> Command {
+    public func input(_ data: Data, fd: FileDescriptor = .stdin) -> Command {
         return FDWrapperCommand(inner: self) { _ in
             let pipe = Pipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
@@ -131,7 +135,7 @@ extension Command {
             ) { [weak writeHandle] _, _ in
                 writeHandle?.closeFile()
             }
-            return .success(fdMap: [(src: pipe.fileHandleForReading.fileDescriptor, dst: fd)], ref: pipe)
+            return .success(fdMap: [fd: pipe.fileHandleForReading.fd], ref: pipe)
         }
     }
 
@@ -141,7 +145,7 @@ extension Command {
     /// - Throws: if encoding fails
     public func input(
         withJSONObject json: Any,
-        fd: Int32 = STDIN_FILENO,
+        fd: FileDescriptor = .stdin,
         options: JSONSerialization.WritingOptions = .init()
     ) throws -> Command {
         return input(try JSONSerialization.data(withJSONObject: json, options: options), fd: fd)
@@ -154,7 +158,7 @@ extension Command {
     /// - Throws: if encoding fails
     public func inputJSON<E: Encodable>(
         from object: E,
-        fd: Int32 = STDIN_FILENO,
+        fd: FileDescriptor = .stdin,
         encoder: JSONEncoder = .init()
     ) throws -> Command {
         return input(try encoder.encode(object), fd: fd)
@@ -162,7 +166,7 @@ extension Command {
 
     /// Bind stdin to a file, similar to `< file` in bash
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
-    public func input(fromFile path: String, fd: Int32 = STDIN_FILENO) -> Command {
+    public func input(fromFile path: String, fd: FileDescriptor = .stdin) -> Command {
         return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_RDONLY)
     }
 }

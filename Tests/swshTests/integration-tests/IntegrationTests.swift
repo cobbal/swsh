@@ -97,7 +97,7 @@ final class IntegrationTests: XCTestCase {
 
     func testIsRunning() throws {
         let pipe = Pipe()
-        let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fileDescriptor)
+        let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fd)
         XCTAssertTrue(proc.isRunning)
         pipe.fileHandleForWriting.closeFile()
         try proc.succeed()
@@ -132,7 +132,22 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testCombineOutput() throws {
-        let res = try cmd("sh", "-c", "echo out; echo error >&2").combineError.runString()
+        let res = try cmd("bash", "-c", "echo out; echo error >&2").combineError.runString()
         XCTAssertEqual(res, "out\nerror")
+    }
+
+    func testRemapCycle() throws {
+        let pipes = [Pipe(), Pipe()]
+        let write = pipes.map { $0.fileHandleForWriting.fd }
+        let res = cmd("bash", "-c", "echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
+            write[0]: write[1],
+            write[1]: write[0],
+        ])
+        pipes.forEach { $0.fileHandleForWriting.closeFile() }
+        let output = pipes.map {
+            String(data: $0.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
+        }
+        try res.succeed()
+        XCTAssertEqual(output, ["thing2\n", "thing1\n"])
     }
 }

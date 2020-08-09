@@ -21,7 +21,7 @@ extension XCTestCase {
         line: UInt = #line
     ) throws -> T {
         guard let e = try expression() else {
-            XCTFail(message(), file: file, line: line)
+            XCTFail(message(), file: (file), line: line)
             throw NilError()
         }
         return e

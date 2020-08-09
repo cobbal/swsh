@@ -2,11 +2,8 @@ import Foundation
 
 /// Represents a description of a command that can be executed any number of times, but usually just once.
 public protocol Command: class {
-    /// A list of file descriptor remappings. Order matters, same as in bash
-    typealias FDMap = [(src: Int32, dst: Int32)]
-
     /// The minimum requirement of a Command is that it can launch itself asynchronously
-    /// - Parameter fdMap: A list of file descriptors to remap. Order matters, same as in bash
+    /// - Parameter fdMap: A map from child FDs to parent FDs
     /// - Returns: a result capable of monitoring the asynchronous command
     func coreAsync(fdMap: FDMap) -> CommandResult
 }
@@ -14,29 +11,34 @@ public protocol Command: class {
 extension Command {
     // MARK: - Running
 
+    internal var standardFdMap: FDMap { return [
+        .stdin: .stdin,
+        .stdout: .stdout,
+        .stderr: .stderr,
+    ] }
+
     /// Run the command asynchronously, inheriting or overwriting the standard file descriptors
+    /// - Parameter fdMap: A map from child FDs to parent FDs, will be composed with standard map
+    /// - Returns: a result capable of monitoring the asynchronous command
+    public func async(fdMap: FDMap = [:]) -> CommandResult {
+        return coreAsync(fdMap: fdMap.compose(standardFdMap))
+    }
+
+     /// Run the command asynchronously, inheriting or overwriting the standard file descriptors
     public func async(
-      stdin: Int32 = STDIN_FILENO,
-      stdout: Int32 = STDOUT_FILENO,
-      stderr: Int32 = STDERR_FILENO
+        stdin: FileDescriptor = .stdin,
+        stdout: FileDescriptor = .stdout,
+        stderr: FileDescriptor = .stderr
     ) -> CommandResult {
-        return coreAsync(fdMap: [
-            (stdin, STDIN_FILENO),
-            (stdout, STDOUT_FILENO),
-            (stderr, STDERR_FILENO),
-        ])
+        return coreAsync(fdMap: [.stdin: stdin, .stdout: stdout, .stderr: stderr])
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
-    public func asyncStream(joinErr: Bool = false) -> FileHandle {
+    public func asyncStream() -> FileHandle {
         let pipe = Pipe()
-        let pipeFD = pipe.fileHandleForWriting.fileDescriptor
-        _ = coreAsync(fdMap: [
-            (STDIN_FILENO, STDIN_FILENO),
-            (pipeFD, STDOUT_FILENO),
-            (joinErr ? pipeFD : STDERR_FILENO, STDERR_FILENO),
-        ])
-        close(pipeFD)
+        let write = pipe.fileHandleForWriting
+        _ = async(fdMap: [ .stdout: write.fd ])
+        close(write.fileDescriptor)
         return pipe.fileHandleForReading
     }
 
@@ -63,14 +65,13 @@ extension Command {
 
     /// Run the command synchronously, and collect stdout.
     /// does not trim newlines (unlike $(...))
-    /// - Parameter joinErr: if true, stderr will be collected as well
     /// - Throws: if command fails
     /// - Returns: output as Data
-    public func runData(joinErr: Bool = false) throws -> Data {
+    public func runData() throws -> Data {
         let pipe = Pipe()
-        let writeFD = pipe.fileHandleForWriting.fileDescriptor
-        let result = async(stdout: writeFD, stderr: joinErr ? writeFD : STDERR_FILENO)
-        close(writeFD)
+        let write = pipe.fileHandleForWriting
+        let result = async(fdMap: [ .stdout: write.fd ])
+        close(write.fileDescriptor)
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         try result.succeed()
         return data
@@ -79,12 +80,11 @@ extension Command {
     /// Run the command synchronously, and collect stdout into a string.
     /// Trims trailing newlines (like $(...))
     /// - Parameter encoding: the encoding of the output data
-    /// - Parameter joinErr: if true, stderr will be collected as well
     /// - Throws: if command fails
     /// - Throws: `InvalidString` if the output isn't valid
     /// - Returns: output as unicode string
-    public func runString(encoding: String.Encoding = .utf8, joinErr: Bool = false) throws -> String {
-        let data = try runData(joinErr: joinErr)
+    public func runString(encoding: String.Encoding = .utf8) throws -> String {
+        let data = try runData()
         guard let string = String(data: data, encoding: encoding) else {
             throw InvalidString(data: data, encoding: encoding)
         }

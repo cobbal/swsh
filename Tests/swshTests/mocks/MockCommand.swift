@@ -4,22 +4,22 @@ import XCTest
 class MockCommand: Command, Equatable {
     class Result: CommandResult {
         private var _command: MockCommand
-        public var command: Command { _command }
+        public var command: Command { return _command }
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         public var fdMap: FDMap
-        public var handles: [Int32: FileHandle]
+        public var handles: [FileDescriptor: FileHandle]
 
         public init(command: MockCommand, fdMap: FDMap) {
             _command = command
             self.fdMap = fdMap
-            handles = [Int32: FileHandle]()
-            for (src, dst) in fdMap {
-                handles[dst] = handles[src] ?? FileHandle(fileDescriptor: dup(src), closeOnDealloc: true)
+            handles = [FileDescriptor: FileHandle]()
+            for (dst, src) in fdMap {
+                handles[dst] = handles[src] ?? FileHandle(fileDescriptor: dup(src.rawValue), closeOnDealloc: true)
             }
         }
 
-        subscript(_ fd: Int32) -> FileHandle! { return handles[fd] }
+        subscript(_ fd: FileDescriptor) -> FileHandle! { return handles[fd] }
 
         public func setExit(code: Int32) {
             let old = _exitCode

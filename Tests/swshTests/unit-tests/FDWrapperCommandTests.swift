@@ -7,7 +7,7 @@ final class FDWrapperCommandTests: XCTestCase {
     lazy var invalidCmd = FDWrapperCommand( inner: inner, opening: "\(UUID())", toHandle: 0, oflag: O_RDONLY)
 
     func result() throws -> (outer: FDWrapperCommand.Result, inner: MockCommand.Result) {
-        let result = try unwrap(cmd.coreAsync(fdMap: [(src: 3, dst: 5)]) as? FDWrapperCommand.Result)
+        let result = try unwrap(cmd.coreAsync(fdMap: [5: 3]) as? FDWrapperCommand.Result)
         let innerResult = try unwrap(result.innerResult as? MockCommand.Result)
         return (outer: result, inner: innerResult)
     }
@@ -19,13 +19,12 @@ final class FDWrapperCommandTests: XCTestCase {
     func testValidCoreAsync() throws {
         let map = try result().inner.fdMap
         XCTAssertEqual(map.count, 2)
-        XCTAssertEqual(map[1].dst, 0)
-        XCTAssertEqual(map[0].src, 3)
-        XCTAssertEqual(map[0].dst, 5)
+        XCTAssertNotNil(map[0])
+        XCTAssertEqual(map[5], 3)
     }
 
     func testInvalidCoreAsync() throws {
-        let result = try unwrap(invalidCmd.coreAsync(fdMap: []) as? SyscallError)
+        let result = try unwrap(invalidCmd.coreAsync(fdMap: [:]) as? SyscallError)
         XCTAssert(result.command === invalidCmd)
         XCTAssertEqual(result.errno, ENOENT)
     }
@@ -54,7 +53,11 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     var innerResult: MockCommand.Result!
     var error: Error!
     var syscallError: SyscallError! { return error as? SyscallError }
-    var handle: FileHandle! { return (innerResult?.fdMap.last?.src).map { FileHandle(fileDescriptor: $0) } }
+
+    var handle: FileHandle? {
+        let fd: FileDescriptor = innerResult?.fdMap[.stdin] != .stdin ? .stdin : .stdout
+        return (innerResult?.fdMap[fd]).map { FileHandle(fileDescriptor: $0.rawValue) }
+    }
 
     // note: fresh between tests
     let tmpUrl = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -84,20 +87,26 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
         try? FileManager.default.removeItem(at: tmpUrl)
     }
 
+    #if swift(<5.1)
     func close() {
-        if #available(OSX 10.15, *) {
-            try? handle.close()
+        handle?.closeFile()
+    }
+    #else
+    func close() {
+        if #available(macOS 10.15, *) {
+            try? handle?.close()
         } else {
-            handle.closeFile()
+            handle?.closeFile()
         }
     }
+    #endif
 
     // MARK: - Output redirection
 
     func testOutputCreatingFileSuccess() throws {
         deleteTmp()
         try succeed(inner.output(creatingFile: tmpPath))
-        handle.write("Hello".data(using: .utf8)!)
+        handle?.write("Hello".data(using: .utf8)!)
         close()
         innerResult.setExit(code: 0)
         try outerResult.succeed()
@@ -112,7 +121,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
 
     func testOutputOverwritingFile() throws {
         try succeed(inner.output(overwritingFile: tmpPath))
-        handle.write("Hiya".data(using: .utf8)!)
+        handle?.write("Hiya".data(using: .utf8)!)
         close()
         innerResult.setExit(code: 0)
         try outerResult.succeed()
@@ -122,7 +131,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
 
     func testOutputAppendingNoCreateSuccess() throws {
         try succeed(inner.append(toFile: tmpPath, createFile: false))
-        handle.write("Hiya".data(using: .utf8)!)
+        handle?.write("Hiya".data(using: .utf8)!)
         close()
 
         XCTAssertEqual(try String(contentsOf: tmpUrl), "HelloHiya")
@@ -141,25 +150,23 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
 
     func testDuplicateFd() throws {
         try succeed(inner.duplicateFd(source: 42, destination: 35))
-        XCTAssertEqual(innerResult.fdMap.last?.src, 42)
-        XCTAssertEqual(innerResult.fdMap.last?.dst, 35)
+        XCTAssertEqual(innerResult.fdMap[35], 42)
     }
 
     func testCombineError() throws {
         try succeed(inner.combineError)
-        XCTAssertEqual(innerResult.fdMap.last?.src, 1)
-        XCTAssertEqual(innerResult.fdMap.last?.dst, 2)
+        XCTAssertEqual(innerResult.fdMap[2], 1)
     }
 
     // MARK: - Input
 
-    func handleString() -> String {
-        return String(data: handle.readDataToEndOfFile(), encoding: .utf8)!
+    func handleString() throws -> String {
+        return String(data: try unwrap(handle).readDataToEndOfFile(), encoding: .utf8)!
     }
 
     func testInputStringSuccess() throws {
         try succeed(inner.input("xyz"))
-        XCTAssertEqual(handleString(), "xyz")
+        XCTAssertEqual(try handleString(), "xyz")
     }
 
     func testInputStringFailure() {
@@ -169,16 +176,16 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
 
     func testInputJSON() throws {
         try succeed(inner.input(withJSONObject: ["foo": "bar"]))
-        XCTAssertEqual(handleString(), "{\"foo\":\"bar\"}")
+        XCTAssertEqual(try handleString(), "{\"foo\":\"bar\"}")
     }
 
     func testInputEncodable() throws {
         try succeed(inner.inputJSON(from: ["foo": "bar"]))
-        XCTAssertEqual(handleString(), "{\"foo\":\"bar\"}")
+        XCTAssertEqual(try handleString(), "{\"foo\":\"bar\"}")
     }
 
     func testInputFromFile() throws {
         try succeed(inner.input(fromFile: tmpPath))
-        XCTAssertEqual(handleString(), "Hello")
+        XCTAssertEqual(try handleString(), "Hello")
     }
 }

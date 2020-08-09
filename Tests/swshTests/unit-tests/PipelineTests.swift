@@ -9,7 +9,7 @@ class PipelineTests: XCTestCase {
     lazy var pipeline = Pipeline(cmd0, cmd1, cmd2)
 
     func results() -> ([MockCommand.Result], Pipeline.Result) {
-        let res = pipeline.coreAsync(fdMap: []) as! Pipeline.Result
+        let res = pipeline.coreAsync(fdMap: [:]) as! Pipeline.Result
         return (res.results as! [MockCommand.Result], res)
     }
 
@@ -72,7 +72,7 @@ class PipelineTests: XCTestCase {
     }
 
     class AnError: Error, Equatable {
-        static func == (lhs: AnError, rhs: AnError) -> Bool { lhs.id == rhs.id }
+        static func == (lhs: AnError, rhs: AnError) -> Bool { return lhs.id == rhs.id }
         let id = UUID()
     }
 
