@@ -1,3 +1,24 @@
+# [2.0.0](https://github.com/cobbal/swsh/compare/v1.0.1...v2.0.0) (2020-08-10)
+
+
+### Features
+
+* fd duplication and more general output/error combining ([1667abd](https://github.com/cobbal/swsh/commit/1667abd0bf7b9c84c0d3c0835a5abdd7f590c4c5))
+* rework FD mapping systems ([5becc68](https://github.com/cobbal/swsh/commit/5becc68299b150069c007ca62c9f9c8dcb15869f))
+
+
+### BREAKING CHANGES
+
+* Traditional, imperative file descriptor remapping has
+    been removed in favor of a more functional mapping of what the child
+    process will see. dup calls are now synthesized to get the right FDs
+    in the right place.
+
+    Hopefully, this will be more composable.
+
+    Also, joinErr parameters have been removed in favor of the
+    `combineError` property.
+
 ## [1.0.1](https://github.com/cobbal/swsh/compare/v1.0.0...v1.0.1) (2020-07-20)
 
 
