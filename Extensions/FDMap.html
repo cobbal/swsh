@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>StringEncodingError Structure Reference</title>
+    <title>FDMap Extension Reference</title>
     <link rel="stylesheet" type="text/css" href="../css/jazzy.css" />
     <link rel="stylesheet" type="text/css" href="../css/highlight.css" />
     <meta charset='utf-8'>
@@ -10,8 +10,8 @@
     
   </head>
   <body>
-    <a name="//apple_ref/swift/Struct/StringEncodingError" class="dashAnchor"></a>
-    <a title="StringEncodingError Structure Reference"></a>
+    <a name="//apple_ref/swift/Extension/FDMap" class="dashAnchor"></a>
+    <a title="FDMap Extension Reference"></a>
     <header>
       <div class="content-wrapper">
         <p><a href="../index.html">swsh master Docs</a> (100% documented)</p>
@@ -22,7 +22,7 @@
       <p id="breadcrumbs">
         <a href="../index.html">swsh Reference</a>
         <img id="carat" src="../img/carat.png" />
-        StringEncodingError Structure Reference
+        FDMap Extension Reference
       </p>
     </div>
     <div class="content-wrapper">
@@ -128,15 +128,14 @@
       <article class="main-content">
         <section>
           <section class="section">
-            <h1>StringEncodingError</h1>
+            <h1>FDMap</h1>
               <div class="declaration">
                 <div class="language">
-                  <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">struct</span> <span class="kt">StringEncodingError</span> <span class="p">:</span> <span class="kt">Error</span></code></pre>
+                  <pre class="highlight swift"><code><span class="kd">extension</span> <span class="kt"><a href="../Typealiases.html#/s:4swsh5FDMapa">FDMap</a></span></code></pre>
 
                 </div>
               </div>
-            <p>Thrown when a string cannot be encoded with the requested incoding</p>
-
+            
           </section>
           <section class="section task-group-section">
             <div class="task-group">
@@ -144,9 +143,9 @@
                 <li class="item">
                   <div>
                     <code>
-                    <a name="/s:4swsh19StringEncodingErrorV6stringSSvp"></a>
-                    <a name="//apple_ref/swift/Property/string" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh19StringEncodingErrorV6stringSSvp">string</a>
+                    <a name="/s:SD4swshAA14FileDescriptorVRszACRs_rlE7composeySDyA2CGAEF"></a>
+                    <a name="//apple_ref/swift/Method/compose(_:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:SD4swshAA14FileDescriptorVRszACRs_rlE7composeySDyA2CGAEF">compose(_:)</a>
                     </code>
                   </div>
                   <div class="height-container">
@@ -154,43 +153,51 @@
                     <section class="section">
                       <div class="pointer"></div>
                       <div class="abstract">
-                        <p>The invalid string</p>
+                        <p>joins 2 maps together. If a FDMap is a child -&gt; parent mapping</p>
 
                       </div>
                       <div class="declaration">
                         <h4>Declaration</h4>
                         <div class="language">
                           <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">string</span><span class="p">:</span> <span class="kt">String</span></code></pre>
+                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="kd">func</span> <span class="nf">compose</span><span class="p">(</span><span class="n">_</span> <span class="nv">other</span><span class="p">:</span> <span class="kt"><a href="../Typealiases.html#/s:4swsh5FDMapa">FDMap</a></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt"><a href="../Typealiases.html#/s:4swsh5FDMapa">FDMap</a></span></code></pre>
 
                         </div>
                       </div>
-                    </section>
-                  </div>
-                </li>
-                <li class="item">
-                  <div>
-                    <code>
-                    <a name="/s:4swsh19StringEncodingErrorV8encodingSS10FoundationE0C0Vvp"></a>
-                    <a name="//apple_ref/swift/Property/encoding" class="dashAnchor"></a>
-                    <a class="token" href="#/s:4swsh19StringEncodingErrorV8encodingSS10FoundationE0C0Vvp">encoding</a>
-                    </code>
-                  </div>
-                  <div class="height-container">
-                    <div class="pointer-container"></div>
-                    <section class="section">
-                      <div class="pointer"></div>
-                      <div class="abstract">
-                        <p>The encoding used</p>
-
+                      <div>
+                        <h4>Parameters</h4>
+                        <table class="graybox">
+                          <tbody>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>self</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>intermediate -&gt; parent</p>
+                                </div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <code>
+                                <em>other</em>
+                                </code>
+                              </td>
+                              <td>
+                                <div>
+                                  <p>child -&gt; intermediate</p>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
-                      <div class="declaration">
-                        <h4>Declaration</h4>
-                        <div class="language">
-                          <p class="aside-title">Swift</p>
-                          <pre class="highlight swift"><code><span class="kd">public</span> <span class="k">let</span> <span class="nv">encoding</span><span class="p">:</span> <span class="kt">String</span><span class="o">.</span><span class="kt">Encoding</span></code></pre>
-
-                        </div>
+                      <div>
+                        <h4>Return Value</h4>
+                        <p>child -&gt; parent</p>
                       </div>
                     </section>
                   </div>
