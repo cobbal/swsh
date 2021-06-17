@@ -150,4 +150,30 @@ final class IntegrationTests: XCTestCase {
         try res.succeed()
         XCTAssertEqual(output, ["thing2\n", "thing1\n"])
     }
+
+    func testCdSuccess() throws {
+        let originalWD = try cmd("pwd").runString()
+        let tmpDir = FileManager.default.temporaryDirectory.path
+        let newWD = try FileManager.default.withCurrentDirectoryPath(tmpDir) {
+            try cmd("pwd").runString()
+        }
+        let finalWD = try cmd("pwd").runString()
+        XCTAssertNotEqual(originalWD, newWD)
+        XCTAssertEqual(originalWD, finalWD)
+    }
+
+    func testCdFailure() throws {
+        let body = { XCTFail("body should not be run") }
+        XCTAssertThrowsError(try FileManager.default.withCurrentDirectoryPath("this-shouldnt-exist", body: body)) { error in
+            XCTAssertEqual("\(error)", "ChangeDirectoryFailedError()")
+        }
+    }
+
+    func testCdRethrows() throws {
+        let tmpDir = FileManager.default.temporaryDirectory.path
+        struct Foo: Error {}
+        XCTAssertThrowsError(try FileManager.default.withCurrentDirectoryPath(tmpDir) { throw Foo() }) { error in
+            XCTAssertEqual("\(error)", "Foo()")
+        }
+    }
 }
