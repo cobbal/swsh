@@ -21,13 +21,13 @@ public struct FileDescriptor: RawRepresentable, ExpressibleByIntegerLiteral {
 
 extension FileDescriptor: Hashable, Equatable, CustomStringConvertible {
     public var description: String {
-        return rawValue.description
+        rawValue.description
     }
 }
 
 extension FileHandle {
     /// The underlying FD number
     public var fd: FileDescriptor {
-        return FileDescriptor(fileDescriptor)
+        FileDescriptor(fileDescriptor)
     }
 }

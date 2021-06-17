@@ -11,7 +11,7 @@ public protocol Command: AnyObject {
 extension Command {
     // MARK: - Running
 
-    internal var standardFdMap: FDMap { return [
+    internal var standardFdMap: FDMap { [
         .stdin: .stdin,
         .stdout: .stdout,
         .stderr: .stderr,
@@ -21,7 +21,7 @@ extension Command {
     /// - Parameter fdMap: A map from child FDs to parent FDs, will be composed with standard map
     /// - Returns: a result capable of monitoring the asynchronous command
     public func async(fdMap: FDMap = [:]) -> CommandResult {
-        return coreAsync(fdMap: fdMap.compose(standardFdMap))
+        coreAsync(fdMap: fdMap.compose(standardFdMap))
     }
 
      /// Run the command asynchronously, inheriting or overwriting the standard file descriptors
@@ -30,7 +30,7 @@ extension Command {
         stdout: FileDescriptor = .stdout,
         stderr: FileDescriptor = .stderr
     ) -> CommandResult {
-        return coreAsync(fdMap: [.stdin: stdin, .stdout: stdout, .stderr: stderr])
+        coreAsync(fdMap: [.stdin: stdin, .stdout: stdout, .stderr: stderr])
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
@@ -50,7 +50,7 @@ extension Command {
 
     /// Run the command synchronously, and return true if the command exited zero
     public func runBool() -> Bool {
-        return async().exitCode() == 0
+        async().exitCode() == 0
     }
 
     /// Run the command synchronously, directing the output to a temporary file
@@ -105,7 +105,7 @@ extension Command {
     /// - Throws: if command fails
     /// - Throws: if the output isn't JSON
     public func runJSON(options: JSONSerialization.ReadingOptions = .allowFragments) throws -> Any {
-        return try JSONSerialization.jsonObject(with: runData(), options: options)
+        try JSONSerialization.jsonObject(with: runData(), options: options)
     }
 
     /// Run the command synchronously, and collect output as a parsed JSON object

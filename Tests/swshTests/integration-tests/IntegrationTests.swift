@@ -164,7 +164,7 @@ final class IntegrationTests: XCTestCase {
 
     func testCdFailure() throws {
         let body = { XCTFail("body should not be run") }
-        XCTAssertThrowsError(try FileManager.default.withCurrentDirectoryPath("this-shouldnt-exist", body: body)) { error in
+        XCTAssertThrowsError(try FileManager.default.withCurrentDirectoryPath("shouldnt-exist", body: body)) { error in
             XCTAssertEqual("\(error)", "ChangeDirectoryFailedError()")
         }
     }

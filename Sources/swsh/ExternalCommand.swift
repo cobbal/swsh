@@ -51,7 +51,7 @@ public class ExternalCommand: Command {
         }
 
         var isRunning: Bool {
-            return Result.reaperQueue.sync { _exitCode == nil }
+            Result.reaperQueue.sync { _exitCode == nil }
         }
 
         func kill(signal: Int32) throws {
@@ -94,12 +94,12 @@ public class ExternalCommand: Command {
 /// - Parameter command: The executable to run
 /// - Parameter arguments: The command line arguments to pass. No substitution is performed
 public func cmd(_ command: String, arguments: [String], addEnv: [String: String] = [:]) -> Command {
-    return ExternalCommand(command, arguments: arguments, addEnv: addEnv)
+    ExternalCommand(command, arguments: arguments, addEnv: addEnv)
 }
 
 /// Convenience function for creating an extternal command. Does **not** run the command.
 /// - Parameter command: The executable to run
 /// - Parameter arguments: The command line arguments to pass. No substitution is performed
 public func cmd(_ command: String, _ arguments: String..., addEnv: [String: String] = [:]) -> Command {
-    return ExternalCommand(command, arguments: arguments, addEnv: addEnv)
+    ExternalCommand(command, arguments: arguments, addEnv: addEnv)
 }

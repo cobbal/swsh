@@ -72,7 +72,7 @@ class PipelineTests: XCTestCase {
     }
 
     class AnError: Error, Equatable {
-        static func == (lhs: AnError, rhs: AnError) -> Bool { return lhs.id == rhs.id }
+        static func == (lhs: AnError, rhs: AnError) -> Bool { lhs.id == rhs.id }
         let id = UUID()
     }
 

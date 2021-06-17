@@ -52,7 +52,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     var outerResult: FDWrapperCommand.Result!
     var innerResult: MockCommand.Result!
     var error: Error!
-    var syscallError: SyscallError! { return error as? SyscallError }
+    var syscallError: SyscallError! { error as? SyscallError }
 
     var handle: FileHandle? {
         let fd: FileDescriptor = innerResult?.fdMap[.stdin] != .stdin ? .stdin : .stdout
@@ -161,7 +161,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     // MARK: - Input
 
     func handleString() throws -> String {
-        return String(data: try unwrap(handle).readDataToEndOfFile(), encoding: .utf8)!
+        String(data: try unwrap(handle).readDataToEndOfFile(), encoding: .utf8)!
     }
 
     func testInputStringSuccess() throws {
