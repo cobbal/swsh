@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents a description of a command that can be executed any number of times, but usually just once.
-public protocol Command: class {
+public protocol Command: AnyObject {
     /// The minimum requirement of a Command is that it can launch itself asynchronously
     /// - Parameter fdMap: A map from child FDs to parent FDs
     /// - Returns: a result capable of monitoring the asynchronous command
