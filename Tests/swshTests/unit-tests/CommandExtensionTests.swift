@@ -5,7 +5,7 @@ class CommandExtensionTests: XCTestCase {
     let cmd = MockCommand()
 
     var str = "hello\n"
-    var data: Data { return str.data(using: .utf8)! }
+    var data: Data { str.data(using: .utf8)! }
 
     func withResult<T>(_ cmd: MockCommand, block: () -> T) -> (MockCommand.Result, T) {
         var result: MockCommand.Result?

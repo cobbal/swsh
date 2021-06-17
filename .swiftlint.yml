@@ -6,7 +6,6 @@ disabled_rules:
   - type_body_length
   - identifier_name
   - function_parameter_count
-  - file_name
 opt_in_rules:
   - closure_spacing
   - empty_collection_literal
@@ -14,7 +13,7 @@ opt_in_rules:
   - file_header
   - file_name
   - file_types_order
-# - implicit_return
+  - implicit_return
   - lower_acl_than_parent
   - multiline_literal_brackets
   - multiline_parameters
@@ -31,6 +30,7 @@ opt_in_rules:
   - yoda_condition
 included:
 excluded:
+  - Tests/swshTests/XCTestManifests.swift
 line_length: 120
 function_body_length: 100
 type_name:
@@ -46,3 +46,4 @@ file_name:
   excluded:
     - Errors.swift
     - XCTestManifests.swift
+    - Utilities.swift

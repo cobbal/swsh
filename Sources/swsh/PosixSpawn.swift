@@ -59,9 +59,9 @@ public struct PosixSpawn: ProcessSpawner {
     }
 
     // C macros are unfortunately not bridged to swift, borrowed from Foundation/Process
-    private static func WIFEXITED(_ status: Int32) -> Bool { return _WSTATUS(status) == 0 }
-    private static func _WSTATUS(_ status: Int32) -> Int32 { return status & 0x7f }
-    private static func WEXITSTATUS(_ status: Int32) -> Int32 { return (status >> 8) & 0xff }
+    private static func WIFEXITED(_ status: Int32) -> Bool { _WSTATUS(status) == 0 }
+    private static func _WSTATUS(_ status: Int32) -> Int32 { status & 0x7f }
+    private static func WEXITSTATUS(_ status: Int32) -> Int32 { (status >> 8) & 0xff }
     private static func WIFSIGNALED(_ status: Int32) -> Bool { _WSTATUS(status) != _WSTOPPED && _WSTATUS(status) != 0 }
 
     public func reapAsync(

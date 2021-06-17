@@ -40,8 +40,8 @@ internal class FDWrapperCommand: Command {
         let command: Command
         let ref: Any?
 
-        var isRunning: Bool { return innerResult.isRunning }
-        func exitCode() -> Int32 { return innerResult.exitCode() }
+        var isRunning: Bool { innerResult.isRunning }
+        func exitCode() -> Int32 { innerResult.exitCode() }
         func succeed() throws { try innerResult.succeed() }
         func kill(signal: Int32) throws { try innerResult.kill(signal: signal) }
     }
@@ -67,14 +67,14 @@ extension Command {
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
     public func output(creatingFile path: String, fd: FileDescriptor = .stdout) -> Command {
-        return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_EXCL | O_WRONLY)
+        FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_EXCL | O_WRONLY)
     }
 
     /// Bind output to a file, creating if needed. Similar to ">" in bash
     /// - Parameter path: Path to write output to
     /// - Parameter fd: File descriptor to bind. Defaults to stdout
     public func output(overwritingFile path: String, fd: FileDescriptor = .stdout) -> Command {
-        return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_TRUNC | O_WRONLY)
+        FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_CREAT | O_TRUNC | O_WRONLY)
     }
 
     /// Bind output to end of a file. Similar to ">>" in bash
@@ -94,14 +94,14 @@ extension Command {
     /// - Parameter srcFd: File descriptor to duplicate
     /// - Parameter dstFd: Descriptor of new, duplicated handle
     public func duplicateFd(source srcFd: FileDescriptor, destination dstFd: FileDescriptor) -> Command {
-        return FDWrapperCommand(inner: self) { _ in
-            return .success(fdMap: [dstFd: srcFd], ref: nil)
+        FDWrapperCommand(inner: self) { _ in
+            .success(fdMap: [dstFd: srcFd], ref: nil)
         }
     }
 
     /// Redirect standard error to standard output. "2>&1" in bash
     public var combineError: Command {
-        return duplicateFd(source: .stdout, destination: .stderr)
+        duplicateFd(source: .stdout, destination: .stderr)
     }
 
     // MARK: - Input
@@ -124,7 +124,7 @@ extension Command {
     /// Bind stdin to contents of data
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     public func input(_ data: Data, fd: FileDescriptor = .stdin) -> Command {
-        return FDWrapperCommand(inner: self) { _ in
+        FDWrapperCommand(inner: self) { _ in
             let pipe = Pipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
             let writeHandle = pipe.fileHandleForWriting
@@ -148,7 +148,7 @@ extension Command {
         fd: FileDescriptor = .stdin,
         options: JSONSerialization.WritingOptions = .init()
     ) throws -> Command {
-        return input(try JSONSerialization.data(withJSONObject: json, options: options), fd: fd)
+        input(try JSONSerialization.data(withJSONObject: json, options: options), fd: fd)
     }
 
     /// Bind stdin to the the JSON representation of a JSON-encodable value
@@ -161,12 +161,12 @@ extension Command {
         fd: FileDescriptor = .stdin,
         encoder: JSONEncoder = .init()
     ) throws -> Command {
-        return input(try encoder.encode(object), fd: fd)
+        input(try encoder.encode(object), fd: fd)
     }
 
     /// Bind stdin to a file, similar to `< file` in bash
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     public func input(fromFile path: String, fd: FileDescriptor = .stdin) -> Command {
-        return FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_RDONLY)
+        FDWrapperCommand(inner: self, opening: path, toHandle: fd, oflag: O_RDONLY)
     }
 }

@@ -4,7 +4,7 @@ import XCTest
 class MockCommand: Command, Equatable {
     class Result: CommandResult {
         private var _command: MockCommand
-        public var command: Command { return _command }
+        public var command: Command { _command }
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         public var fdMap: FDMap
@@ -19,7 +19,7 @@ class MockCommand: Command, Equatable {
             }
         }
 
-        subscript(_ fd: FileDescriptor) -> FileHandle! { return handles[fd] }
+        subscript(_ fd: FileDescriptor) -> FileHandle! { handles[fd] }
 
         public func setExit(code: Int32) {
             let old = _exitCode
@@ -29,7 +29,7 @@ class MockCommand: Command, Equatable {
             }
         }
 
-        public var isRunning: Bool { return _exitCode == nil }
+        public var isRunning: Bool { _exitCode == nil }
         func exitCode() -> Int32 {
             _exitSemaphore.wait()
             _exitSemaphore.signal()
@@ -54,5 +54,5 @@ class MockCommand: Command, Equatable {
         return result
     }
 
-    static func == (lhs: MockCommand, rhs: MockCommand) -> Bool { return lhs === rhs }
+    static func == (lhs: MockCommand, rhs: MockCommand) -> Bool { lhs === rhs }
 }
