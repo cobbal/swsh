@@ -1,4 +1,4 @@
-// swift-tools-version:5.0
+// swift-tools-version:5.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -18,12 +18,14 @@ let package = Package(
     targets: [
         .target(
             name: "swsh",
-            dependencies: ["linuxSpawn"]),
+            dependencies: [
+                .target(name: "linuxSpawn", condition: .when(platforms: [.linux]))
+            ]),
         .testTarget(
             name: "swshTests",
             dependencies: ["swsh"]),
         .target(
-          name: "linuxSpawn",
-          dependencies: []),
+            name: "linuxSpawn",
+            dependencies: []),
     ]
 )
