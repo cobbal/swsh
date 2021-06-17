@@ -85,6 +85,9 @@ extension IntegrationTests {
     // to regenerate.
     static let __allTests__IntegrationTests = [
         ("testAbsPath", testAbsPath),
+        ("testCdFailure", testCdFailure),
+        ("testCdRethrows", testCdRethrows),
+        ("testCdSuccess", testCdSuccess),
         ("testCmdArgList", testCmdArgList),
         ("testCombineOutput", testCombineOutput),
         ("testFailureIsntRunning", testFailureIsntRunning),
