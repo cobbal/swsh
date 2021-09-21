@@ -1,3 +1,25 @@
+# [3.0.0](https://github.com/cobbal/swsh/compare/v2.0.0...v3.0.0) (2021-09-21)
+
+
+### Bug Fixes
+
+* workaround for Xcode 13 bug ([d69ead5](https://github.com/cobbal/swsh/commit/d69ead58347ca21f0edf36de5e309895cafeaca1))
+
+
+### chore
+
+* update to SPM 5.3 ([67b5585](https://github.com/cobbal/swsh/commit/67b5585493e1af34dda9dbbe5104a34355e6fab9))
+
+
+### Features
+
+* add `FileManager/withCurrentDirectoryPath` ([25e910e](https://github.com/cobbal/swsh/commit/25e910ebcbb079996f62ec8f02a78b603da4c86c))
+
+
+### BREAKING CHANGES
+
+* SPM 5.3 now required
+
 # [2.0.0](https://github.com/cobbal/swsh/compare/v1.0.1...v2.0.0) (2020-08-10)
 
 
