@@ -44,8 +44,10 @@ public struct PosixSpawn: ProcessSpawner {
         cEnv.append(nil)
 
         defer {
-            cArgs.forEach { free($0) }
-            cEnv.forEach { free($0) }
+            // Avoid freeing nil due to type signature change bug in Xcode 13:
+            // https://twitter.com/pathofshrines/status/1440386108416684032
+            cArgs.compactMap { $0 }.forEach { free($0) }
+            cEnv.compactMap { $0 }.forEach { free($0) }
         }
 
         var pid = pid_t()
