@@ -4,9 +4,6 @@ build:
 test: build
 	swift test --enable-code-coverage
 
-test-and-generate-linux-tests: build
-	swift test --enable-code-coverage --generate-linuxmain
-
 docs: docs/swsh-master
 
 docs/swsh-%: docs-phony

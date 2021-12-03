@@ -2,21 +2,14 @@ name: test-linux
 on: push
 jobs:
   test-linux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v1
-    - name: Install swift
-      run: |-
-        set -euxo pipefail
-        # https://tecadmin.net/install-swift-ubuntu-1804-bionic/
-        sudo apt-get install clang
-        curl -o swift.tgz https://swift.org/builds/swift-5.0.2-release/ubuntu1804/swift-5.0.2-RELEASE/swift-5.0.2-RELEASE-ubuntu18.04.tar.gz
-        tar xzf swift.tgz
-        sudo mv swift-5.0.2-RELEASE-ubuntu18.04 /usr/share/swift
-        PATH="/usr/share/swift/usr/bin:$PATH" swift --version
     - name: Build
       run: |-
-        PATH="/usr/share/swift/usr/bin:$PATH" swift build -v
+        set -euxo pipefail
+        swift build
     - name: Run tests
       run: |-
-        PATH="/usr/share/swift/usr/bin:$PATH" swift test -v
+        set -euxo pipefail
+        swift test
