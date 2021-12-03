@@ -58,5 +58,11 @@ public class Pipeline: Command {
     }
 }
 
+extension Pipeline: CustomStringConvertible {
+    public var description: String {
+        ([first] + rest).map(String.init(describing:)).joined(separator: " | ")
+    }
+}
+
 /// Convenience function to create a 2-command pipeline
 public func | (_ left: Command, _ right: Command) -> Command { Pipeline(left, right) }

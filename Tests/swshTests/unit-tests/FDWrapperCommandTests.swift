@@ -2,7 +2,7 @@
 import XCTest
 
 final class FDWrapperCommandTests: XCTestCase {
-    let inner = MockCommand()
+    let inner = MockCommand(description: "inner")
     lazy var cmd = FDWrapperCommand( inner: inner, opening: "/dev/null", toHandle: 0, oflag: O_RDONLY)
     lazy var invalidCmd = FDWrapperCommand( inner: inner, opening: "\(UUID())", toHandle: 0, oflag: O_RDONLY)
 
@@ -48,7 +48,7 @@ final class FDWrapperCommandTests: XCTestCase {
 }
 
 final class FDWrapperCommandExtensionsTests: XCTestCase {
-    let inner = MockCommand()
+    let inner = MockCommand(description: "inner")
     var outerResult: FDWrapperCommand.Result!
     var innerResult: MockCommand.Result!
     var error: Error!
@@ -187,5 +187,9 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     func testInputFromFile() throws {
         try succeed(inner.input(fromFile: tmpPath))
         XCTAssertEqual(try handleString(), "Hello")
+    }
+
+    func testDescription() throws {
+        XCTAssertEqual("\(inner.combineError)", "inner")
     }
 }

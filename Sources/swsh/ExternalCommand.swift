@@ -1,16 +1,32 @@
 import Foundation
 
 /// Represents an external program invocation. It is the lowest-level command, that will spawn a subprocess when run.
-public class ExternalCommand: Command {
+public class ExternalCommand: Command, CustomStringConvertible {
     internal let command: String
     internal let arguments: [String]
     /// The environment variables the command will be launched with
     public let environment: [String: String]
 
+    public let description: String
+
     /// like "set -x", this will cause all external commands to print themselves when they run
     public static var verbose: Bool = false
 
     internal var spawner: ProcessSpawner
+
+    internal static let safeCharacters = CharacterSet(
+        charactersIn: "/%+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz"
+    )
+
+    internal static func escape(_ str: String) -> String {
+        if str.isEmpty {
+            return "''"
+        } else if str.unicodeScalars.allSatisfy(safeCharacters.contains) {
+            return str
+        } else {
+            return "'\(str.replacingOccurrences(of: "'", with: #"'\''"#))'"
+        }
+    }
 
     /// Creates the command, but does **not** run it
     /// - Parameter command: The executable to run
@@ -21,6 +37,15 @@ public class ExternalCommand: Command {
         self.command = command
         self.arguments = arguments
         self.environment = ProcessInfo.processInfo.environment.merging(addEnv) { $1 }
+
+        var descriptionParts: [String] = []
+        for env in addEnv.sorted(by: { $0.key < $1.key }) {
+            descriptionParts.append("\(Self.escape(env.key))=\(Self.escape(env.value))")
+        }
+        descriptionParts.append(Self.escape(command))
+        descriptionParts.append(contentsOf: arguments.map(Self.escape))
+        self.description = descriptionParts.joined(separator: " ")
+
         #if canImport(Darwin)
         self.spawner = PosixSpawn()
         #elseif canImport(Glibc)

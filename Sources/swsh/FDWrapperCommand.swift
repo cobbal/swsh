@@ -60,6 +60,12 @@ internal class FDWrapperCommand: Command {
     }
 }
 
+extension FDWrapperCommand: CustomStringConvertible {
+    var description: String {
+        String(describing: inner)
+    }
+}
+
 extension Command {
     // MARK: - Output redirection
 
