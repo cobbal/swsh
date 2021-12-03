@@ -1,7 +1,7 @@
 @testable import swsh
 import XCTest
 
-class MockCommand: Command, Equatable {
+class MockCommand: Command, Equatable, CustomStringConvertible {
     class Result: CommandResult {
         private var _command: MockCommand
         public var command: Command { _command }
@@ -47,6 +47,11 @@ class MockCommand: Command, Equatable {
 
     public var killResponse: Error?
     var resultCallback: ((Result) -> Void)?
+    var description: String
+
+    init(description: String = "MockCommand") {
+        self.description = description
+    }
 
     func coreAsync(fdMap: FDMap) -> CommandResult {
         let result = Result(command: self, fdMap: fdMap)

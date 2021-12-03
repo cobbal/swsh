@@ -2,9 +2,9 @@
 import XCTest
 
 class PipelineTests: XCTestCase {
-    let cmd0 = MockCommand()
-    let cmd1 = MockCommand()
-    let cmd2 = MockCommand()
+    let cmd0 = MockCommand(description: "cmd0")
+    let cmd1 = MockCommand(description: "cmd1")
+    let cmd2 = MockCommand(description: "cmd2")
 
     lazy var pipeline = Pipeline(cmd0, cmd1, cmd2)
 
@@ -85,5 +85,9 @@ class PipelineTests: XCTestCase {
         XCTAssertThrowsError(try pipeline.async().kill()) { error in
             XCTAssertEqual(error as? AnError, err1)
         }
+    }
+
+    func testPipeDescription() throws {
+        XCTAssertEqual(pipeline.description, "cmd0 | cmd1 | cmd2")
     }
 }
