@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/cobbal/swsh/compare/v3.0.0...v3.1.0) (2021-12-04)
+
+
+### Features
+
+* add meaningful descriptions to Commands ([e7cabda](https://github.com/cobbal/swsh/commit/e7cabda5b137c0406e82a16cc7ef977a566e9b5a))
+
 # [3.0.0](https://github.com/cobbal/swsh/compare/v2.0.0...v3.0.0) (2021-09-21)
 
 
