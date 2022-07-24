@@ -53,7 +53,7 @@ public class ExternalCommand: Command, CustomStringConvertible {
         #endif
     }
 
-    internal class Result: CommandResult {
+    internal class Result: CommandResult, AsyncCommandResult {
         static let reaperQueue = DispatchQueue(label: "swsh.ExternalCommand.Result.reaper")
 
         let name: String
@@ -61,15 +61,18 @@ public class ExternalCommand: Command, CustomStringConvertible {
         let pid: pid_t
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
+        private var _exitContinuations: [() -> Void] = []
 
         init(command: ExternalCommand, pid: pid_t) {
             self.command = command
             self.name = command.command
             self.pid = pid
 
-            command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] in
-                self?._exitCode = $0
+            command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] exitCode in
+                self?._exitCode = exitCode
                 self?._exitSemaphore.signal()
+                self?._exitContinuations.forEach { $0() }
+                self?._exitContinuations = []
             }
 
             try? kill(signal: SIGCONT)
@@ -92,6 +95,21 @@ public class ExternalCommand: Command, CustomStringConvertible {
             _exitSemaphore.signal()
             return Result.reaperQueue.sync { _exitCode! }
         }
+
+        #if compiler(>=5.5) && canImport(_Concurrency)
+        @available(macOS 10.15, *)
+        func asyncFinish() async {
+            await withCheckedContinuation { (kont: CheckedContinuation<Void, Never>) in
+                Result.reaperQueue.sync {
+                    if _exitCode != nil {
+                        kont.resume()
+                    } else {
+                        _exitContinuations.append { kont.resume() }
+                    }
+                }
+            }
+        }
+        #endif
     }
 
     public func coreAsync(fdMap: FDMap) -> CommandResult {

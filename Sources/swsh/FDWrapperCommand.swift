@@ -35,7 +35,7 @@ internal class FDWrapperCommand: Command {
         }
     }
 
-    struct Result: CommandResult {
+    struct Result: CommandResult, AsyncCommandResult {
         let innerResult: CommandResult
         let command: Command
         let ref: Any?
@@ -44,6 +44,13 @@ internal class FDWrapperCommand: Command {
         func exitCode() -> Int32 { innerResult.exitCode() }
         func succeed() throws { try innerResult.succeed() }
         func kill(signal: Int32) throws { try innerResult.kill(signal: signal) }
+
+        #if compiler(>=5.5) && canImport(_Concurrency)
+        @available(macOS 10.15, *)
+        func asyncFinish() async {
+            await innerResult.asyncFinishInternal()
+        }
+        #endif
     }
 
     func coreAsync(fdMap incoming: FDMap) -> CommandResult {

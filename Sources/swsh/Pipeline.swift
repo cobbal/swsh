@@ -12,7 +12,7 @@ public class Pipeline: Command {
         self.rest = rest
     }
 
-    internal struct Result: CommandResult {
+    internal struct Result: CommandResult, AsyncCommandResult {
         let command: Command
         let results: [CommandResult]
         var isRunning: Bool { results.contains { $0.isRunning } }
@@ -42,6 +42,15 @@ public class Pipeline: Command {
             }
             try signalError.map { throw $0 }
         }
+
+        #if compiler(>=5.5) && canImport(_Concurrency)
+        @available(macOS 10.15, *)
+        func asyncFinish() async {
+            for result in results {
+                await result.asyncFinishInternal()
+            }
+        }
+        #endif
     }
 
     public func coreAsync(fdMap baseFDMap: FDMap) -> CommandResult {
