@@ -27,4 +27,20 @@ extension XCTestCase {
         return e
     }
     #endif
+
+    // From https://www.wwt.com/article/unit-testing-on-ios-with-async-await
+    func XCTAssertThrowsAsyncError(
+        _ expression: @autoclosure () async throws -> Any,
+        _ message: @autoclosure () -> String = "",
+        file: StaticString = #filePath,
+        line: UInt = #line,
+        _ errorHandler: (_ error: Error) -> Void = { _ in }
+    ) async {
+        do {
+            _ = try await expression()
+            XCTFail(message(), file: file, line: line)
+        } catch {
+            errorHandler(error)
+        }
+    }
 }
