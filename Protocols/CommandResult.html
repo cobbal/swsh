@@ -14,7 +14,7 @@
     <a title="CommandResult Protocol Reference"></a>
     <header>
       <div class="content-wrapper">
-        <p><a href="../index.html">swsh master Docs</a> (100% documented)</p>
+        <p><a href="../index.html">swsh master Docs</a> (99% documented)</p>
         <p class="header-right"><a href="https://github.com/cobbal/swsh"><img src="../img/gh.png"/>View on GitHub</a></p>
       </div>
     </header>
@@ -208,6 +208,9 @@
                     <a name="//apple_ref/swift/Method/exitCode()" class="dashAnchor"></a>
                     <a class="token" href="#/s:4swsh13CommandResultP8exitCodes5Int32VyF">exitCode()</a>
                     </code>
+                      <span class="declaration-note">
+                        Default implementation
+                      </span>
                   </div>
                   <div class="height-container">
                     <div class="pointer-container"></div>
@@ -215,6 +218,11 @@
                       <div class="pointer"></div>
                       <div class="abstract">
                         <p>Block until command is finished, and return exit code</p>
+
+                      </div>
+                      <h4>Default Implementation</h4>
+                      <div class="default_impl abstract">
+                        <p>return exit code asynchronously</p>
 
                       </div>
                       <div class="declaration">
@@ -235,6 +243,9 @@
                     <a name="//apple_ref/swift/Method/succeed()" class="dashAnchor"></a>
                     <a class="token" href="#/s:4swsh13CommandResultP7succeedyyKF">succeed()</a>
                     </code>
+                      <span class="declaration-note">
+                        Default implementation
+                      </span>
                   </div>
                   <div class="height-container">
                     <div class="pointer-container"></div>
@@ -242,6 +253,11 @@
                       <div class="pointer"></div>
                       <div class="abstract">
                         <p>Block and throw an error if exitCode is non-zero</p>
+
+                      </div>
+                      <h4>Default Implementation</h4>
+                      <div class="default_impl abstract">
+                        <p>throw an error if exitCode is non-zero asynchronously</p>
 
                       </div>
                       <div class="declaration">
@@ -276,6 +292,68 @@
                         <div class="language">
                           <p class="aside-title">Swift</p>
                           <pre class="highlight swift"><code><span class="kd">func</span> <span class="nf">kill</span><span class="p">(</span><span class="nv">signal</span><span class="p">:</span> <span class="kt">Int32</span><span class="p">)</span> <span class="k">throws</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh13CommandResultPAAE15withSyncContext1fqd__qd__yKXE_tKlF"></a>
+                    <a name="//apple_ref/swift/Method/withSyncContext(f:)" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh13CommandResultPAAE15withSyncContext1fqd__qd__yKXE_tKlF">withSyncContext(f:)</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Undocumented</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">func</span> <span class="n">withSyncContext</span><span class="o">&lt;</span><span class="kt">R</span><span class="o">&gt;</span><span class="p">(</span><span class="nv">f</span><span class="p">:</span> <span class="p">()</span> <span class="k">throws</span> <span class="o">-&gt;</span> <span class="kt">R</span><span class="p">)</span> <span class="k">rethrows</span> <span class="o">-&gt;</span> <span class="kt">R</span></code></pre>
+
+                        </div>
+                      </div>
+                    </section>
+                  </div>
+                </li>
+                <li class="item">
+                  <div>
+                    <code>
+                    <a name="/s:4swsh13CommandResultPAAE6finishxyYaF"></a>
+                    <a name="//apple_ref/swift/Method/finish()" class="dashAnchor"></a>
+                    <a class="token" href="#/s:4swsh13CommandResultPAAE6finishxyYaF">finish()</a>
+                    </code>
+                      <span class="declaration-note">
+                        Extension method
+                      </span>
+                  </div>
+                  <div class="height-container">
+                    <div class="pointer-container"></div>
+                    <section class="section">
+                      <div class="pointer"></div>
+                      <div class="abstract">
+                        <p>Wait for the command to finish, ignoring any exit code</p>
+
+                      </div>
+                      <div class="declaration">
+                        <h4>Declaration</h4>
+                        <div class="language">
+                          <p class="aside-title">Swift</p>
+                          <pre class="highlight swift"><code><span class="kd">@available</span><span class="p">(</span><span class="n">macOS</span> <span class="mf">10.15</span><span class="p">,</span> <span class="o">*</span><span class="p">)</span>
+<span class="kd">@discardableResult</span>
+<span class="kd">public</span> <span class="kd">func</span> <span class="nf">finish</span><span class="p">()</span> <span class="n">async</span> <span class="o">-&gt;</span> <span class="k">Self</span></code></pre>
 
                         </div>
                       </div>
@@ -378,7 +456,7 @@
           </section>
         </section>
         <section id="footer">
-          <p>&copy; 2021 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2021-12-04)</p>
+          <p>&copy; 2022 <a class="link" href="" target="_blank" rel="external"></a>. All rights reserved. (Last updated: 2022-07-31)</p>
           <p>Generated by <a class="link" href="https://github.com/realm/jazzy" target="_blank" rel="external">jazzy ♪♫ v0.13.0</a>, a <a class="link" href="https://realm.io" target="_blank" rel="external">Realm</a> project.</p>
         </section>
       </article>

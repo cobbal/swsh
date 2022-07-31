@@ -1,6 +1,12 @@
 {
   "warnings": [
-
+    {
+      "file": "/Users/runner/work/swsh/swsh/Sources/swsh/CommandResult+async.swift",
+      "line": 11,
+      "symbol": "CommandResult.withSyncContext(f:)",
+      "symbol_kind": "source.lang.swift.decl.function.method.instance",
+      "warning": "undocumented"
+    }
   ],
   "source_directory": "/Users/runner/work/swsh/swsh"
 }
