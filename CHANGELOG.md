@@ -1,3 +1,18 @@
+# [4.0.0](https://github.com/cobbal/swsh/compare/v3.1.0...v4.0.0) (2022-07-31)
+
+
+### Features
+
+* add swift 5.5 async versions of most Command methods ([0a49325](https://github.com/cobbal/swsh/commit/0a49325f9a9ce9d8e0ce4779fbb487cea788f8b5))
+
+
+### BREAKING CHANGES
+
+* old synchronous versions of these methods can no longer
+    be called in asynchronous contexts
+
+make all test cases hide their asynchrony so linux stops crashing
+
 # [3.1.0](https://github.com/cobbal/swsh/compare/v3.0.0...v3.1.0) (2021-12-04)
 
 
