@@ -20,4 +20,16 @@ extension FileManager {
         defer { _ = changeCurrentDirectoryPath(oldPath) }
         return try body()
     }
+
+    /// Change current directory to `path` for the duration of `body`, then return to previous directory.
+    /// - Throws: `ChangeDirectoryFailedError` if directory change fails, rethrows errors from `body`
+    /// - Returns: the result of `body`
+    public func withCurrentDirectoryPath<Result>(_ path: String, body: () async throws -> Result) async throws -> Result {
+        let oldPath = currentDirectoryPath
+        guard changeCurrentDirectoryPath(path) else {
+            throw ChangeDirectoryFailedError()
+        }
+        defer { _ = changeCurrentDirectoryPath(oldPath) }
+        return try await body()
+    }
 }
