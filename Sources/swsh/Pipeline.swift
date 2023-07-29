@@ -31,11 +31,11 @@ public class Pipeline: Command {
             try results.forEach { try $0.succeed() }
         }
 
-        func kill(signal: Int32) throws {
+        func _kill(signal: Int32) throws {
             var signalError: Error?
             for result in results {
                 do {
-                    try result.kill(signal: signal)
+                    try result._kill(signal: signal)
                 } catch let error {
                     signalError = signalError ?? error
                 }
@@ -54,9 +54,9 @@ public class Pipeline: Command {
     }
 
     public func coreAsync(fdMap baseFDMap: FDMap) -> CommandResult {
-        let pipes = rest.map { _ in Pipe() }
-        let inputs = [.stdin] + pipes.map { $0.fileHandleForReading.fd }
-        let outputs = pipes.map { $0.fileHandleForWriting.fd } + [.stdout]
+        let pipes = rest.map { _ in FDPipe() }
+        let inputs = [FileDescriptor.stdin] + pipes.map { .init($0.fileDescriptorForReading) }
+        let outputs = pipes.map { .init($0.fileDescriptorForWriting) } + [FileDescriptor.stdout]
         var results = [CommandResult]()
         for (command, (input, output)) in zip([first] + rest, zip(inputs, outputs)) {
             var fdMap = baseFDMap

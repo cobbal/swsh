@@ -85,6 +85,12 @@ public struct PosixSpawn: ProcessSpawner {
         }
         processSource.activate()
     }
+
+    public func resume(
+      pid: pid_t
+    ) throws {
+        kill(SIGCONT, pid)
+    }
 }
 
 #endif

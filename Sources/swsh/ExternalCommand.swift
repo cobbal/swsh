@@ -50,6 +50,8 @@ public class ExternalCommand: Command, CustomStringConvertible {
         self.spawner = PosixSpawn()
         #elseif canImport(Glibc)
         self.spawner = LinuxSpawn()
+        #elseif canImport(ucrt)
+        self.spawner = WindowsSpawn()
         #endif
     }
 
@@ -75,17 +77,21 @@ public class ExternalCommand: Command, CustomStringConvertible {
                 self?._exitContinuations = []
             }
 
-            try? kill(signal: SIGCONT)
+            try? command.spawner.resume(pid: pid)
         }
 
         var isRunning: Bool {
             Result.reaperQueue.sync { _exitCode == nil }
         }
 
-        func kill(signal: Int32) throws {
+        func _kill(signal: Int32) throws {
+            #if os(Windows)
+            throw PlatformError.killUnsupportedOnWindows
+            #else
             guard Foundation.kill(pid, signal) == 0 else {
                 throw SyscallError(name: "kill", command: command, errno: errno)
             }
+            #endif
         }
 
         func succeed() throws { try defaultSucceed(name: name) }

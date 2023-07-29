@@ -62,5 +62,11 @@ public struct LinuxSpawn: ProcessSpawner {
             }
         }
     }
+
+    public func resume(
+      pid: pid_t
+    ) throws {
+        kill(SIGCONT, pid)
+    }
 }
 #endif

@@ -31,7 +31,7 @@ let package = Package(
         ),
         .target(
             name: "windowsSpawn",
-             dependencies: []
+            dependencies: []
         ),
     ]
 )

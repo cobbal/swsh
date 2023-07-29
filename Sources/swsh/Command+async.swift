@@ -35,11 +35,11 @@ extension Command {
     /// - Returns: output as Data
     @available(macOS 10.15, *)
     public func runData() async throws -> Data {
-        let pipe = Pipe()
-        let write = pipe.fileHandleForWriting
-        let result = async(fdMap: [ .stdout: write.fd ])
-        close(write.fileDescriptor)
+        let pipe = FDPipe()
+        let result = async(fdMap: [ .stdout: .init(pipe.fileDescriptorForWriting) ])
+        pipe.fileHandleForWriting.closeIgnoringErrors()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        pipe.fileHandleForReading.closeIgnoringErrors()
         try await result.succeed()
         return data
     }

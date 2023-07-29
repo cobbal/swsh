@@ -43,7 +43,7 @@ internal class FDWrapperCommand: Command {
         var isRunning: Bool { innerResult.isRunning }
         func exitCode() -> Int32 { innerResult.exitCode() }
         func succeed() throws { try innerResult.succeed() }
-        func kill(signal: Int32) throws { try innerResult.kill(signal: signal) }
+        func _kill(signal: Int32) throws { try innerResult._kill(signal: signal) }
 
         #if compiler(>=5.5) && canImport(_Concurrency)
         @available(macOS 10.15, *)
@@ -138,17 +138,20 @@ extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     public func input(_ data: Data, fd: FileDescriptor = .stdin) -> Command {
         FDWrapperCommand(inner: self) { _ in
-            let pipe = Pipe()
+            let pipe = FDPipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
-            let writeHandle = pipe.fileHandleForWriting
+
             DispatchIO.write(
-                toFileDescriptor: writeHandle.fileDescriptor,
+                toFileDescriptor: pipe.fileDescriptorForWriting,
                 data: dispatchData,
                 runningHandlerOn: DispatchQueue.global()
-            ) { [weak writeHandle] _, _ in
+            ) { [weak writeHandle = pipe.fileHandleForWriting] _, _ in
                 writeHandle?.closeFile()
             }
-            return .success(fdMap: [fd: pipe.fileHandleForReading.fd], ref: pipe)
+            return .success(
+                fdMap: [fd: .init(pipe.fileDescriptorForReading)],
+                ref: pipe.fileHandleForReading
+            )
         }
     }
 

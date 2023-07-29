@@ -41,4 +41,8 @@ public protocol ProcessSpawner {
       queue: DispatchQueue,
       callback: @escaping (Int32) -> Void
     )
+
+    func resume(
+      pid: pid_t
+    ) throws
 }

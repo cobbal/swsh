@@ -21,3 +21,13 @@ extension FileManager {
         return try body()
     }
 }
+
+extension FileHandle {
+    func closeIgnoringErrors() {
+        #if os(Windows)
+        try? close()
+        #else
+        close(fileDescriptor)
+        #endif
+    }
+}
