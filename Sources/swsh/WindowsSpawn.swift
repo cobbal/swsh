@@ -2,9 +2,10 @@
 
 import ucrt
 import Foundation
+import windowsSpawn
 
 /// A process spawned with `posix_spawn`
-public struct WindowsSpawn: ProcessSpawner {
+struct WindowsSpawn: ProcessSpawner {
     public func spawn(
       command: String,
       arguments: [String],
@@ -12,7 +13,19 @@ public struct WindowsSpawn: ProcessSpawner {
       fdMap: FDMap,
       pathResolve: Bool
     ) -> SpawnResult {
-        fatalError("TODO")
+      let intFDMap = Dictionary(uniqueKeysWithValues: fdMap.map { ($0.key.rawValue, $0.value.rawValue) })
+      do {
+        switch WindowsSpawnImpl.spawn(
+          command: command,
+          arguments: arguments,
+          env: env,
+          fdMap: intFDMap,
+          pathResolve: pathResolve
+        ) {
+          case .success(let pid): return .success(pid)
+          case .failure(let error): return .error(errno: error.errno)
+        }
+      }
     }
 
     public func reapAsync(
