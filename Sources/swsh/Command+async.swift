@@ -36,7 +36,7 @@ extension Command {
     @available(macOS 10.15, *)
     public func runData() async throws -> Data {
         let pipe = FDPipe()
-        let result = async(fdMap: [ .stdout: .init(pipe.fileDescriptorForWriting) ])
+        let result = async(fdMap: [ .stdout: pipe.fileDescriptorForWriting ])
         pipe.fileHandleForWriting.closeIgnoringErrors()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         pipe.fileHandleForReading.closeIgnoringErrors()

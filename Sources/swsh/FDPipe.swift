@@ -2,10 +2,10 @@ import Foundation
 
 // A version of `Pipe` that works more uniformly between windows and posix
 public class FDPipe {
-    let fileDescriptorForReading: Int32
-    let fileDescriptorForWriting: Int32
-    let fileHandleForReading: FileHandle
-    let fileHandleForWriting: FileHandle
+    public let fileDescriptorForReading: FileDescriptor
+    public let fileDescriptorForWriting: FileDescriptor
+    public let fileHandleForReading: FileHandle
+    public let fileHandleForWriting: FileHandle
 
     public init() {
         #if os(Windows)
@@ -16,21 +16,21 @@ public class FDPipe {
         let ret = _pipe(fds, 0, _O_BINARY)
         switch (ret, errno) {
         case (0, _):
-            fileDescriptorForReading = fds[0]
-            fileDescriptorForWriting = fds[1]
+            fileDescriptorForReading = FileDescriptor(fds[0])
+            fileDescriptorForWriting = FileDescriptor(fds[1])
 
         case (-1, EMFILE), (-1, ENFILE):
             // Unfortunately this initializer does not throw and isn't failable so this is only
             // way of handling this situation.
-            fileDescriptorForReading = -1
-            fileDescriptorForWriting = -1
-
+            fileDescriptorForReading = FileDescriptor(-1)
+            fileDescriptorForWriting = FileDescriptor(-1)
+ 
         default:
             fatalError("Error calling pipe(): \(errno)")
         }
 
-        fileHandleForReading = FileHandle(fileDescriptor: fileDescriptorForReading, closeOnDealloc: true)
-        fileHandleForWriting = FileHandle(fileDescriptor: fileDescriptorForWriting, closeOnDealloc: true)
+        fileHandleForReading = FileHandle(fileDescriptor: fileDescriptorForReading.rawValue, closeOnDealloc: true)
+        fileHandleForWriting = FileHandle(fileDescriptor: fileDescriptorForWriting.rawValue, closeOnDealloc: true)
         #else
         let pipe = Pipe()
         fileHandleForReading = pipe.fileHandleForReading

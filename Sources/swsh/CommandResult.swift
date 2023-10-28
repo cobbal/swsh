@@ -22,15 +22,10 @@ public protocol CommandResult {
     func succeed() throws
 
     /// Sends a signal to a process,
-    func _kill(signal: Int32) throws
+    func kill(signal: Int32) throws
 }
 
 extension CommandResult {
-    @available(Windows, unavailable)
-    public func kill(signal: Int32) throws {
-        try _kill(signal: signal)
-    }
-
     /// Wait for the command to finish, ignoring any exit code
     @discardableResult
     public func finish() -> Self {
@@ -47,8 +42,7 @@ extension CommandResult {
     }
 
     /// Sends a TERM signal to a process,
-    @available(Windows, unavailable)
     public func kill() throws {
-        try kill(signal: SIGTERM)
+        try _kill(signal: SIGTERM)
     }
 }

@@ -38,7 +38,7 @@ class MockCommand: Command, Equatable, CustomStringConvertible {
 
         func succeed() throws { try defaultSucceed() }
 
-        func kill(signal: Int32) throws {
+        func _kill(signal: Int32) throws {
             if let error = _command.killResponse {
                 throw error
             }

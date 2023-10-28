@@ -55,8 +55,8 @@ public class Pipeline: Command {
 
     public func coreAsync(fdMap baseFDMap: FDMap) -> CommandResult {
         let pipes = rest.map { _ in FDPipe() }
-        let inputs = [FileDescriptor.stdin] + pipes.map { .init($0.fileDescriptorForReading) }
-        let outputs = pipes.map { .init($0.fileDescriptorForWriting) } + [FileDescriptor.stdout]
+        let inputs = [FileDescriptor.stdin] + pipes.map(\.fileDescriptorForReading)
+        let outputs = pipes.map(\.fileDescriptorForWriting) + [FileDescriptor.stdout]
         var results = [CommandResult]()
         for (command, (input, output)) in zip([first] + rest, zip(inputs, outputs)) {
             var fdMap = baseFDMap

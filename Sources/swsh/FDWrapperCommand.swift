@@ -142,14 +142,14 @@ extension Command {
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
 
             DispatchIO.write(
-                toFileDescriptor: pipe.fileDescriptorForWriting,
+                toFileDescriptor: pipe.fileDescriptorForWriting.rawValue,
                 data: dispatchData,
                 runningHandlerOn: DispatchQueue.global()
             ) { [weak writeHandle = pipe.fileHandleForWriting] _, _ in
                 writeHandle?.closeFile()
             }
             return .success(
-                fdMap: [fd: .init(pipe.fileDescriptorForReading)],
+                fdMap: [fd: pipe.fileDescriptorForReading],
                 ref: pipe.fileHandleForReading
             )
         }

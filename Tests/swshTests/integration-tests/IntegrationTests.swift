@@ -96,8 +96,8 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testIsRunning() throws {
-        let pipe = Pipe()
-        let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fd)
+        let pipe = FDPipe()
+        let proc = cmd("cat").async(stdin: pipe.fileDescriptorForReading)
         XCTAssertTrue(proc.isRunning)
         pipe.fileHandleForWriting.closeFile()
         try proc.succeed()
@@ -125,7 +125,9 @@ final class IntegrationTests: XCTestCase {
 
     func testKillStop() throws {
         let res = try (cmd("bash", "-c", "while true; do sleep 1; done") | cmd("cat") | cmd("cat")).input("").async()
+        #if !os(Windows)
         try res.kill(signal: SIGSTOP)
+        #endif
         XCTAssert(res.isRunning)
         try res.kill(signal: SIGKILL)
         XCTAssertEqual(res.exitCode(), 1)
@@ -137,8 +139,8 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testRemapCycle() throws {
-        let pipes = [Pipe(), Pipe()]
-        let write = pipes.map { $0.fileHandleForWriting.fd }
+        let pipes = [FDPipe(), FDPipe()]
+        let write = pipes.map { FileDescriptor($0.fileDescriptorForWriting) }
         let res = cmd("bash", "-c", "echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],

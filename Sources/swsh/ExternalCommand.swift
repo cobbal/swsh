@@ -61,14 +61,22 @@ public class ExternalCommand: Command, CustomStringConvertible {
         let name: String
         var command: Command
         let pid: pid_t
+        #if os(Windows)
+        let processHandle: HANDLE
+        #endif
+
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         private var _exitContinuations: [() -> Void] = []
 
-        init(command: ExternalCommand, pid: pid_t) {
+        init(command: ExternalCommand, pid: pid_t, winHandle: UnsafeMutableRawPointer?) {
             self.command = command
             self.name = command.command
             self.pid = pid
+
+            #if os(Windows)
+            self.processHandle = winHandle
+            #endif
 
             command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] exitCode in
                 self?._exitCode = exitCode
@@ -83,10 +91,27 @@ public class ExternalCommand: Command, CustomStringConvertible {
         var isRunning: Bool {
             Result.reaperQueue.sync { _exitCode == nil }
         }
+        
+        static let NtSuspendProcess: (Handle) -> Int32 = {
+            return { _ in 0 }
+        }()
 
-        func _kill(signal: Int32) throws {
+        func kill(signal: Int32) throws {
             #if os(Windows)
-            throw PlatformError.killUnsupportedOnWindows
+            // TODO: figure out how to do this in-executable?
+            if signal == SIGTERM {
+                try cmd("taskkill.exe", "/pid", "\(pid)").run()
+            } else if signal == SIGKILL {
+                try cmd("taskkill.exe", "/f", "/pid", "\(pid)").run()
+            } else if signal == SIGSTOP {
+                // Method borrowed from https://github.com/giampaolo/psutil/blob/a7e70bb66d5823f2cdcdf0f950bdbf26875058b4/psutil/arch/windows/proc.c#L539
+                // See also https://ntopcode.wordpress.com/2018/01/16/anatomy-of-the-thread-suspension-mechanism-in-windows-windows-internals/
+                NtSuspendProcess(handle)
+            } else if signal == SIGCONT {
+                NtResumeProcess(handle)
+            } else {
+                throw PlatformError.killUnsupportedOnWindows
+            }
             #else
             guard Foundation.kill(pid, signal) == 0 else {
                 throw SyscallError(name: "kill", command: command, errno: errno)
