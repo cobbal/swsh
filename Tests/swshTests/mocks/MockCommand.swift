@@ -43,6 +43,10 @@ class MockCommand: Command, Equatable, CustomStringConvertible {
                 throw error
             }
         }
+
+        func kill(signal: Int32) throws {
+            try _kill(signal: signal)
+        }
     }
 
     public var killResponse: Error?

@@ -95,16 +95,18 @@ public enum WindowsSpawnImpl {
         fdMap: [Int32: Int32],
         pathResolve: Bool
     ) -> Result<Int, Error> {
+        print("Windows Command: \(command) \(arguments.joined(separator: " "))\n")
+
         guard let command = command.withCString(encodedAs: UTF16.self, _wcsdup) else {
             return .failure(.allocationError) 
         }
         defer { free(command) }
-        // TODO!!
+        // TODO: Joining with spaces is terrible!! Do real quoting.
         guard let arguments = arguments.joined(separator: " ").withCString(encodedAs: UTF16.self, _wcsdup) else {
             return .failure(.allocationError)
         }
         defer { free(arguments) }
-
+        
         var startup = STARTUPINFOW()
         var info = PROCESS_INFORMATION()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
@@ -140,12 +142,6 @@ public enum WindowsSpawnImpl {
         ) else { 
             let err = GetLastError()
             return .failure(Error("CreateProcessW failed: ", systemError: err))
-        }
-
-        guard ResumeThread(info.hThread) != DWORD(bitPattern: -1) else {
-            let err = GetLastError()
-            TerminateProcess(info.hProcess, 1)
-            return .failure(Error("Resuming process failed: ", systemError: err))
         }
 
         return .success(Int(info.dwProcessId))

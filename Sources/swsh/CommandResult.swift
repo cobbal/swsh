@@ -43,6 +43,6 @@ extension CommandResult {
 
     /// Sends a TERM signal to a process,
     public func kill() throws {
-        try _kill(signal: SIGTERM)
+        try kill(signal: SIGTERM)
     }
 }

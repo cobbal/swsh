@@ -140,7 +140,7 @@ final class IntegrationTests: XCTestCase {
 
     func testRemapCycle() throws {
         let pipes = [FDPipe(), FDPipe()]
-        let write = pipes.map { FileDescriptor($0.fileDescriptorForWriting) }
+        let write = pipes.map { $0.fileDescriptorForWriting }
         let res = cmd("bash", "-c", "echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],
@@ -177,5 +177,25 @@ final class IntegrationTests: XCTestCase {
         XCTAssertThrowsError(try FileManager.default.withCurrentDirectoryPath(tmpDir) { throw Foo() }) { error in
             XCTAssertEqual("\(error)", "Foo()")
         }
+    }
+
+    func testWindowsFalse() throws {
+        XCTAssertFalse(try cmd("C:\\Program Files\\Git\\usr\\bin\\false.exe").runBool())
+    }
+
+    func testWindowsTrue() throws {
+        XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\true.exe").runBool())
+    }
+
+    func testWindowsFriendlyCommands() throws {
+        XCTAssertEqual(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir").runString(), "foo")
+    }
+
+    func testWindowsFriendlyIshCommands() throws {
+        XCTAssertEqual(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir > foo.txt").runString(), "foo")
+    }
+
+    func testSystemCommandsViaGitCompatibility() throws {
+        XCTAssertEqual(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runString(), "hello")
     }
 }

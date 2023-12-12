@@ -1,9 +1,5 @@
 import Foundation
 
-#if os(Windows)
-import ucrt
-#endif
-
 /// Thrown when a string cannot be created with the requested encoding
 public struct InvalidString: Error {
     /// The invalid data
@@ -73,6 +69,10 @@ public class SyscallError: Error, CommandResult, CustomStringConvertible {
 
     public func _kill(signal: Int32) throws {
         throw self
+    }
+
+    public func kill(signal: Int32) throws {
+        try _kill(signal: signal)
     }
 }
 

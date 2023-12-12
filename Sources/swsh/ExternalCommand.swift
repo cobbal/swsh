@@ -1,4 +1,5 @@
 import Foundation
+import WinSDK
 
 /// Represents an external program invocation. It is the lowest-level command, that will spawn a subprocess when run.
 public class ExternalCommand: Command, CustomStringConvertible {
@@ -61,24 +62,17 @@ public class ExternalCommand: Command, CustomStringConvertible {
         let name: String
         var command: Command
         let pid: pid_t
-        #if os(Windows)
-        let processHandle: HANDLE
-        #endif
-
+        
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         private var _exitContinuations: [() -> Void] = []
 
-        init(command: ExternalCommand, pid: pid_t, winHandle: UnsafeMutableRawPointer?) {
+        init(command: ExternalCommand, pid: pid_t) {
             self.command = command
             self.name = command.command
             self.pid = pid
 
-            #if os(Windows)
-            self.processHandle = winHandle
-            #endif
-
-            command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] exitCode in
+           command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] exitCode in
                 self?._exitCode = exitCode
                 self?._exitSemaphore.signal()
                 self?._exitContinuations.forEach { $0() }
@@ -92,12 +86,22 @@ public class ExternalCommand: Command, CustomStringConvertible {
             Result.reaperQueue.sync { _exitCode == nil }
         }
         
-        static let NtSuspendProcess: (Handle) -> Int32 = {
+        static let NtSuspendProcess: (pid_t) -> Int32 = {
+            // TODO: Tie into (undocumented) NtSuspendProcess() syscall
+            return { _ in 0 }
+        }()
+
+        static let NtResumeProcess: (pid_t) -> Int32 = {
+            // TODO: Tie into (undocumented) NtResumeProcess() syscall
             return { _ in 0 }
         }()
 
         func kill(signal: Int32) throws {
             #if os(Windows)
+            // TODO: Pull these from signal.h
+            let SIGTERM = 15
+            let SIGSTOP = 19
+            let SIGCONT = 18
             // TODO: figure out how to do this in-executable?
             if signal == SIGTERM {
                 try cmd("taskkill.exe", "/pid", "\(pid)").run()
@@ -106,9 +110,9 @@ public class ExternalCommand: Command, CustomStringConvertible {
             } else if signal == SIGSTOP {
                 // Method borrowed from https://github.com/giampaolo/psutil/blob/a7e70bb66d5823f2cdcdf0f950bdbf26875058b4/psutil/arch/windows/proc.c#L539
                 // See also https://ntopcode.wordpress.com/2018/01/16/anatomy-of-the-thread-suspension-mechanism-in-windows-windows-internals/
-                NtSuspendProcess(handle)
+                Self.NtSuspendProcess(pid)
             } else if signal == SIGCONT {
-                NtResumeProcess(handle)
+                Self.NtResumeProcess(pid)
             } else {
                 throw PlatformError.killUnsupportedOnWindows
             }

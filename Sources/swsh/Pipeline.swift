@@ -35,12 +35,16 @@ public class Pipeline: Command {
             var signalError: Error?
             for result in results {
                 do {
-                    try result._kill(signal: signal)
+                    try result.kill(signal: signal)
                 } catch let error {
                     signalError = signalError ?? error
                 }
             }
             try signalError.map { throw $0 }
+        }
+
+        func kill(signal: Int32) throws {
+            try _kill(signal: signal)
         }
 
         #if compiler(>=5.5) && canImport(_Concurrency)

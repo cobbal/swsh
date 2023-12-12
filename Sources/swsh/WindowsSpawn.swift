@@ -3,9 +3,14 @@
 import ucrt
 import Foundation
 import windowsSpawn
+import WinSDK
 
 /// A process spawned with `posix_spawn`
 struct WindowsSpawn: ProcessSpawner {
+    public enum Error: Swift.Error {
+      case systemError(String, DWORD)
+    }
+
     public func spawn(
       command: String,
       arguments: [String],
@@ -28,18 +33,33 @@ struct WindowsSpawn: ProcessSpawner {
       }
     }
 
+    static let windowsReapQueue = DispatchQueue(label: "TODO:remove_this_queue")
+
     public func reapAsync(
       pid: pid_t,
       queue: DispatchQueue,
       callback: @escaping (Int32) -> Void
     ) {
-        fatalError("TODO")
+        //fatalError("TODO: reapAsync()")
+        Self.windowsReapQueue.asyncAfter(deadline: .now() + 1.0) {
+            callback(0)
+        }
     }
 
     public func resume(
       pid: pid_t
     ) throws {
-        fatalError("TODO")
+        let processHandle: HANDLE = OpenProcess(DWORD(bitPattern: THREAD_SUSPEND_RESUME), false, DWORD(pid))
+        // guard processHandle != 0 else {
+        //     let err = GetLastError()
+        //     throw .failure(Error("Resuming process failed to find process: ", systemError: err))
+        // }
+
+        guard ResumeThread(processHandle) != DWORD(bitPattern: -1) else {
+            let err = GetLastError()
+            TerminateProcess(processHandle, 1)
+            throw Error.systemError("Resuming process failed: ", err)
+        }
     }
 }
 
