@@ -143,10 +143,7 @@ public enum WindowsSpawnImpl {
             let err = GetLastError()
             return .failure(Error("CreateProcessW failed: ", systemError: err))
         }
-        // defer {
-        //     CloseHandle(info.hThread)
-        // }
-
+        
         return .success(info)
     }
 }

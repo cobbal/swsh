@@ -87,7 +87,7 @@ extension Command {
             throw InvalidString(data: data, encoding: encoding)
         }
         guard let trimStop = string.lastIndex(where: { $0 != "\n" }) else {
-            return ""
+            return string
         }
         return String(string[...trimStop])
     }

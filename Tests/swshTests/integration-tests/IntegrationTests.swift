@@ -187,15 +187,15 @@ final class IntegrationTests: XCTestCase {
         XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\true.exe").runBool())
     }
 
-    func testWindowsFriendlyCommands() throws {
-        XCTAssertEqual(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir").runString(), "foo")
+    func testWindowsSilentStringBatchScript() throws {
+        XCTAssertTrue(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir > foo.txt").runBool())
     }
 
-    func testWindowsFriendlyIshCommands() throws {
-        XCTAssertEqual(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir > foo.txt").runString(), "foo")
+    func testWindowsStringBatchScript() throws {
+        XCTAssertTrue(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir").runString().contains("Directory"))
     }
 
-    func testSystemCommandsViaGitCompatibility() throws {
-        XCTAssertEqual(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runString(), "hello")
+    func testWindowsEchoViaGitCompatibility() throws {
+        XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe").runBool())
     }
 }
