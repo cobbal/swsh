@@ -8,58 +8,66 @@ import WinSDK
 /// A process spawned with `posix_spawn`
 struct WindowsSpawn: ProcessSpawner {
     public enum Error: Swift.Error {
-      case systemError(String, DWORD)
+        case systemError(String, DWORD)
     }
 
     public func spawn(
-      command: String,
-      arguments: [String],
-      env: [String: String],
-      fdMap: FDMap,
-      pathResolve: Bool
+        command: String,
+        arguments: [String],
+        env: [String: String],
+        fdMap: FDMap,
+        pathResolve: Bool
     ) -> SpawnResult {
-      let intFDMap = Dictionary(uniqueKeysWithValues: fdMap.map { ($0.key.rawValue, $0.value.rawValue) })
-      do {
-        switch WindowsSpawnImpl.spawn(
-          command: command,
-          arguments: arguments,
-          env: env,
-          fdMap: intFDMap,
-          pathResolve: pathResolve
-        ) {
-          case .success(let pid): return .success(pid)
-          case .failure(let error): return .error(errno: error.errno)
+        let intFDMap = Dictionary(uniqueKeysWithValues: fdMap.map { ($0.key.rawValue, $0.value.rawValue) })
+        do {
+            switch WindowsSpawnImpl.spawn(
+                command: command,
+                arguments: arguments,
+                env: env,
+                fdMap: intFDMap,
+                pathResolve: pathResolve
+            ) {
+                case .success(let info): return .success(ProcessInformation(id: Int(info.dwProcessId), handle: info.hProcess, mainThreadHandle: info.hThread))
+                case .failure(let error): return .error(errno: error.errno)
+            }
         }
-      }
     }
 
-    static let windowsReapQueue = DispatchQueue(label: "TODO:remove_this_queue")
-
     public func reapAsync(
-      pid: pid_t,
-      queue: DispatchQueue,
-      callback: @escaping (Int32) -> Void
+        process: ProcessInformation,
+        queue: DispatchQueue,
+        callback: @escaping (Int32) -> Void
     ) {
-        //fatalError("TODO: reapAsync()")
-        Self.windowsReapQueue.asyncAfter(deadline: .now() + 1.0) {
-            callback(0)
+        print("Windows Command Reaping...\n")
+        queue.async {
+          var exitCode: DWORD = 0
+          guard GetExitCodeProcess(process.handle, &exitCode) != false else {
+              let err = GetLastError()
+              print("Windows Command Reap Failed with Error: \(err)\n")
+              callback(Int32(bitPattern: err)) // TODO: What should this be if the exit code cannot be determined?
+              return
+          }
+          guard exitCode != STILL_ACTIVE else {
+              print("Windows Command Still Active. Requeuing reap.\n")
+              queue.asyncAfter(deadline: .now() + 0.1) { reapAsync(process: process, queue: queue, callback: callback) }
+              return
+          }
+          print("Windows Command Reaped with Exit Code: \(exitCode)\n")
+          callback(Int32(bitPattern: exitCode))
         }
     }
 
     public func resume(
-      pid: pid_t
+        process: ProcessInformation
     ) throws {
-        let processHandle: HANDLE = OpenProcess(DWORD(bitPattern: THREAD_SUSPEND_RESUME), false, DWORD(pid))
-        // guard processHandle != 0 else {
-        //     let err = GetLastError()
-        //     throw .failure(Error("Resuming process failed to find process: ", systemError: err))
-        // }
-
-        guard ResumeThread(processHandle) != DWORD(bitPattern: -1) else {
+        print("Windows Command Resuming...\n")
+        guard ResumeThread(process.mainThreadHandle) != DWORD(bitPattern: -1) else {
+            print("Windows Command Resume Failed.\n")
             let err = GetLastError()
-            TerminateProcess(processHandle, 1)
+            TerminateProcess(process.handle, 1)
             throw Error.systemError("Resuming process failed: ", err)
         }
+        print("Windows Command Resumed.\n")
     }
 }
 

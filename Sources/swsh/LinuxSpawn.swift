@@ -47,16 +47,16 @@ public struct LinuxSpawn: ProcessSpawner {
         guard res == 0 else {
             return .error(errno: res)
         }
-        return .success(pid)
+        return .success(ProcessInformation(id: pid))
     }
 
     public func reapAsync(
-      pid: pid_t,
+      process: ProcessInformation,
       queue: DispatchQueue,
       callback: @escaping (Int32) -> Void
     ) {
         Thread.detachNewThread {
-            let status = spawnWait(pid)
+            let status = spawnWait(process.id)
             queue.async {
                 callback(status)
             }
@@ -64,9 +64,9 @@ public struct LinuxSpawn: ProcessSpawner {
     }
 
     public func resume(
-      pid: pid_t
+      process: ProcessInformation
     ) throws {
-        kill(SIGCONT, pid)
+        kill(SIGCONT, process.id)
     }
 }
 #endif

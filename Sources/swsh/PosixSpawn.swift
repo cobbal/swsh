@@ -57,7 +57,7 @@ public struct PosixSpawn: ProcessSpawner {
             return .error(errno: res)
         }
 
-        return .success(pid)
+        return .success(ProcessInformation(id: pid))
     }
 
     // C macros are unfortunately not bridged to swift, borrowed from Foundation/Process
@@ -67,14 +67,14 @@ public struct PosixSpawn: ProcessSpawner {
     private static func WIFSIGNALED(_ status: Int32) -> Bool { _WSTATUS(status) != _WSTOPPED && _WSTATUS(status) != 0 }
 
     public func reapAsync(
-      pid: pid_t,
+      process: ProcessInformation,
       queue: DispatchQueue,
       callback: @escaping (Int32) -> Void
     ) {
-        let processSource = DispatchSource.makeProcessSource(identifier: pid, eventMask: .exit, queue: queue)
+        let processSource = DispatchSource.makeProcessSource(identifier: process.id, eventMask: .exit, queue: queue)
         processSource.setEventHandler { [processSource] in
             var status: Int32 = 0
-            waitpid(pid, &status, 0)
+            waitpid(process.id, &status, 0)
             if Self.WIFEXITED(status) {
                 callback(PosixSpawn.WEXITSTATUS(status))
                 processSource.cancel()
@@ -87,9 +87,9 @@ public struct PosixSpawn: ProcessSpawner {
     }
 
     public func resume(
-      pid: pid_t
+      process: ProcessInformation
     ) throws {
-        kill(SIGCONT, pid)
+        kill(SIGCONT, process.id)
     }
 }
 

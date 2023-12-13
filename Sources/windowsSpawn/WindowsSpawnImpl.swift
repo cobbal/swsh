@@ -94,7 +94,7 @@ public enum WindowsSpawnImpl {
         env: [String: String],
         fdMap: [Int32: Int32],
         pathResolve: Bool
-    ) -> Result<Int, Error> {
+    ) -> Result<PROCESS_INFORMATION, Error> {
         print("Windows Command: \(command) \(arguments.joined(separator: " "))\n")
 
         guard let command = command.withCString(encodedAs: UTF16.self, _wcsdup) else {
@@ -143,7 +143,10 @@ public enum WindowsSpawnImpl {
             let err = GetLastError()
             return .failure(Error("CreateProcessW failed: ", systemError: err))
         }
+        // defer {
+        //     CloseHandle(info.hThread)
+        // }
 
-        return .success(Int(info.dwProcessId))
+        return .success(info)
     }
 }

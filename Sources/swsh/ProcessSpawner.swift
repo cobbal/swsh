@@ -6,10 +6,23 @@ import Darwin.C
 import Glibc
 #endif
 
+/// Data used to identify a process
+public struct ProcessInformation {
+    let id: pid_t
+    let handle: UnsafeMutableRawPointer?
+    let mainThreadHandle: UnsafeMutableRawPointer?
+
+    public init(id: pid_t, handle: UnsafeMutableRawPointer? = nil, mainThreadHandle: UnsafeMutableRawPointer? = nil) {
+        self.id = id
+        self.handle = handle
+        self.mainThreadHandle = mainThreadHandle
+    }
+}
+
 /// The result of a spawn
 public enum SpawnResult {
-    /// A successful spawn with child process pid
-    case success(pid_t)
+    /// A successful spawn with child process
+    case success(ProcessInformation)
     /// A failed spawn with error `errno`
     case error(errno: Int32)
 }
@@ -25,11 +38,11 @@ public protocol ProcessSpawner {
     /// - Parameter pathResolve: if true, search for executable in PATH
     /// - Returns: pid of spawned process or error if failed
     func spawn(
-      command: String,
-      arguments: [String],
-      env: [String: String],
-      fdMap: FDMap,
-      pathResolve: Bool
+        command: String,
+        arguments: [String],
+        env: [String: String],
+        fdMap: FDMap,
+        pathResolve: Bool
     ) -> SpawnResult
 
     /// Add a callback for child process exiting
@@ -37,12 +50,12 @@ public protocol ProcessSpawner {
     /// - Parameter callback: called with exit code when child exits
     /// - Parameter queue: queue the callback is executed on
     func reapAsync(
-      pid: pid_t,
-      queue: DispatchQueue,
-      callback: @escaping (Int32) -> Void
+        process: ProcessInformation,
+        queue: DispatchQueue,
+        callback: @escaping (Int32) -> Void
     )
 
     func resume(
-      pid: pid_t
+        process: ProcessInformation
     ) throws
 }

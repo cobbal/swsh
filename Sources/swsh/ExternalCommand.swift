@@ -61,37 +61,37 @@ public class ExternalCommand: Command, CustomStringConvertible {
 
         let name: String
         var command: Command
-        let pid: pid_t
+        let process: ProcessInformation
         
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         private var _exitContinuations: [() -> Void] = []
 
-        init(command: ExternalCommand, pid: pid_t) {
+        init(command: ExternalCommand, process: ProcessInformation) {
             self.command = command
             self.name = command.command
-            self.pid = pid
-
-           command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] exitCode in
+            self.process = process
+            
+            command.spawner.reapAsync(process: process, queue: Result.reaperQueue) { [weak self] exitCode in
                 self?._exitCode = exitCode
                 self?._exitSemaphore.signal()
                 self?._exitContinuations.forEach { $0() }
                 self?._exitContinuations = []
             }
 
-            try? command.spawner.resume(pid: pid)
+            try? command.spawner.resume(process: process)
         }
 
         var isRunning: Bool {
             Result.reaperQueue.sync { _exitCode == nil }
         }
         
-        static let NtSuspendProcess: (pid_t) -> Int32 = {
+        static let NtSuspendProcess: (ProcessInformation) -> Int32 = {
             // TODO: Tie into (undocumented) NtSuspendProcess() syscall
             return { _ in 0 }
         }()
 
-        static let NtResumeProcess: (pid_t) -> Int32 = {
+        static let NtResumeProcess: (ProcessInformation) -> Int32 = {
             // TODO: Tie into (undocumented) NtResumeProcess() syscall
             return { _ in 0 }
         }()
@@ -104,15 +104,15 @@ public class ExternalCommand: Command, CustomStringConvertible {
             let SIGCONT = 18
             // TODO: figure out how to do this in-executable?
             if signal == SIGTERM {
-                try cmd("taskkill.exe", "/pid", "\(pid)").run()
+                try cmd("taskkill.exe", "/pid", "\(process.id)").run()
             } else if signal == SIGKILL {
-                try cmd("taskkill.exe", "/f", "/pid", "\(pid)").run()
+                try cmd("taskkill.exe", "/f", "/pid", "\(process.id)").run()
             } else if signal == SIGSTOP {
                 // Method borrowed from https://github.com/giampaolo/psutil/blob/a7e70bb66d5823f2cdcdf0f950bdbf26875058b4/psutil/arch/windows/proc.c#L539
                 // See also https://ntopcode.wordpress.com/2018/01/16/anatomy-of-the-thread-suspension-mechanism-in-windows-windows-internals/
-                Self.NtSuspendProcess(pid)
+                Self.NtSuspendProcess(process)
             } else if signal == SIGCONT {
-                Self.NtResumeProcess(pid)
+                Self.NtResumeProcess(process)
             } else {
                 throw PlatformError.killUnsupportedOnWindows
             }
@@ -160,8 +160,8 @@ public class ExternalCommand: Command, CustomStringConvertible {
           fdMap: fdMap,
           pathResolve: true
         ) {
-        case .success(let pid):
-            return Result(command: self, pid: pid)
+        case .success(let process):
+            return Result(command: self, process: process)
         case .error(let err):
             return SyscallError(name: "launching \"\(command)\"", command: self, errno: err)
         }
