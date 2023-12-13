@@ -40,6 +40,8 @@ struct WindowsSpawn: ProcessSpawner {
     ) {
         print("Windows Command Reaping...\n")
         queue.async {
+          //RegisterWaitForSingleObject
+          Thread.sleep(forTimeInterval: 1.0)
           var exitCode: DWORD = 0
           guard GetExitCodeProcess(process.handle, &exitCode) != false else {
               let err = GetLastError()

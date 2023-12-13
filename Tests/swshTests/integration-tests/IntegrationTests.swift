@@ -196,6 +196,6 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testWindowsEchoViaGitCompatibility() throws {
-        XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe").runBool())
+        XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runBool())
     }
 }

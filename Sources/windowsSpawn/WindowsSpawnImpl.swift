@@ -50,7 +50,7 @@ public enum WindowsSpawnImpl {
     *   HANDLE os_handle[number_of_fds]
     */
     class ChildHandleBuffer {
-        let handles: [(flags: UInt8, handle: HANDLE)]
+        let handles: [(flags: UInt8, handle: HANDLE?)]
         let count: Int
         let buffer: UnsafeMutableRawBufferPointer
 
@@ -58,7 +58,7 @@ public enum WindowsSpawnImpl {
         private let byteSize = MemoryLayout<UInt8>.size
         private let ptrSize = MemoryLayout<UnsafeRawPointer>.size
 
-        private init?(_ handles: [(flags: UInt8, handle: HANDLE)]) {
+        private init?(_ handles: [(flags: UInt8, handle: HANDLE?)]) {
             self.handles = handles
             count = handles.count
             let byteLength = intSize + byteSize * count + ptrSize * count
@@ -69,11 +69,11 @@ public enum WindowsSpawnImpl {
             buffer.storeBytes(of: count, toByteOffset: 0, as: Int.self)
             for (i, handle) in handles.enumerated() {
                 buffer.storeBytes(of: handle.flags, toByteOffset: intSize + byteSize * i, as: UInt8.self)
-                buffer.storeBytes(of: handle.handle, toByteOffset: intSize + byteSize * count + ptrSize * i, as: HANDLE.self)
+                buffer.storeBytes(of: handle.handle, toByteOffset: intSize + byteSize * count + ptrSize * i, as: HANDLE?.self)
             }
         }
 
-        static func create(_ handles: [(flags: UInt8, handle: HANDLE)]) -> Result<ChildHandleBuffer, Error> {
+        static func create(_ handles: [(flags: UInt8, handle: HANDLE?)]) -> Result<ChildHandleBuffer, Error> {
             guard let buffer = ChildHandleBuffer(handles) else { return .failure(.tooManyHandles) }
             return .success(buffer)
         }
@@ -95,7 +95,7 @@ public enum WindowsSpawnImpl {
         fdMap: [Int32: Int32],
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
-        print("Windows Command: \(command) \(arguments.joined(separator: " "))\n")
+        print("Windows Command: \(command) \(arguments.joined(separator: " ")) fdMap: \(fdMap)")
 
         guard let command = command.withCString(encodedAs: UTF16.self, _wcsdup) else {
             return .failure(.allocationError) 
@@ -112,9 +112,43 @@ public enum WindowsSpawnImpl {
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.dwFlags = STARTF_USESTDHANDLES
 
-        // TODO: handles
+        let handles: [Int32: HANDLE?] = fdMap.mapValues { HANDLE(bitPattern: _get_osfhandle($0)) }
+        let handleMax = fdMap.keys.max() ?? -1
+        var handleArray = Array<(flags: UInt8, handle: HANDLE?)>(repeating: (flags: 0, handle: nil), count: Int(handleMax + 1))
+        for (fd, handle) in handles {
+            let FOPEN: UInt8 = 0x01
+            let FEOFLAG: UInt8 = 0x02
+            let FCRLF: UInt8 = 0x04
+            let FPIPE: UInt8 = 0x08
+            let FNOINHERIT: UInt8 = 0x10
+            let FAPPEND: UInt8 = 0x20
+            let FDEV: UInt8 = 0x40
+            let FTEXT: UInt8 = 0x80
+
+            let fileType = GetFileType(handle)
+            let flags: UInt8
+            switch Int32(fileType) {
+            case FILE_TYPE_DISK: 
+                flags = FOPEN
+            case FILE_TYPE_PIPE: 
+                flags = FOPEN | FPIPE
+            case FILE_TYPE_CHAR,
+                FILE_TYPE_REMOTE:
+                flags = FOPEN | FDEV
+            case FILE_TYPE_UNKNOWN:
+                // TODO: What if GetFileType returns an error?
+                flags = FOPEN | FDEV
+            default:
+                preconditionFailure("Windows lied about the file type. Should not happen.")
+            }
+
+            handleArray[Int(fd)] = (flags: flags, handle: handle)
+        }
+        
+        print("Windows Command handleArray: \(handleArray)")
+
         let handleStructure: ChildHandleBuffer
-        switch ChildHandleBuffer.create([]) {
+        switch ChildHandleBuffer.create(handleArray) {
             case .success(let buffer): handleStructure = buffer
             case .failure(let error): return .failure(error)
         }
@@ -126,6 +160,10 @@ public enum WindowsSpawnImpl {
         startup.hStdOutput = handleStructure[1]
         startup.hStdError = handleStructure[2]
 
+        print("Thing 0: \(handleStructure[0])")
+        print("Thing 1: \(handleStructure[1])")
+        print("Thing 2: \(handleStructure[2])")
+
         let processFlags = DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED)
 
         guard CreateProcessW(
@@ -133,7 +171,7 @@ public enum WindowsSpawnImpl {
             /* lpCommandLine: */ arguments,
             /* lpProcessAttributes: */ nil,
             /* lpThreadAttributes: */ nil,
-            /* bInheritHandles: */ true,
+            /* bInheritHandles: */ false,
             /* dwCreationFlags: */ processFlags,
             /* lpEnvironment: */ nil, // TODO
             /* lpCurrentDirectory: */ nil, // TODO
