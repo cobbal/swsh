@@ -49,18 +49,21 @@ struct WindowsSpawn: ProcessSpawner {
         callback: @escaping (Int32) -> Void
     ) {
         queue.async {
-          WaitForSingleObject(process.handle, INFINITE)
+            WaitForSingleObject(process.handle, INFINITE)
           
-          var exitCode: DWORD = 0
-          guard GetExitCodeProcess(process.handle, &exitCode) != false else {
-              let err = GetLastError()
-              print("\(process) reap failed with error: \(err)")
-              callback(Int32(bitPattern: err)) // TODO: What should this be if the exit code cannot be determined?
-              return
-          }
+            var exitCode: DWORD = 0
+            guard GetExitCodeProcess(process.handle, &exitCode) != false else {
+                let err = GetLastError()
+                print("PROCESS(\(process)) reap failed with error: \(err)")
+                callback(Int32(bitPattern: err)) // TODO: What should this be if the exit code cannot be determined?
+                return
+            }
 
-          print("\(process) completed with exit code: \(exitCode)")
-          callback(Int32(bitPattern: exitCode))
+            CloseHandle(process.mainThreadHandle)
+            CloseHandle(process.handle)
+
+            print("PROCESS(\(process)) completed with exit code: \(exitCode)")
+            callback(Int32(bitPattern: exitCode))
         }
     }
 
@@ -69,7 +72,7 @@ struct WindowsSpawn: ProcessSpawner {
     ) throws {
         guard ResumeThread(process.mainThreadHandle) != DWORD(bitPattern: -1) else {
             let err = GetLastError()
-            print("\(process) resume failed with error: \(err)")
+            print("PROCESS(\(process)) resume failed with error: \(err)")
             TerminateProcess(process.handle, 1)
             throw Error.systemError("Resuming process failed: ", err)
         }

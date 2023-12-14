@@ -47,7 +47,13 @@ public struct LinuxSpawn: ProcessSpawner {
         guard res == 0 else {
             return .error(errno: res)
         }
-        return .success(ProcessInformation(command: command, arguments: arguments, env: env, id: pid))
+        let process = ProcessInformation(
+            command: command, 
+            arguments: arguments, 
+            env: env, 
+            id: pid
+        )
+        return .success(process)
     }
 
     public func reapAsync(
