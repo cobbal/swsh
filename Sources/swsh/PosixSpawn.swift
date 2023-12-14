@@ -57,7 +57,13 @@ public struct PosixSpawn: ProcessSpawner {
             return .error(errno: res)
         }
 
-        return .success(ProcessInformation(id: pid))
+        let process = ProcessInformation(
+            command: command, 
+            arguments: arguments, 
+            env: env, 
+            id: pid
+        )
+        return .success(process)
     }
 
     // C macros are unfortunately not bridged to swift, borrowed from Foundation/Process

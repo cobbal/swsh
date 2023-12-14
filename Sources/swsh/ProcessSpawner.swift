@@ -7,15 +7,32 @@ import Glibc
 #endif
 
 /// Data used to identify a process
-public struct ProcessInformation {
+public struct ProcessInformation: CustomDebugStringConvertible {
+    let command: String
+    let arguments: [String]
+    let env: [String: String]
     let id: pid_t
     let handle: UnsafeMutableRawPointer?
     let mainThreadHandle: UnsafeMutableRawPointer?
-
-    public init(id: pid_t, handle: UnsafeMutableRawPointer? = nil, mainThreadHandle: UnsafeMutableRawPointer? = nil) {
+    
+    public init(
+        command: String, 
+        arguments: [String], 
+        env: [String: String], 
+        id: pid_t, 
+        handle: UnsafeMutableRawPointer? = nil, 
+        mainThreadHandle: UnsafeMutableRawPointer? = nil) 
+    {
+        self.command = command
+        self.arguments = arguments
+        self.env = env
         self.id = id
         self.handle = handle
         self.mainThreadHandle = mainThreadHandle
+    }
+
+    public var debugDescription: String {
+        return "\(command) PID(\(id))"
     }
 }
 

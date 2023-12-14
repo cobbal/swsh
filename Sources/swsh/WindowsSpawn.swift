@@ -27,8 +27,18 @@ struct WindowsSpawn: ProcessSpawner {
                 fdMap: intFDMap,
                 pathResolve: pathResolve
             ) {
-                case .success(let info): return .success(ProcessInformation(id: Int(info.dwProcessId), handle: info.hProcess, mainThreadHandle: info.hThread))
-                case .failure(let error): return .error(errno: error.errno)
+                case .success(let info): 
+                    let process = ProcessInformation(
+                        command: command,
+                        arguments: arguments,
+                        env: env,
+                        id: Int(info.dwProcessId), 
+                        handle: info.hProcess, 
+                        mainThreadHandle: info.hThread
+                    )
+                    return .success(process)
+                case .failure(let error): 
+                    return .error(errno: error.errno)
             }
         }
     }
@@ -38,23 +48,18 @@ struct WindowsSpawn: ProcessSpawner {
         queue: DispatchQueue,
         callback: @escaping (Int32) -> Void
     ) {
-        print("Windows Command Reaping...\n")
         queue.async {
-          //RegisterWaitForSingleObject
-          Thread.sleep(forTimeInterval: 1.0)
+          WaitForSingleObject(process.handle, INFINITE)
+          
           var exitCode: DWORD = 0
           guard GetExitCodeProcess(process.handle, &exitCode) != false else {
               let err = GetLastError()
-              print("Windows Command Reap Failed with Error: \(err)\n")
+              print("\(process) reap failed with error: \(err)")
               callback(Int32(bitPattern: err)) // TODO: What should this be if the exit code cannot be determined?
               return
           }
-          guard exitCode != STILL_ACTIVE else {
-              print("Windows Command Still Active. Requeuing reap.\n")
-              queue.asyncAfter(deadline: .now() + 0.1) { reapAsync(process: process, queue: queue, callback: callback) }
-              return
-          }
-          print("Windows Command Reaped with Exit Code: \(exitCode)\n")
+
+          print("\(process) completed with exit code: \(exitCode)")
           callback(Int32(bitPattern: exitCode))
         }
     }
@@ -62,14 +67,12 @@ struct WindowsSpawn: ProcessSpawner {
     public func resume(
         process: ProcessInformation
     ) throws {
-        print("Windows Command Resuming...\n")
         guard ResumeThread(process.mainThreadHandle) != DWORD(bitPattern: -1) else {
-            print("Windows Command Resume Failed.\n")
             let err = GetLastError()
+            print("\(process) resume failed with error: \(err)")
             TerminateProcess(process.handle, 1)
             throw Error.systemError("Resuming process failed: ", err)
         }
-        print("Windows Command Resumed.\n")
     }
 }
 
