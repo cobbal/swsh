@@ -38,6 +38,8 @@ struct WindowsSpawn: ProcessSpawner {
                     )
                     return .success(process)
                 case .failure(let error): 
+                    // TODO: Can pass error context string along somehow?
+                    print(error)
                     return .error(errno: error.errno)
             }
         }
@@ -53,8 +55,7 @@ struct WindowsSpawn: ProcessSpawner {
           
             var exitCode: DWORD = 0
             guard GetExitCodeProcess(process.handle, &exitCode) != false else {
-                let err = GetLastError()
-                callback(Int32(bitPattern: err)) // TODO: What should this be if the exit code cannot be determined?
+                callback(Int32(bitPattern: DWORD(GetLastError()))) // TODO: What should this be if the exit code cannot be determined?
                 return
             }
 
@@ -206,13 +207,48 @@ public enum WindowsSpawnImpl {
         fdMap: [Int32: Int32],
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
-        // Convert the command into a wide string suitable for use in CreateProcessW()
-        guard let applicationName = command.withCString(encodedAs: UTF16.self, _wcsdup) else {
-            return .failure(.allocationError) 
+        // Find the path environment variable, checking the passed environment first, then the system environment
+        let envPath = env.keys.first(where:) { $0.uppercased == "PATH" }.map { env[$0]! }
+        let path: UnsafeMutablePointer<wchar_t>?
+        if let envPath = envPath {
+            path = envPath.withCString(encodedAs: UTF16.self, _wcsdup)
+        } else {
+            let pathLength = "PATH".withCString(encodedAs: UTF16.self) { GetEnvironmentVariableW($0, nil, 0) }
+            guard pathLength > 0 else {
+                return .failure(Error("Could not find PATH environment variable", systemError: DWORD(GetLastError())))
+            }
+            var pathBuffer = calloc(MemoryLayout<wchar_t>.size, Int(pathLength)).assumingMemoryBound(to: wchar_t.self)
+            let r = "PATH".withCString(encodedAs: UTF16.self) { GetEnvironmentVariableW($0, pathBuffer, pathLength) }
+            guard r != 0 && r < pathLength else {
+                return .failure(Error("Could not load PATH environment variable", systemError: DWORD(GetLastError())))
+            }
+            path = pathBuffer
         }
-        defer { free(applicationName) }
+        defer { free(path) }
+        print("path: \(path.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
-        // Convert the command and arguments to a null-terminated list of null-terminated UTF8 strings,
+        // Find the current working directory
+        let cwdLength = GetCurrentDirectoryW(0, nil)
+        guard cwdLength > 0 else {
+            return .failure(Error("Could not find current working directory", systemError: DWORD(GetLastError())))
+        }
+        let cwd: UnsafeMutablePointer<wchar_t>? = calloc(MemoryLayout<wchar_t>.size, Int(cwdLength)).assumingMemoryBound(to: wchar_t.self)
+        defer { free(cwd) }
+        let r = GetCurrentDirectoryW(cwdLength, cwd)
+        guard r != 0 && r < cwdLength else {
+            return .failure(Error("Could not load current working directory", systemError: DWORD(GetLastError())))
+        }
+        print("cwd: \(cwd.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        
+        // Search the path and working directory for the application that is to be used to execute the command, in a form sutable to use in CreateProcessW()
+        let applicationPath = command.withCString(encodedAs: UTF16.self) {  windowsSpawn.search_path($0, cwd, path) }
+        defer { free(applicationPath) }
+        guard applicationPath != nil else {
+            return .failure(Error("Could not find application", systemError: DWORD(ERROR_FILE_NOT_FOUND)))
+        }
+        print("applicationPath: \(applicationPath.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        
+        // Convert the command (not the application path!) and arguments to a null-terminated list of null-terminated UTF8 strings,
         // then process them into properly quoted wide strings suitable for use in CreateProcessW()
         var args = ([command] + arguments).map { _strdup($0) } + [nil]
         defer { args.forEach { free($0) } }
@@ -222,7 +258,7 @@ public enum WindowsSpawnImpl {
         guard makeArgsStatus == 0 else {
             return .failure(Error("Unable to convert command arguments", systemError: DWORD(makeArgsStatus)))
         }
-        // print(commandLine.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")
+        print("commandLine: \(commandLine.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Package the file descriptors map as a list of handles, 
         // then process them into a form suitable for use in the startup information object passed to CreateProcessW()
@@ -231,13 +267,13 @@ public enum WindowsSpawnImpl {
         var handleArray = Array<(flags: UInt8, handle: HANDLE?)>(repeating: (flags: 0, handle: nil), count: Int(handleMax + 1))
         for (fd, handle) in handles {
             let FOPEN: UInt8 = 0x01
-            let FEOFLAG: UInt8 = 0x02
-            let FCRLF: UInt8 = 0x04
+            // let FEOFLAG: UInt8 = 0x02
+            // let FCRLF: UInt8 = 0x04
             let FPIPE: UInt8 = 0x08
-            let FNOINHERIT: UInt8 = 0x10
-            let FAPPEND: UInt8 = 0x20
+            // let FNOINHERIT: UInt8 = 0x10
+            // let FAPPEND: UInt8 = 0x20
             let FDEV: UInt8 = 0x40
-            let FTEXT: UInt8 = 0x80
+            // let FTEXT: UInt8 = 0x80
 
             let fileType = GetFileType(handle)
             let flags: UInt8
@@ -278,19 +314,18 @@ public enum WindowsSpawnImpl {
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()
         guard CreateProcessW(
-            /* lpApplicationName: */ applicationName,
+            /* lpApplicationName: */ applicationPath,
             /* lpCommandLine: */ commandLine,
             /* lpProcessAttributes: */ nil,
             /* lpThreadAttributes: */ nil,
             /* bInheritHandles: */ true,
             /* dwCreationFlags: */ DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED),
             /* lpEnvironment: */ nil, // TODO
-            /* lpCurrentDirectory: */ nil, // TODO
+            /* lpCurrentDirectory: */ cwd,
             /* lpStartupInfo: */ &startup,
             /* lpProcessInformation: */ &info
         ) else { 
-            let err = GetLastError()
-            return .failure(Error("CreateProcessW failed: ", systemError: err))
+            return .failure(Error("CreateProcessW failed: ", systemError: DWORD(GetLastError())))
         }
         // TODO: Cleanup stdio handles?
         return .success(info)

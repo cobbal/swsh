@@ -1,5 +1,10 @@
 import swsh
 
 print("Running command...")
-try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").runBool()
+do {
+    // try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").run()
+    try cmd("echo", "hiya").run()
+} catch {
+    print("Error running command: \(error)")
+}
 print("Finished running command.")
