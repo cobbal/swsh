@@ -5,7 +5,7 @@ import Foundation
 import windowsSpawn
 import WinSDK
 
-/// A process spawned with `posix_spawn`
+/// A process spawned with `CreateProcessW`
 struct WindowsSpawn: ProcessSpawner {
     public enum Error: Swift.Error {
         case systemError(String, DWORD)
@@ -206,17 +206,26 @@ public enum WindowsSpawnImpl {
         fdMap: [Int32: Int32],
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
+        // Convert the command into a wide string suitable for use in CreateProcessW()
         guard let applicationName = command.withCString(encodedAs: UTF16.self, _wcsdup) else {
             return .failure(.allocationError) 
         }
         defer { free(applicationName) }
         
-        // TODO: Joining with spaces is terrible!! Do real quoting.
-        guard let commandLine = (["\"\(command)\""] + arguments).joined(separator: " ").withCString(encodedAs: UTF16.self, _wcsdup) else {
-            return .failure(.allocationError)
-        }
+        // Convert the command and arguments to a null-terminated list of null-terminated UTF8 strings,
+        // then process them into properly quoted wide strings suitable for use in CreateProcessW()
+        var args = ([command] + arguments).map { _strdup($0) } + [nil]
+        defer { args.forEach { free($0) } }
+        var commandLine: UnsafeMutablePointer<wchar_t>?
+        let makeArgsStatus = windowsSpawn.make_program_args(&args, 0, &commandLine)
         defer { free(commandLine) }
+        guard makeArgsStatus == 0 else {
+            return .failure(Error("Unable to convert command arguments", systemError: DWORD(makeArgsStatus)))
+        }
+        // print(commandLine.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")
         
+        // Package the file descriptors map as a list of handles, 
+        // then process them into a form suitable for use in the startup information object passed to CreateProcessW()
         let handles: [Int32: HANDLE?] = fdMap.mapValues { HANDLE(bitPattern: _get_osfhandle($0)) }
         let handleMax = fdMap.keys.max() ?? -1
         var handleArray = Array<(flags: UInt8, handle: HANDLE?)>(repeating: (flags: 0, handle: nil), count: Int(handleMax + 1))
@@ -249,27 +258,24 @@ public enum WindowsSpawnImpl {
 
             handleArray[Int(fd)] = (flags: flags, handle: handle)
         }
-        
         let handleStructure: ChildHandleBuffer
         switch ChildHandleBuffer.create(handleArray) {
             case .success(let buffer): handleStructure = buffer
             case .failure(let error): return .failure(error)
         }
-
         var startup = STARTUPINFOW()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.lpReserved = nil
         startup.lpDesktop = nil
         startup.lpTitle = nil
         startup.dwFlags = STARTF_USESTDHANDLES
-
         startup.cbReserved2 = UInt16(handleStructure.buffer.count)
         startup.lpReserved2 = .init(bitPattern: UInt(bitPattern: handleStructure.buffer.baseAddress))
-
         startup.hStdInput = handleStructure[0]
         startup.hStdOutput = handleStructure[1]
         startup.hStdError = handleStructure[2]
 
+        // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()
         guard CreateProcessW(
             /* lpApplicationName: */ applicationName,
@@ -286,9 +292,7 @@ public enum WindowsSpawnImpl {
             let err = GetLastError()
             return .failure(Error("CreateProcessW failed: ", systemError: err))
         }
-
-        // TODO: Cleanup stdio handles
-
+        // TODO: Cleanup stdio handles?
         return .success(info)
     }
 }
