@@ -134,7 +134,7 @@ public enum WindowsSpawnImpl {
         private let ptrSize = MemoryLayout<UnsafeRawPointer>.size
 
         private init?(_ handles: [(flags: UInt8, handle: HANDLE?)]) {
-            self.handles = handles
+            self.handles = handles.map { (flags: $0.flags, handle: Self.duplicate(fd: $0.handle)) }
             count = handles.count
             let byteLength = intSize + byteSize * count + ptrSize * count
             guard byteLength < UInt16.max else { return nil }
@@ -161,41 +161,41 @@ public enum WindowsSpawnImpl {
         deinit {
             buffer.deallocate()
         }
-    }
+    
+        // Adaped from libuv: 
+        // https://github.com/libuv/libuv/blob/00357f87328def30a32af82c841e5d1667a2a827/src/win/process-stdio.c#L96
+        private static func duplicate(fd: HANDLE?) -> HANDLE? {
+            guard fd != INVALID_HANDLE_VALUE, fd != nil, fd != HANDLE(bitPattern: -2) else {
+                return nil
+            }
 
-    // Adaped from libuv: 
-    // https://github.com/libuv/libuv/blob/00357f87328def30a32af82c841e5d1667a2a827/src/win/process-stdio.c#L96
-    private static func duplicate(fd: HANDLE?) -> HANDLE? {
-        guard fd != INVALID_HANDLE_VALUE, fd != nil, fd != HANDLE(bitPattern: -2) else {
-            return nil
+            let currentProcess = GetCurrentProcess()
+            var duplicated: HANDLE?
+            guard DuplicateHandle(
+                currentProcess,
+                fd,
+                currentProcess,
+                &duplicated,
+                0,
+                true,
+                DWORD(DUPLICATE_SAME_ACCESS)
+            ) else {
+                return nil
+            }
+            return duplicated
         }
 
-        let currentProcess = GetCurrentProcess()
-        var duplicated: HANDLE?
-        guard DuplicateHandle(
-            currentProcess,
-            fd,
-            currentProcess,
-            &duplicated,
-            0,
-            true,
-            DWORD(DUPLICATE_SAME_ACCESS)
-        ) else {
-            return nil
+        public static func duplicateStdin() -> HANDLE? {
+            Self.duplicate(fd: GetStdHandle(STD_INPUT_HANDLE))
         }
-        return duplicated
-    }
 
-    public static func duplicateStdin() -> HANDLE? {
-        Self.duplicate(fd: GetStdHandle(STD_INPUT_HANDLE))
-    }
+        public static func duplicateStdout() -> HANDLE? {
+            Self.duplicate(fd: GetStdHandle(STD_OUTPUT_HANDLE))
+        }
 
-    public static func duplicateStdout() -> HANDLE? {
-        Self.duplicate(fd: GetStdHandle(STD_OUTPUT_HANDLE))
-    }
-
-    public static func duplicateStderr() -> HANDLE? {
-        Self.duplicate(fd: GetStdHandle(STD_ERROR_HANDLE))
+        public static func duplicateStderr() -> HANDLE? {
+            Self.duplicate(fd: GetStdHandle(STD_ERROR_HANDLE))
+        }
     }
 
     // Adapted from libuv:
@@ -220,6 +220,7 @@ public enum WindowsSpawnImpl {
             var pathBuffer = calloc(MemoryLayout<wchar_t>.size, Int(pathLength)).assumingMemoryBound(to: wchar_t.self)
             let r = "PATH".withCString(encodedAs: UTF16.self) { GetEnvironmentVariableW($0, pathBuffer, pathLength) }
             guard r != 0 && r < pathLength else {
+                free(pathBuffer)
                 return .failure(Error("Could not load PATH environment variable", systemError: DWORD(GetLastError())))
             }
             path = pathBuffer
@@ -241,7 +242,7 @@ public enum WindowsSpawnImpl {
         print("cwd: \(cwd.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Search the path and working directory for the application that is to be used to execute the command, in a form sutable to use in CreateProcessW()
-        let applicationPath = command.withCString(encodedAs: UTF16.self) {  windowsSpawn.search_path($0, cwd, path) }
+        let applicationPath = command.withCString(encodedAs: UTF16.self) { windowsSpawn.search_path($0, cwd, path) }
         defer { free(applicationPath) }
         guard applicationPath != nil else {
             return .failure(Error("Could not find application", systemError: DWORD(ERROR_FILE_NOT_FOUND)))
@@ -262,7 +263,10 @@ public enum WindowsSpawnImpl {
         
         // Package the file descriptors map as a list of handles, 
         // then process them into a form suitable for use in the startup information object passed to CreateProcessW()
+        print("fdMap: \(fdMap)")
+        print("\(_get_osfhandle(3))")
         let handles: [Int32: HANDLE?] = fdMap.mapValues { HANDLE(bitPattern: _get_osfhandle($0)) }
+        print("handles: \(handles)")
         let handleMax = fdMap.keys.max() ?? -1
         var handleArray = Array<(flags: UInt8, handle: HANDLE?)>(repeating: (flags: 0, handle: nil), count: Int(handleMax + 1))
         for (fd, handle) in handles {
@@ -311,6 +315,8 @@ public enum WindowsSpawnImpl {
         startup.hStdOutput = handleStructure[1]
         startup.hStdError = handleStructure[2]
 
+        print("startup.hStdOutput: \(startup.hStdOutput)")
+        
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()
         guard CreateProcessW(

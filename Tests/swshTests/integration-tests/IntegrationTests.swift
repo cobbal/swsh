@@ -196,7 +196,15 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testWindowsEchoViaGitCompatibility() throws {
-        // XCTAssertEqual(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runString(), "hello")
-        XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runBool())
+        XCTAssertEqual(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runString(), "hello")
+        // XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runBool())
+    }
+
+    func testWindowsFileOutput() throws {
+        let filePath = "foo.txt"
+        let string = "hello"
+        try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", string).output(overwritingFile: filePath).run()
+        let fileData = try String(contentsOfFile: filePath)
+        XCTAssertEqual(fileData, string)
     }
 }

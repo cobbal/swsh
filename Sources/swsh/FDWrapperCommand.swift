@@ -30,7 +30,7 @@ internal class FDWrapperCommand: Command {
             guard fd >= 0 else {
                 return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, errno: errno))
             }
-            let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+            let handle = FDFileHandle(fd: fd)
             return .success(fdMap: [dstFd: FileDescriptor(fd)], ref: handle)
         }
     }
