@@ -36,6 +36,8 @@ public class FDPipe {
 
         readingSide = FDFileHandle(fileDescriptor: fileDescriptorForReading)
         writingSide = FDFileHandle(fileDescriptor: fileDescriptorForWriting)
+        print("pipe.fileDescriptorForReading \(fileDescriptorForReading)")
+        print("pipe.fileDescriptorForWriting \(fileDescriptorForWriting)")
         #else
         let pipe = Pipe()
         readingSide = FDFileHandle(

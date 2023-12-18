@@ -83,6 +83,7 @@ public enum WindowsSpawnImpl {
     public enum Error: Swift.Error {
         case allocationError
         case tooManyHandles
+        case envPathUnset
         case systemError(DWORD, String)
 
         init(_ context: String = "", systemError: DWORD) {
@@ -125,6 +126,8 @@ public enum WindowsSpawnImpl {
     *   HANDLE os_handle[number_of_fds]
     */
     class ChildHandleBuffer {
+        let shouldDuplicate = false
+
         let handles: [(flags: UInt8, handle: HANDLE?)]
         let count: Int
         let buffer: UnsafeMutableRawBufferPointer
@@ -133,8 +136,43 @@ public enum WindowsSpawnImpl {
         private let byteSize = MemoryLayout<UInt8>.size
         private let ptrSize = MemoryLayout<UnsafeRawPointer>.size
 
+        static func create(_ handles: [HANDLE?]) -> Result<ChildHandleBuffer, Error> {
+            let flaggedHandles: [(flags: UInt8, handle: HANDLE?)] = handles.map { handle in
+                let FOPEN: UInt8 = 0x01
+                // let FEOFLAG: UInt8 = 0x02
+                // let FCRLF: UInt8 = 0x04
+                let FPIPE: UInt8 = 0x08
+                // let FNOINHERIT: UInt8 = 0x10
+                // let FAPPEND: UInt8 = 0x20
+                let FDEV: UInt8 = 0x40
+                // let FTEXT: UInt8 = 0x80
+
+                let fileType = GetFileType(handle)
+                let flags: UInt8
+                switch Int32(fileType) {
+                case FILE_TYPE_DISK: 
+                    flags = FOPEN
+                case FILE_TYPE_PIPE: 
+                    flags = FOPEN | FPIPE
+                case FILE_TYPE_CHAR,
+                    FILE_TYPE_REMOTE:
+                    flags = FOPEN | FDEV
+                case FILE_TYPE_UNKNOWN:
+                    // TODO: What if GetFileType returns an error?
+                    flags = FOPEN | FDEV
+                default:
+                    preconditionFailure("Windows lied about the file type. Should not happen.")
+                }
+
+                return (flags: flags, handle: handle)
+            }
+
+            guard let buffer = ChildHandleBuffer(flaggedHandles) else { return .failure(.tooManyHandles) }
+            return .success(buffer)
+        }
+
         private init?(_ handles: [(flags: UInt8, handle: HANDLE?)]) {
-            self.handles = handles
+            self.handles = !shouldDuplicate ? handles : handles.map { (flags: $0.flags, handle: Self.duplicate(handle: $0.handle)) }
             count = handles.count
             let byteLength = intSize + byteSize * count + ptrSize * count
             guard byteLength < UInt16.max else { return nil }
@@ -148,24 +186,29 @@ public enum WindowsSpawnImpl {
             }
         }
 
-        static func create(_ handles: [(flags: UInt8, handle: HANDLE?)]) -> Result<ChildHandleBuffer, Error> {
-            guard let buffer = ChildHandleBuffer(handles) else { return .failure(.tooManyHandles) }
-            return .success(buffer)
-        }
-
         subscript(index: Int) -> HANDLE? {
             guard index < count else { return INVALID_HANDLE_VALUE }
             return buffer.loadUnaligned(fromByteOffset: intSize + byteSize * count + ptrSize * index, as: HANDLE.self)
         }
 
         deinit {
+            // Close all handles that were duplicated
+            if shouldDuplicate {
+                for index in 0..<count {
+                    let handle = self[index]
+                    if handle != INVALID_HANDLE_VALUE {
+                        CloseHandle(handle)
+                    }
+                }
+            }
+
             buffer.deallocate()
         }
     
         // Adaped from libuv: 
         // https://github.com/libuv/libuv/blob/00357f87328def30a32af82c841e5d1667a2a827/src/win/process-stdio.c#L96
-        private static func duplicate(fd: HANDLE?) -> HANDLE? {
-            guard fd != INVALID_HANDLE_VALUE, fd != nil, fd != HANDLE(bitPattern: -2) else {
+        private static func duplicate(handle: HANDLE?) -> HANDLE? {
+            guard handle != INVALID_HANDLE_VALUE, handle != nil, handle != HANDLE(bitPattern: -2) else {
                 return nil
             }
 
@@ -173,7 +216,7 @@ public enum WindowsSpawnImpl {
             var duplicated: HANDLE?
             guard DuplicateHandle(
                 currentProcess,
-                fd,
+                handle,
                 currentProcess,
                 &duplicated,
                 0,
@@ -186,15 +229,15 @@ public enum WindowsSpawnImpl {
         }
 
         public static func duplicateStdin() -> HANDLE? {
-            Self.duplicate(fd: GetStdHandle(STD_INPUT_HANDLE))
+            Self.duplicate(handle: GetStdHandle(STD_INPUT_HANDLE))
         }
 
         public static func duplicateStdout() -> HANDLE? {
-            Self.duplicate(fd: GetStdHandle(STD_OUTPUT_HANDLE))
+            Self.duplicate(handle: GetStdHandle(STD_OUTPUT_HANDLE))
         }
 
         public static func duplicateStderr() -> HANDLE? {
-            Self.duplicate(fd: GetStdHandle(STD_ERROR_HANDLE))
+            Self.duplicate(handle: GetStdHandle(STD_ERROR_HANDLE))
         }
     }
 
@@ -208,23 +251,10 @@ public enum WindowsSpawnImpl {
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
         // Find the path environment variable, checking the passed environment first, then the system environment
-        let envPath = env.keys.first(where:) { $0.uppercased == "PATH" }.map { env[$0]! }
-        let path: UnsafeMutablePointer<wchar_t>?
-        if let envPath = envPath {
-            path = envPath.withCString(encodedAs: UTF16.self, _wcsdup)
-        } else {
-            let pathLength = "PATH".withCString(encodedAs: UTF16.self) { GetEnvironmentVariableW($0, nil, 0) }
-            guard pathLength > 0 else {
-                return .failure(Error("Could not find PATH environment variable", systemError: DWORD(GetLastError())))
-            }
-            var pathBuffer = calloc(MemoryLayout<wchar_t>.size, Int(pathLength)).assumingMemoryBound(to: wchar_t.self)
-            let r = "PATH".withCString(encodedAs: UTF16.self) { GetEnvironmentVariableW($0, pathBuffer, pathLength) }
-            guard r != 0 && r < pathLength else {
-                free(pathBuffer)
-                return .failure(Error("Could not load PATH environment variable", systemError: DWORD(GetLastError())))
-            }
-            path = pathBuffer
+        guard let envPath = env.keys.first(where:) { $0.uppercased == "PATH" }.map({ env[$0]! }) else {
+            return .failure(Error.envPathUnset)
         }
+        let path: UnsafeMutablePointer<wchar_t>? = envPath.withCString(encodedAs: UTF16.self, _wcsdup)
         defer { free(path) }
         print("path: \(path.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
@@ -264,39 +294,12 @@ public enum WindowsSpawnImpl {
         // Package the file descriptors map as a list of handles, 
         // then process them into a form suitable for use in the startup information object passed to CreateProcessW()
         print("fdMap: \(fdMap)")
-        print("\(_get_osfhandle(3))")
         let handles: [Int32: HANDLE?] = fdMap.mapValues { HANDLE(bitPattern: _get_osfhandle($0)) }
         print("handles: \(handles)")
         let handleMax = fdMap.keys.max() ?? -1
-        var handleArray = Array<(flags: UInt8, handle: HANDLE?)>(repeating: (flags: 0, handle: nil), count: Int(handleMax + 1))
+        var handleArray = Array<HANDLE?>(repeating: nil, count: Int(handleMax + 1))
         for (fd, handle) in handles {
-            let FOPEN: UInt8 = 0x01
-            // let FEOFLAG: UInt8 = 0x02
-            // let FCRLF: UInt8 = 0x04
-            let FPIPE: UInt8 = 0x08
-            // let FNOINHERIT: UInt8 = 0x10
-            // let FAPPEND: UInt8 = 0x20
-            let FDEV: UInt8 = 0x40
-            // let FTEXT: UInt8 = 0x80
-
-            let fileType = GetFileType(handle)
-            let flags: UInt8
-            switch Int32(fileType) {
-            case FILE_TYPE_DISK: 
-                flags = FOPEN
-            case FILE_TYPE_PIPE: 
-                flags = FOPEN | FPIPE
-            case FILE_TYPE_CHAR,
-                FILE_TYPE_REMOTE:
-                flags = FOPEN | FDEV
-            case FILE_TYPE_UNKNOWN:
-                // TODO: What if GetFileType returns an error?
-                flags = FOPEN | FDEV
-            default:
-                preconditionFailure("Windows lied about the file type. Should not happen.")
-            }
-
-            handleArray[Int(fd)] = (flags: flags, handle: handle)
+            handleArray[Int(fd)] = handle
         }
         let handleStructure: ChildHandleBuffer
         switch ChildHandleBuffer.create(handleArray) {
@@ -315,7 +318,9 @@ public enum WindowsSpawnImpl {
         startup.hStdOutput = handleStructure[1]
         startup.hStdError = handleStructure[2]
 
+        print("startup.hStdInput: \(startup.hStdInput)")
         print("startup.hStdOutput: \(startup.hStdOutput)")
+        print("startup.hStdError: \(startup.hStdError)")
         
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()
@@ -333,7 +338,7 @@ public enum WindowsSpawnImpl {
         ) else { 
             return .failure(Error("CreateProcessW failed: ", systemError: DWORD(GetLastError())))
         }
-        // TODO: Cleanup stdio handles?
+        
         return .success(info)
     }
 }

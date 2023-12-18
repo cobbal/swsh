@@ -1,10 +1,22 @@
 import swsh
 import XCTest
+#if os(Windows)
+import WinSDK
+#endif
 
 final class IntegrationTests: XCTestCase {
     override func setUp() {
         super.setUp()
         ExternalCommand.verbose = true
+        // #if os(Windows)
+        // var path = ProcessInfo.processInfo.environment.first { $0.key.lowercased() == "path" }!.value
+        // path += ";C:\\Program Files\\Git\\usr\\bin\\"
+        // "PATH".withCString(encodedAs: UTF16.self) { pathKey in
+        //     path.withCString(encodedAs: UTF16.self) { path in
+        //         SetEnvironmentVariableW(pathKey, path)
+        //     }
+        // }
+        // #endif
     }
 
     func testReadmeExamples() {
@@ -195,6 +207,11 @@ final class IntegrationTests: XCTestCase {
         XCTAssertTrue(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir").runString().contains("Directory"))
     }
 
+    func testWindowsEchoNoPath() throws {
+        print("\(ProcessInfo.processInfo.environment.first { $0.key.lowercased() == "path" }!.value)")
+        XCTAssertEqual(try cmd("echo", "sup").runString(), "sup")
+    }
+
     func testWindowsEchoViaGitCompatibility() throws {
         XCTAssertEqual(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runString(), "hello")
     }
@@ -204,6 +221,6 @@ final class IntegrationTests: XCTestCase {
         let string = "hello"
         try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", string).output(overwritingFile: filePath).run()
         let fileData = try String(contentsOfFile: filePath)
-        XCTAssertEqual(fileData, string)
+        XCTAssertEqual(fileData, string + "\n")
     }
 }
