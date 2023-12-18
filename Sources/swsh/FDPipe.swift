@@ -1,11 +1,14 @@
 import Foundation
 
-// A version of `Pipe` that works more uniformly between windows and posix
+/// A version of `Pipe` that works more uniformly between windows and posix
 public class FDPipe {
-    public let fileDescriptorForReading: FileDescriptor
-    public let fileDescriptorForWriting: FileDescriptor
-    public let fileHandleForReading: FileHandle
-    public let fileHandleForWriting: FileHandle
+    private let readingSide: FDFileHandle
+    private let writingSide: FDFileHandle
+
+    public var fileDescriptorForReading: FileDescriptor { readingSide.fileDescriptor }
+    public var fileDescriptorForWriting: FileDescriptor { writingSide.fileDescriptor }
+    public var fileHandleForReading: FileHandle { readingSide.handle }
+    public var fileHandleForWriting: FileHandle { writingSide.handle }
 
     public init() {
         #if os(Windows)
@@ -14,6 +17,8 @@ public class FDPipe {
         defer { fds.deallocate() }
         /// If the operating system prevents us from creating file handles, stop
         let ret = _pipe(fds, 0, _O_BINARY)
+        let fileDescriptorForReading: FileDescriptor
+        let fileDescriptorForWriting: FileDescriptor
         switch (ret, errno) {
         case (0, _):
             fileDescriptorForReading = FileDescriptor(fds[0])
@@ -29,14 +34,18 @@ public class FDPipe {
             fatalError("Error calling pipe(): \(errno)")
         }
 
-        fileHandleForReading = FileHandle(fileDescriptor: fileDescriptorForReading.rawValue, closeOnDealloc: true)
-        fileHandleForWriting = FileHandle(fileDescriptor: fileDescriptorForWriting.rawValue, closeOnDealloc: true)
+        readingSide = FDFileHandle(fileDescriptor: fileDescriptorForReading)
+        writingSide = FDFileHandle(fileDescriptor: fileDescriptorForWriting)
         #else
         let pipe = Pipe()
-        fileHandleForReading = pipe.fileHandleForReading
-        fileHandleForWriting = pipe.fileHandleForWriting
-        fileDescriptorForReading = FileDescriptor(pipe.fileHandleForReading)
-        fileDescriptorForWriting = FileDescriptor(pipe.fileHandleForWriting)
+        readingSide = FDFileHandle(
+            fd: FileDescriptor(pipe.fileHandleForReading), 
+            handle: pipe.fileHandleForReading
+        )
+        writingSide = FDFileHandle(
+            fd: FileDescriptor(pipe.fileHandleForWriting), 
+            handle: pipe.fileHandleForWriting
+        )
         #endif
     }
 }

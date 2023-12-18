@@ -8,18 +8,18 @@ class MockCommand: Command, Equatable, CustomStringConvertible {
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         public var fdMap: FDMap
-        public var handles: [FileDescriptor: FileHandle]
+        public var handles: [FileDescriptor: FDFileHandle]
 
         public init(command: MockCommand, fdMap: FDMap) {
             _command = command
             self.fdMap = fdMap
-            handles = [FileDescriptor: FileHandle]()
+            handles = [FileDescriptor: FDFileHandle]()
             for (dst, src) in fdMap {
-                handles[dst] = handles[src] ?? FileHandle(fileDescriptor: dup(src.rawValue), closeOnDealloc: true)
+                handles[dst] = handles[src] ?? FDFileHandle(fileDescriptor: FileDescriptor(dup(src.rawValue)))
             }
         }
 
-        subscript(_ fd: FileDescriptor) -> FileHandle! { handles[fd] }
+        subscript(_ fd: FileDescriptor) -> FileHandle! { handles[fd]?.handle }
 
         public func setExit(code: Int32) {
             let old = _exitCode

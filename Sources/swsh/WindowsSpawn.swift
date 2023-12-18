@@ -134,7 +134,7 @@ public enum WindowsSpawnImpl {
         private let ptrSize = MemoryLayout<UnsafeRawPointer>.size
 
         private init?(_ handles: [(flags: UInt8, handle: HANDLE?)]) {
-            self.handles = handles.map { (flags: $0.flags, handle: Self.duplicate(fd: $0.handle)) }
+            self.handles = handles
             count = handles.count
             let byteLength = intSize + byteSize * count + ptrSize * count
             guard byteLength < UInt16.max else { return nil }

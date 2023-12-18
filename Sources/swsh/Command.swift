@@ -69,7 +69,7 @@ extension Command {
     public func runData() throws -> Data {
         let pipe = FDPipe()
         let result = async(fdMap: [ .stdout: pipe.fileDescriptorForWriting ])
-        pipe.fileHandleForWriting.closeIgnoringErrors()
+        try pipe.fileHandleForWriting.close()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         try result.succeed()
         return data

@@ -6,6 +6,7 @@ class FDPipeTests: XCTestCase {
     func testPipePipiness() throws {
         let string = "SomeString"
         let pipe = FDPipe()
+
         let waiter = DispatchGroup()
         waiter.enter()
         let writeThread = Thread {
@@ -14,6 +15,7 @@ class FDPipeTests: XCTestCase {
             waiter.leave()
         }
         writeThread.start()
+        
         try XCTAssertEqual(pipe.fileHandleForReading.read(upToCount: string.count), string.data(using: .utf8)!)
         waiter.wait()
     }
