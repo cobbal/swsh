@@ -109,9 +109,9 @@ final class IntegrationTests: XCTestCase {
 
     func testIsRunning() throws {
         let pipe = FDPipe()
-        let proc = cmd("cat").async(stdin: pipe.fileDescriptorForReading)
+        let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fileDescriptor)
         XCTAssertTrue(proc.isRunning)
-        pipe.fileHandleForWriting.closeFile()
+        pipe.fileHandleForWriting.close()
         try proc.succeed()
     }
 
@@ -152,14 +152,14 @@ final class IntegrationTests: XCTestCase {
 
     func testRemapCycle() throws {
         let pipes = [FDPipe(), FDPipe()]
-        let write = pipes.map { $0.fileDescriptorForWriting }
+        let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
         let res = cmd("bash", "-c", "echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],
         ])
-        pipes.forEach { $0.fileHandleForWriting.closeFile() }
+        pipes.forEach { $0.fileHandleForWriting.close() }
         let output = pipes.map {
-            String(data: $0.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
+            String(data: $0.fileHandleForReading.handle.readDataToEndOfFile(), encoding: .utf8)
         }
         try res.succeed()
         XCTAssertEqual(output, ["thing2\n", "thing1\n"])

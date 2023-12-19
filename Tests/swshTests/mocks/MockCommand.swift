@@ -15,7 +15,7 @@ class MockCommand: Command, Equatable, CustomStringConvertible {
             self.fdMap = fdMap
             handles = [FileDescriptor: FDFileHandle]()
             for (dst, src) in fdMap {
-                handles[dst] = handles[src] ?? FDFileHandle(fileDescriptor: FileDescriptor(dup(src.rawValue)))
+                handles[dst] = handles[src] ?? FDFileHandle(fileDescriptor: FileDescriptor(dup(src.rawValue)), closeOnDealloc: true)
             }
         }
 

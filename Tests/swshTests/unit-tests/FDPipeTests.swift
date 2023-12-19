@@ -10,13 +10,13 @@ class FDPipeTests: XCTestCase {
         let waiter = DispatchGroup()
         waiter.enter()
         let writeThread = Thread {
-            try! pipe.fileHandleForWriting.write(contentsOf: string.data(using: .utf8)!)
-            try! pipe.fileHandleForWriting.synchronize()
+            try! pipe.fileHandleForWriting.handle.write(contentsOf: string.data(using: .utf8)!)
+            try! pipe.fileHandleForWriting.handle.synchronize()
             waiter.leave()
         }
         writeThread.start()
         
-        try XCTAssertEqual(pipe.fileHandleForReading.read(upToCount: string.count), string.data(using: .utf8)!)
+        try XCTAssertEqual(pipe.fileHandleForReading.handle.read(upToCount: string.count), string.data(using: .utf8)!)
         waiter.wait()
     }
 }
