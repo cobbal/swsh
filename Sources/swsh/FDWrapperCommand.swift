@@ -30,7 +30,7 @@ internal class FDWrapperCommand: Command {
             guard fd >= 0 else {
                 return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, errno: errno))
             }
-            let io = FDFileHandle(fileDescriptor: FileDescriptor(fd))
+            let io = FDFileHandle(fileDescriptor: FileDescriptor(fd), closeOnDealloc: true)
             return .success(fdMap: [dstFd: io.fileDescriptor], ref: io)
         }
     }
@@ -143,14 +143,14 @@ extension Command {
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
 
             DispatchIO.write(
-                toFileDescriptor: pipe.fileDescriptorForWriting.rawValue,
+                toFileDescriptor: pipe.fileHandleForWriting.fileDescriptor.rawValue,
                 data: dispatchData,
                 runningHandlerOn: DispatchQueue.global()
             ) { [weak writeHandle = pipe.fileHandleForWriting] _, _ in
-                writeHandle?.closeFile()
+                writeHandle?.close()
             }
             return .success(
-                fdMap: [fd: pipe.fileDescriptorForReading],
+                fdMap: [fd: pipe.fileHandleForReading.fileDescriptor],
                 ref: pipe.fileHandleForReading
             )
         }

@@ -172,7 +172,7 @@ public enum WindowsSpawnImpl {
         }
 
         private init?(_ handles: [(flags: UInt8, handle: HANDLE?)]) {
-            self.handles = !shouldDuplicate ? handles : handles.map { (flags: $0.flags, handle: Self.duplicate(handle: $0.handle)) }
+            let handles = shouldDuplicate ? handles.map { (flags: $0.flags, handle: Self.duplicate(handle: $0.handle)) } : handles
             count = handles.count
             let byteLength = intSize + byteSize * count + ptrSize * count
             guard byteLength < UInt16.max else { return nil }
@@ -184,6 +184,7 @@ public enum WindowsSpawnImpl {
                 buffer.storeBytes(of: handle.flags, toByteOffset: intSize + byteSize * i, as: UInt8.self)
                 buffer.storeBytes(of: handle.handle, toByteOffset: intSize + byteSize * count + ptrSize * i, as: HANDLE?.self)
             }
+            self.handles = handles
         }
 
         subscript(index: Int) -> HANDLE? {
@@ -192,12 +193,12 @@ public enum WindowsSpawnImpl {
         }
 
         deinit {
-            // Close all handles that were duplicated
             if shouldDuplicate {
                 for index in 0..<count {
                     let handle = self[index]
                     if handle != INVALID_HANDLE_VALUE {
                         CloseHandle(handle)
+                        print("Closed \(handle)")
                     }
                 }
             }
@@ -215,29 +216,19 @@ public enum WindowsSpawnImpl {
             let currentProcess = GetCurrentProcess()
             var duplicated: HANDLE?
             guard DuplicateHandle(
-                currentProcess,
-                handle,
-                currentProcess,
-                &duplicated,
-                0,
-                true,
-                DWORD(DUPLICATE_SAME_ACCESS)
+                /* hSourceProcessHandle: */ currentProcess,
+                /* hSourceHandle: */ handle,
+                /* hTargetProcessHandle: */ currentProcess,
+                /* lpTargetHandle: */ &duplicated,
+                /* dwDesiredAccess: */ 0,
+                /* bInheritHandle: */ true,
+                /* dwOptions: */ DWORD(DUPLICATE_SAME_ACCESS)
             ) else {
                 return nil
             }
+            print("Duplicated \(handle) to \(duplicated)")
+            
             return duplicated
-        }
-
-        public static func duplicateStdin() -> HANDLE? {
-            Self.duplicate(handle: GetStdHandle(STD_INPUT_HANDLE))
-        }
-
-        public static func duplicateStdout() -> HANDLE? {
-            Self.duplicate(handle: GetStdHandle(STD_OUTPUT_HANDLE))
-        }
-
-        public static func duplicateStderr() -> HANDLE? {
-            Self.duplicate(handle: GetStdHandle(STD_ERROR_HANDLE))
         }
     }
 

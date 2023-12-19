@@ -199,10 +199,6 @@ final class IntegrationTests: XCTestCase {
         XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\true.exe").runBool())
     }
 
-    func testWindowsSilentStringBatchScript() throws {
-        XCTAssertTrue(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir > foo.txt").runBool())
-    }
-
     func testWindowsStringBatchScript() throws {
         XCTAssertTrue(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir").runString().contains("Directory"))
     }

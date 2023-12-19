@@ -2,13 +2,8 @@ import Foundation
 
 /// A version of `Pipe` that works more uniformly between windows and posix
 public class FDPipe {
-    private let readingSide: FDFileHandle
-    private let writingSide: FDFileHandle
-
-    public var fileDescriptorForReading: FileDescriptor { readingSide.fileDescriptor }
-    public var fileDescriptorForWriting: FileDescriptor { writingSide.fileDescriptor }
-    public var fileHandleForReading: FileHandle { readingSide.handle }
-    public var fileHandleForWriting: FileHandle { writingSide.handle }
+    public let fileHandleForReading: FDFileHandle
+    public let fileHandleForWriting: FDFileHandle
 
     public init() {
         #if os(Windows)
@@ -34,17 +29,15 @@ public class FDPipe {
             fatalError("Error calling pipe(): \(errno)")
         }
 
-        readingSide = FDFileHandle(fileDescriptor: fileDescriptorForReading)
-        writingSide = FDFileHandle(fileDescriptor: fileDescriptorForWriting)
-        print("pipe.fileDescriptorForReading \(fileDescriptorForReading)")
-        print("pipe.fileDescriptorForWriting \(fileDescriptorForWriting)")
+        fileHandleForReading = FDFileHandle(fileDescriptor: fileDescriptorForReading, closeOnDealloc: true)
+        fileHandleForWriting = FDFileHandle(fileDescriptor: fileDescriptorForWriting, closeOnDealloc: true)
         #else
         let pipe = Pipe()
-        readingSide = FDFileHandle(
+        fileDescriptorForReading = FDFileHandle(
             fd: FileDescriptor(pipe.fileHandleForReading), 
             handle: pipe.fileHandleForReading
         )
-        writingSide = FDFileHandle(
+        fileDescriptorForWriting = FDFileHandle(
             fd: FileDescriptor(pipe.fileHandleForWriting), 
             handle: pipe.fileHandleForWriting
         )

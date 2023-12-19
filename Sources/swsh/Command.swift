@@ -36,9 +36,9 @@ extension Command {
     /// Run the command asynchronously, and return a stream open on process's stdout
     public func asyncStream() -> FileHandle {
         let pipe = FDPipe()
-        _ = async(fdMap: [ .stdout: pipe.fileDescriptorForWriting ])
-        pipe.fileHandleForWriting.closeIgnoringErrors()
-        return pipe.fileHandleForReading
+        _ = async(fdMap: [ .stdout: pipe.fileHandleForWriting.fileDescriptor ])
+        pipe.fileHandleForWriting.close()
+        return pipe.fileHandleForReading.handle
     }
 
     /// Run the command synchronously, and return nothing if successful
@@ -68,9 +68,9 @@ extension Command {
     /// - Returns: output as Data
     public func runData() throws -> Data {
         let pipe = FDPipe()
-        let result = async(fdMap: [ .stdout: pipe.fileDescriptorForWriting ])
-        try pipe.fileHandleForWriting.close()
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let result = async(fdMap: [ .stdout: pipe.fileHandleForWriting.fileDescriptor ])
+        pipe.fileHandleForWriting.close()
+        let data = pipe.fileHandleForReading.handle.readDataToEndOfFile()
         try result.succeed()
         return data
     }
