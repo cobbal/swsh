@@ -141,13 +141,19 @@ extension Command {
         FDWrapperCommand(inner: self) { _ in
             let pipe = FDPipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
-
+            print("Made a pipe")
+                
             DispatchIO.write(
                 toFileDescriptor: pipe.fileHandleForWriting.fileDescriptor.rawValue,
                 data: dispatchData,
                 runningHandlerOn: DispatchQueue.global()
-            ) { [weak writeHandle = pipe.fileHandleForWriting] _, _ in
-                writeHandle?.close()
+            ) { [pipe = pipe, writeHandle = pipe.fileHandleForWriting] _, error in
+                print("DispatchIO closing. error: \(error)")
+                writeHandle.handle.write("A few more characters".data(using: .utf8)!)
+                "TastyData".withCString() {
+                    _write(pipe.fileHandleForWriting.fileDescriptor.rawValue, $0, UInt32(strlen($0)))
+                }
+                writeHandle.close()
             }
             return .success(
                 fdMap: [fd: pipe.fileHandleForReading.fileDescriptor],

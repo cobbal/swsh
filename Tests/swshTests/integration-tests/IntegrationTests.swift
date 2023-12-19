@@ -204,7 +204,6 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testWindowsEchoNoPath() throws {
-        print("\(ProcessInfo.processInfo.environment.first { $0.key.lowercased() == "path" }!.value)")
         XCTAssertEqual(try cmd("echo", "sup").runString(), "sup")
     }
 

@@ -126,7 +126,7 @@ public enum WindowsSpawnImpl {
     *   HANDLE os_handle[number_of_fds]
     */
     class ChildHandleBuffer {
-        let shouldDuplicate = false
+        let shouldDuplicate = true
 
         let handles: [(flags: UInt8, handle: HANDLE?)]
         let count: Int
@@ -198,7 +198,7 @@ public enum WindowsSpawnImpl {
                     let handle = self[index]
                     if handle != INVALID_HANDLE_VALUE {
                         CloseHandle(handle)
-                        print("Closed \(handle)")
+                        // print("Closed \(handle)")
                     }
                 }
             }
@@ -226,7 +226,7 @@ public enum WindowsSpawnImpl {
             ) else {
                 return nil
             }
-            print("Duplicated \(handle) to \(duplicated)")
+            // print("Duplicated \(handle) to \(duplicated)")
             
             return duplicated
         }
@@ -247,7 +247,7 @@ public enum WindowsSpawnImpl {
         }
         let path: UnsafeMutablePointer<wchar_t>? = envPath.withCString(encodedAs: UTF16.self, _wcsdup)
         defer { free(path) }
-        print("path: \(path.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        // print("path: \(path.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Find the current working directory
         let cwdLength = GetCurrentDirectoryW(0, nil)
@@ -260,7 +260,7 @@ public enum WindowsSpawnImpl {
         guard r != 0 && r < cwdLength else {
             return .failure(Error("Could not load current working directory", systemError: DWORD(GetLastError())))
         }
-        print("cwd: \(cwd.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        // print("cwd: \(cwd.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Search the path and working directory for the application that is to be used to execute the command, in a form sutable to use in CreateProcessW()
         let applicationPath = command.withCString(encodedAs: UTF16.self) { windowsSpawn.search_path($0, cwd, path) }
@@ -268,7 +268,7 @@ public enum WindowsSpawnImpl {
         guard applicationPath != nil else {
             return .failure(Error("Could not find application", systemError: DWORD(ERROR_FILE_NOT_FOUND)))
         }
-        print("applicationPath: \(applicationPath.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        // print("applicationPath: \(applicationPath.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Convert the command (not the application path!) and arguments to a null-terminated list of null-terminated UTF8 strings,
         // then process them into properly quoted wide strings suitable for use in CreateProcessW()
@@ -309,10 +309,6 @@ public enum WindowsSpawnImpl {
         startup.hStdOutput = handleStructure[1]
         startup.hStdError = handleStructure[2]
 
-        print("startup.hStdInput: \(startup.hStdInput)")
-        print("startup.hStdOutput: \(startup.hStdOutput)")
-        print("startup.hStdError: \(startup.hStdError)")
-        
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()
         guard CreateProcessW(
