@@ -33,11 +33,11 @@ public class FDPipe {
         fileHandleForWriting = FDFileHandle(fileDescriptor: fileDescriptorForWriting, closeOnDealloc: true)
         #else
         let pipe = Pipe()
-        fileDescriptorForReading = FDFileHandle(
+        fileHandleForReading = FDFileHandle(
             fd: FileDescriptor(pipe.fileHandleForReading), 
             handle: pipe.fileHandleForReading
         )
-        fileDescriptorForWriting = FDFileHandle(
+        fileHandleForWriting = FDFileHandle(
             fd: FileDescriptor(pipe.fileHandleForWriting), 
             handle: pipe.fileHandleForWriting
         )

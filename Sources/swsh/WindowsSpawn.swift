@@ -20,6 +20,7 @@ struct WindowsSpawn: ProcessSpawner {
     ) -> SpawnResult {
         let intFDMap = Dictionary(uniqueKeysWithValues: fdMap.map { ($0.key.rawValue, $0.value.rawValue) })
         do {
+            print("Started spawn: \(command) \(arguments.joined(separator: " "))")
             switch WindowsSpawnImpl.spawn(
                 command: command,
                 arguments: arguments,
@@ -61,6 +62,7 @@ struct WindowsSpawn: ProcessSpawner {
 
             CloseHandle(process.mainThreadHandle)
             CloseHandle(process.handle)
+            print("Reaped(\(exitCode)): \(process)")
 
             callback(Int32(bitPattern: exitCode))
         }
@@ -126,65 +128,44 @@ public enum WindowsSpawnImpl {
     *   HANDLE os_handle[number_of_fds]
     */
     class ChildHandleBuffer {
-        let shouldDuplicate = true
-
-        let handles: [(flags: UInt8, handle: HANDLE?)]
-        let count: Int
-        let buffer: UnsafeMutableRawBufferPointer
-
+        private let shouldDuplicate = true
         private let intSize = MemoryLayout<Int>.size
         private let byteSize = MemoryLayout<UInt8>.size
         private let ptrSize = MemoryLayout<UnsafeRawPointer>.size
 
-        static func create(_ handles: [HANDLE?]) -> Result<ChildHandleBuffer, Error> {
-            let flaggedHandles: [(flags: UInt8, handle: HANDLE?)] = handles.map { handle in
-                let FOPEN: UInt8 = 0x01
-                // let FEOFLAG: UInt8 = 0x02
-                // let FCRLF: UInt8 = 0x04
-                let FPIPE: UInt8 = 0x08
-                // let FNOINHERIT: UInt8 = 0x10
-                // let FAPPEND: UInt8 = 0x20
-                let FDEV: UInt8 = 0x40
-                // let FTEXT: UInt8 = 0x80
-
-                let fileType = GetFileType(handle)
-                let flags: UInt8
-                switch Int32(fileType) {
-                case FILE_TYPE_DISK: 
-                    flags = FOPEN
-                case FILE_TYPE_PIPE: 
-                    flags = FOPEN | FPIPE
-                case FILE_TYPE_CHAR,
-                    FILE_TYPE_REMOTE:
-                    flags = FOPEN | FDEV
-                case FILE_TYPE_UNKNOWN:
-                    // TODO: What if GetFileType returns an error?
-                    flags = FOPEN | FDEV
-                default:
-                    preconditionFailure("Windows lied about the file type. Should not happen.")
-                }
-
-                return (flags: flags, handle: handle)
+        let handles: [HANDLE?]
+        let buffer: UnsafeMutableRawBufferPointer
+        let count: Int
+        
+        static func create(_ fdMap: [Int32: Int32]) -> Result<ChildHandleBuffer, Error> {
+            let parentFDMax = fdMap.keys.max() ?? -1
+            var childHandleArray = Array<HANDLE?>(repeating: nil, count: Int(parentFDMax + 1))
+            for (parentFD, childFD) in fdMap {
+                childHandleArray[Int(parentFD)] = Self.osHandle(for: childFD)
             }
 
-            guard let buffer = ChildHandleBuffer(flaggedHandles) else { return .failure(.tooManyHandles) }
+            guard let buffer = ChildHandleBuffer(childHandleArray) else { return .failure(.tooManyHandles) }
             return .success(buffer)
         }
 
-        private init?(_ handles: [(flags: UInt8, handle: HANDLE?)]) {
-            let handles = shouldDuplicate ? handles.map { (flags: $0.flags, handle: Self.duplicate(handle: $0.handle)) } : handles
-            count = handles.count
+        private init?(_ handles: [HANDLE?]) {
+            let handles = !shouldDuplicate ? handles : handles.map { Self.duplicate($0) }
+            let count = handles.count
+
+            // Pack the handles into a buffer suitable for passing to CreateProcessW
             let byteLength = intSize + byteSize * count + ptrSize * count
             guard byteLength < UInt16.max else { return nil }
-
             buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: byteLength, alignment: 16)
-
             buffer.storeBytes(of: count, toByteOffset: 0, as: Int.self)
-            for (i, handle) in handles.enumerated() {
-                buffer.storeBytes(of: handle.flags, toByteOffset: intSize + byteSize * i, as: UInt8.self)
-                buffer.storeBytes(of: handle.handle, toByteOffset: intSize + byteSize * count + ptrSize * i, as: HANDLE?.self)
+            for i in 0..<count {
+                let handle = handles[i]
+                let flags = Self.flags(for: handle)
+                buffer.storeBytes(of: flags, toByteOffset: intSize + byteSize * i, as: UInt8.self)
+                buffer.storeBytes(of: handle, toByteOffset: intSize + byteSize * count + ptrSize * i, as: HANDLE?.self)
             }
+
             self.handles = handles
+            self.count = count
         }
 
         subscript(index: Int) -> HANDLE? {
@@ -194,21 +175,48 @@ public enum WindowsSpawnImpl {
 
         deinit {
             if shouldDuplicate {
-                for index in 0..<count {
-                    let handle = self[index]
-                    if handle != INVALID_HANDLE_VALUE {
+                for handle in handles {
+                    if let handle = handle {
                         CloseHandle(handle)
-                        // print("Closed \(handle)")
+                        print("Closed \(handle)")
                     }
                 }
             }
-
             buffer.deallocate()
         }
+
+        // Adapted from libuv:
+        // https://github.com/libuv/libuv/blob/1479b76310a38d98eda94db2b7f8a40e04b3ff32/src/win/handle-inl.h#L166
+        private static func osHandle(for fileDescriptor: Int32) -> HANDLE? {
+            // TODO: Can disable assert-in-debug-builds-only nonsense for _get_osfhandle()?
+            return HANDLE(bitPattern: _get_osfhandle(fileDescriptor))
+        }
     
+        // Adapted from libuv:
+        // https://github.com/libuv/libuv/blob/1479b76310a38d98eda94db2b7f8a40e04b3ff32/src/win/process-stdio.c#L273
+        private static func flags(for handle: HANDLE?) -> UInt8 {
+            let FOPEN: UInt8 = 0x01
+            // let FEOFLAG: UInt8 = 0x02
+            // let FCRLF: UInt8 = 0x04
+            let FPIPE: UInt8 = 0x08
+            // let FNOINHERIT: UInt8 = 0x10
+            // let FAPPEND: UInt8 = 0x20
+            let FDEV: UInt8 = 0x40
+            // let FTEXT: UInt8 = 0x80
+
+            switch Int32(GetFileType(handle)) {
+            case FILE_TYPE_DISK: return FOPEN
+            case FILE_TYPE_PIPE: return FOPEN | FPIPE
+            case FILE_TYPE_CHAR: return FOPEN | FDEV
+            case FILE_TYPE_REMOTE: return FOPEN | FDEV
+            case FILE_TYPE_UNKNOWN: return FOPEN | FDEV // TODO: What if GetFileType returns an error?
+            default: preconditionFailure("Windows lied about the file type. Should not happen.")
+            }
+        }
+
         // Adaped from libuv: 
         // https://github.com/libuv/libuv/blob/00357f87328def30a32af82c841e5d1667a2a827/src/win/process-stdio.c#L96
-        private static func duplicate(handle: HANDLE?) -> HANDLE? {
+        private static func duplicate(_ handle: HANDLE?) -> HANDLE? {
             guard handle != INVALID_HANDLE_VALUE, handle != nil, handle != HANDLE(bitPattern: -2) else {
                 return nil
             }
@@ -226,7 +234,7 @@ public enum WindowsSpawnImpl {
             ) else {
                 return nil
             }
-            // print("Duplicated \(handle) to \(duplicated)")
+            print("Duplicated \(handle) to \(duplicated)")
             
             return duplicated
         }
@@ -242,7 +250,7 @@ public enum WindowsSpawnImpl {
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
         // Find the path environment variable, checking the passed environment first, then the system environment
-        guard let envPath = env.keys.first(where:) { $0.uppercased == "PATH" }.map({ env[$0]! }) else {
+        guard let envPath = env.keys.first(where: { $0.uppercased == "PATH" }).map({ env[$0]! }) else {
             return .failure(Error.envPathUnset)
         }
         let path: UnsafeMutablePointer<wchar_t>? = envPath.withCString(encodedAs: UTF16.self, _wcsdup)
@@ -280,34 +288,28 @@ public enum WindowsSpawnImpl {
         guard makeArgsStatus == 0 else {
             return .failure(Error("Unable to convert command arguments", systemError: DWORD(makeArgsStatus)))
         }
-        print("commandLine: \(commandLine.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        // print("commandLine: \(commandLine.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Package the file descriptors map as a list of handles, 
         // then process them into a form suitable for use in the startup information object passed to CreateProcessW()
-        print("fdMap: \(fdMap)")
-        let handles: [Int32: HANDLE?] = fdMap.mapValues { HANDLE(bitPattern: _get_osfhandle($0)) }
-        print("handles: \(handles)")
-        let handleMax = fdMap.keys.max() ?? -1
-        var handleArray = Array<HANDLE?>(repeating: nil, count: Int(handleMax + 1))
-        for (fd, handle) in handles {
-            handleArray[Int(fd)] = handle
-        }
-        let handleStructure: ChildHandleBuffer
-        switch ChildHandleBuffer.create(handleArray) {
-            case .success(let buffer): handleStructure = buffer
+        // print("fdMap: \(fdMap)")
+        let childHandleStructure: ChildHandleBuffer
+        switch ChildHandleBuffer.create(fdMap) {
+            case .success(let buffer): childHandleStructure = buffer
             case .failure(let error): return .failure(error)
         }
+        print("childHandleStructure: \((0..<childHandleStructure.count).map { "(parentFD: \(fdMap[Int32($0)]!) childFD: \($0) osHandle: \(childHandleStructure[$0]!))" })")
         var startup = STARTUPINFOW()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.lpReserved = nil
         startup.lpDesktop = nil
         startup.lpTitle = nil
         startup.dwFlags = STARTF_USESTDHANDLES
-        startup.cbReserved2 = UInt16(handleStructure.buffer.count)
-        startup.lpReserved2 = .init(bitPattern: UInt(bitPattern: handleStructure.buffer.baseAddress))
-        startup.hStdInput = handleStructure[0]
-        startup.hStdOutput = handleStructure[1]
-        startup.hStdError = handleStructure[2]
+        startup.cbReserved2 = UInt16(childHandleStructure.buffer.count)
+        startup.lpReserved2 = .init(bitPattern: UInt(bitPattern: childHandleStructure.buffer.baseAddress))
+        startup.hStdInput = childHandleStructure[0]
+        startup.hStdOutput = childHandleStructure[1]
+        startup.hStdError = childHandleStructure[2]
 
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()
@@ -325,6 +327,7 @@ public enum WindowsSpawnImpl {
         ) else { 
             return .failure(Error("CreateProcessW failed: ", systemError: DWORD(GetLastError())))
         }
+        print("Spawned")
         
         return .success(info)
     }

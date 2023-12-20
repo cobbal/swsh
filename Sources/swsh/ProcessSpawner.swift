@@ -32,7 +32,7 @@ public struct ProcessInformation: CustomDebugStringConvertible {
     }
 
     public var debugDescription: String {
-        return "\(id) \(command)"
+        return "\(id) \(command) \(arguments.joined(separator: " "))"
     }
 }
 

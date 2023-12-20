@@ -1,39 +1,36 @@
 import Foundation
 
 /// A version of `FileHandle` that can be accessed by handle or fd at the same time
-public class FDFileHandle {
+public class FDFileHandle: CustomDebugStringConvertible {
     public let fileDescriptor: FileDescriptor
+    private let osHandle: intptr_t
     public let handle: FileHandle
     private let closeOnDealloc: Bool
     private var isClosed: Bool
     
-    public init(fileDescriptor: FileDescriptor, handle: FileHandle, closeOnDealloc: Bool) {
-        self.fileDescriptor = fileDescriptor
-        self.handle = handle
-        self.closeOnDealloc = closeOnDealloc
-        self.isClosed = false
-    }
-
-    public convenience init(fileDescriptor: FileDescriptor, closeOnDealloc: Bool) {
+    public init(fileDescriptor: FileDescriptor, closeOnDealloc: Bool) {
         // Construct the handle around the fd, but do not use closeOnDealloc, as this closes the fd!
-        let handle = FileHandle(fileDescriptor: fileDescriptor.rawValue)
+        let handle = FileHandle(fileDescriptor: fileDescriptor.rawValue, closeOnDealloc: false)
         let osHandle = _get_osfhandle(fileDescriptor.rawValue)
         precondition(osHandle != -1/*INVALID_HANDLE_VALUE*/ && osHandle != -2/*special Windows value*/)
 
-        // Configure this to close on dealloc manually
-        self.init(fileDescriptor: fileDescriptor, handle: handle, closeOnDealloc: closeOnDealloc)
+        self.fileDescriptor = fileDescriptor
+        self.osHandle = osHandle
+        self.handle = handle
+        self.closeOnDealloc = closeOnDealloc
+        self.isClosed = false // TODO: Can determine from fd if it is already closed?
+        print("Created FDFileHandle for \(debugDescription)")
     }
-
-    // public convenience init(fileDescriptor: FileDescriptor) {
-    //     self.init(fileDescriptor: fileDescriptor, closeOnDealloc: false)
-    // }
 
     public func close() {
         precondition(!isClosed)
-
-        print("Closing \(fileDescriptor.rawValue) handle: \(handle)...")
         _close(fileDescriptor.rawValue)
         isClosed = true
+        print("Closed FDFileHandle for \(debugDescription)")
+    }
+
+    public var debugDescription: String {
+        return "fd: \(fileDescriptor.rawValue) osHandle: \(UnsafeRawPointer(bitPattern: osHandle).map { $0.debugDescription } ?? "0x0000000000000000") fileHandle: \(handle) closeOnDealloc: \(closeOnDealloc)"
     }
 
     deinit {

@@ -149,10 +149,10 @@ extension Command {
                 runningHandlerOn: DispatchQueue.global()
             ) { [pipe = pipe, writeHandle = pipe.fileHandleForWriting] _, error in
                 print("DispatchIO closing. error: \(error)")
-                writeHandle.handle.write("A few more characters".data(using: .utf8)!)
-                "TastyData".withCString() {
-                    _write(pipe.fileHandleForWriting.fileDescriptor.rawValue, $0, UInt32(strlen($0)))
-                }
+                // writeHandle.handle.write("A few more characters".data(using: .utf8)!)
+                // "TastyData".withCString() {
+                //     _write(pipe.fileHandleForWriting.fileDescriptor.rawValue, $0, UInt32(strlen($0)))
+                // }
                 writeHandle.close()
             }
             return .success(
