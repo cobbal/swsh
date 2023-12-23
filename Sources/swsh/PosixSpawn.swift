@@ -97,7 +97,7 @@ public struct PosixSpawn: ProcessSpawner {
     public func resume(
       process: ProcessInformation
     ) throws {
-        kill(SIGCONT, process.id)
+        kill(process.id, SIGCONT)
     }
 }
 

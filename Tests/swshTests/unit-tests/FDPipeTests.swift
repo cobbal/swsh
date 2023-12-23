@@ -11,7 +11,8 @@ class FDPipeTests: XCTestCase {
         waiter.enter()
         let writeThread = Thread {
             try! pipe.fileHandleForWriting.handle.write(contentsOf: string.data(using: .utf8)!)
-            try! pipe.fileHandleForWriting.handle.synchronize()
+            // TODO: Need to synchronize()? Fails with error 512 on macOS if we do...
+            //try! pipe.fileHandleForWriting.handle.synchronize()
             waiter.leave()
         }
         writeThread.start()
