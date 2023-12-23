@@ -48,17 +48,25 @@ class CommandExtensionTests: XCTestCase {
     }
 
     func testAsync() throws {
+        #if os(Windows)
+        XCTFail("Succeeds on Windows from PowerShell, but fails from VSCode. Why?")
+        #else
         let res = try unwrap(cmd.async(stdin: 4, stdout: 5, stderr: 6) as? MockCommand.Result)
         XCTAssertEqual(res.fdMap, [0: 4, 1: 5, 2: 6])
+        #endif
     }
 
     func testAsyncStream() {
+        #if os(Windows)
+        XCTFail("Why does FileHandle raise error 512 here on Windows?")
+        #else
         let (res, handle) = withResult(cmd) { cmd.asyncStream() }
         res[1].write(data)
         res[2].write(data)
         res[1].closeFile()
         res[2].closeFile()
         XCTAssertEqual(handle.readDataToEndOfFile(), data)
+        #endif
     }
 
     func testRunSucceeds() {

@@ -8,15 +8,9 @@ final class IntegrationTests: XCTestCase {
     override func setUp() {
         super.setUp()
         ExternalCommand.verbose = true
-        // #if os(Windows)
-        // var path = ProcessInfo.processInfo.environment.first { $0.key.lowercased() == "path" }!.value
-        // path += ";C:\\Program Files\\Git\\usr\\bin\\"
-        // "PATH".withCString(encodedAs: UTF16.self) { pathKey in
-        //     path.withCString(encodedAs: UTF16.self) { path in
-        //         SetEnvironmentVariableW(pathKey, path)
-        //     }
-        // }
-        // #endif
+        #if os(Windows)
+        ExternalCommand.supplementaryPath = ";C:\\Program Files\\Git\\usr\\bin"
+        #endif
     }
 
     func testReadmeExamples() {
@@ -75,7 +69,11 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testAbsPath() {
+        #if os(Windows)
+        XCTAssertEqual(try? cmd("C:\\Windows\\System32\\cmd.exe", "/C", "ECHO 1").runString(), "1\r\n")
+        #else
         XCTAssertTrue(cmd("/bin/sh", "-c", "true").runBool())
+        #endif
     }
 
     func testNonExistantProgram() {
@@ -108,11 +106,15 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testIsRunning() throws {
+        #if os(Windows)
+        XCTFail("TODO: proc.isRunning blocks on Windows. Why?!?")
+        #else
         let pipe = FDPipe()
         let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fileDescriptor)
         XCTAssertTrue(proc.isRunning)
         pipe.fileHandleForWriting.close()
         try proc.succeed()
+        #endif
     }
 
     func testOverwriteEnv() throws {
@@ -131,18 +133,24 @@ final class IntegrationTests: XCTestCase {
         let res = cmd("true").async()
         try res.succeed()
         XCTAssertThrowsError(try res.kill()) { error in
+            #if os(Windows)
+            XCTAssertEqual("\(error)", "command \"taskkill.exe\" failed with exit code 128")
+            #else
             XCTAssertEqual("\(error)", "kill failed with error code 3: No such process")
+            #endif
         }
     }
 
     func testKillStop() throws {
+        #if os(Windows)
+        XCTFail("TODO: SIGSTOP for windows")
+        #else
         let res = try (cmd("bash", "-c", "while true; do sleep 1; done") | cmd("cat") | cmd("cat")).input("").async()
-        #if !os(Windows)
         try res.kill(signal: SIGSTOP)
-        #endif
         XCTAssert(res.isRunning)
         try res.kill(signal: SIGKILL)
         XCTAssertEqual(res.exitCode(), 1)
+        #endif
     }
 
     func testCombineOutput() throws {
@@ -151,6 +159,9 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testRemapCycle() throws {
+        #if os(Windows)
+        XCTFail("Not even sure what is going on here on Windows...")
+        #else
         let pipes = [FDPipe(), FDPipe()]
         let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
         let res = cmd("bash", "-c", "echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
@@ -163,6 +174,7 @@ final class IntegrationTests: XCTestCase {
         }
         try res.succeed()
         XCTAssertEqual(output, ["thing2\n", "thing1\n"])
+        #endif
     }
 
     func testCdSuccess() throws {
@@ -189,33 +201,5 @@ final class IntegrationTests: XCTestCase {
         XCTAssertThrowsError(try FileManager.default.withCurrentDirectoryPath(tmpDir) { throw Foo() }) { error in
             XCTAssertEqual("\(error)", "Foo()")
         }
-    }
-
-    func testWindowsFalse() throws {
-        XCTAssertFalse(cmd("C:\\Program Files\\Git\\usr\\bin\\false.exe").runBool())
-    }
-
-    func testWindowsTrue() throws {
-        XCTAssertTrue(cmd("C:\\Program Files\\Git\\usr\\bin\\true.exe").runBool())
-    }
-
-    func testWindowsStringBatchScript() throws {
-        XCTAssertTrue(try cmd("C:\\Windows\\System32\\cmd.exe", "/C", "dir").runString().contains("Directory"))
-    }
-
-    func testWindowsEchoNoPath() throws {
-        XCTAssertEqual(try cmd("echo", "sup").runString(), "sup")
-    }
-
-    func testWindowsEchoViaGitCompatibility() throws {
-        XCTAssertEqual(try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hello").runString(), "hello")
-    }
-
-    func testWindowsFileOutput() throws {
-        let filePath = "foo.txt"
-        let string = "hello"
-        try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", string).output(overwritingFile: filePath).run()
-        let fileData = try String(contentsOfFile: filePath)
-        XCTAssertEqual(fileData, string + "\n")
     }
 }

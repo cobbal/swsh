@@ -10,8 +10,11 @@ public class ExternalCommand: Command, CustomStringConvertible {
 
     public let description: String
 
-    /// like "set -x", this will cause all external commands to print themselves when they run
+    /// Like "set -x", this will cause all external commands to print themselves when they run
     public static var verbose: Bool = false
+
+    /// Adds to the path variable when modifying the environment directly is impossible
+    public static var supplementaryPath: String = ""
 
     internal var spawner: ProcessSpawner
 
@@ -103,10 +106,8 @@ public class ExternalCommand: Command, CustomStringConvertible {
             let SIGSTOP = 19
             let SIGCONT = 18
             // TODO: figure out how to do this in-executable?
-            if signal == SIGTERM {
-                try cmd("taskkill.exe", "/pid", "\(process.id)").run()
-            } else if signal == SIGKILL {
-                try cmd("taskkill.exe", "/f", "/pid", "\(process.id)").run()
+            if signal == SIGTERM || signal == SIGKILL {
+                try cmd("taskkill.exe", "/F", "/pid", "\(process.id)").run()
             } else if signal == SIGSTOP {
                 // Method borrowed from https://github.com/giampaolo/psutil/blob/a7e70bb66d5823f2cdcdf0f950bdbf26875058b4/psutil/arch/windows/proc.c#L539
                 // See also https://ntopcode.wordpress.com/2018/01/16/anatomy-of-the-thread-suspension-mechanism-in-windows-windows-internals/

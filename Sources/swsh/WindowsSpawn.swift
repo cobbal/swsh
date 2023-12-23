@@ -261,9 +261,10 @@ public enum WindowsSpawnImpl {
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
         // Find the path environment variable, checking the passed environment first, then the system environment
-        guard let envPath = env.keys.first(where: { $0.uppercased == "PATH" }).map({ env[$0]! }) else {
+        guard var envPath = env.keys.first(where: { $0.uppercased == "PATH" }).map({ env[$0]! }) else {
             return .failure(Error.envPathUnset)
         }
+        envPath += ExternalCommand.supplementaryPath 
         let path: UnsafeMutablePointer<wchar_t>? = envPath.withCString(encodedAs: UTF16.self, _wcsdup)
         defer { free(path) }
         // print("path: \(path.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
@@ -288,7 +289,7 @@ public enum WindowsSpawnImpl {
         let applicationPath = command.withCString(encodedAs: UTF16.self) { windowsSpawn.search_path($0, cwd, path) }
         defer { free(applicationPath) }
         guard applicationPath != nil else {
-            return .failure(Error("Could not find application", systemError: DWORD(ERROR_FILE_NOT_FOUND)))
+            return .failure(Error("Could not find application for command \"\(command)\". ", systemError: DWORD(ERROR_FILE_NOT_FOUND)))
         }
         // print("applicationPath: \(applicationPath.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         

@@ -149,8 +149,12 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     }
 
     func testDuplicateFd() throws {
+        #if os(Windows)
+        XCTFail("Succeeds on Windows from PowerShell, but fails from VSCode. Why?")
+        #else
         try succeed(inner.duplicateFd(source: 42, destination: 35))
         XCTAssertEqual(innerResult.fdMap[35], 42)
+        #endif
     }
 
     func testCombineError() throws {

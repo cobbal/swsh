@@ -1,6 +1,7 @@
 import swsh
 
 ExternalCommand.verbose = true
+ExternalCommand.supplementaryPath = ";C:\\Program Files\\Git\\usr\\bin"
 
 enum Error: Swift.Error {
     case wrongAnswer
@@ -9,11 +10,11 @@ enum Error: Swift.Error {
 
 print("Running commands...")
 do {
-    try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").run()
-    try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").output(overwritingFile: "foo.txt").run()
-    guard try cmd("C:\\Program Files\\Git\\usr\\bin\\cat.exe", "foo.txt").runString() == "hiya" else { throw Error.wrongAnswer }
-    guard try cmd("C:\\Program Files\\Git\\usr\\bin\\rm.exe", "foo.txt").runBool() else { throw Error.couldNotDelete }
-    guard try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").runString() == "hiya" else { throw Error.wrongAnswer }
+    try cmd("echo", "hiya").run()
+    try cmd("echo", "hiya").output(overwritingFile: "foo.txt").run()
+    guard try cmd("cat", "foo.txt").runString() == "hiya" else { throw Error.wrongAnswer }
+    guard try cmd("rm", "foo.txt").runBool() else { throw Error.couldNotDelete }
+    guard try cmd("echo", "hiya").runString() == "hiya" else { throw Error.wrongAnswer }
     guard try cmd("echo", "hi").runString() == "hi" else { throw Error.wrongAnswer }
     guard try cmd("tr", "a-z", "n-za-m").input("secret message").runString() == "frperg zrffntr" else { throw Error.wrongAnswer }
     guard try Pipeline(cmd("echo", "secret message"), cmd("cat"), cmd("tr", "a-z", "n-za-m")).runString() == "frperg zrffntr" else { throw Error.wrongAnswer }
