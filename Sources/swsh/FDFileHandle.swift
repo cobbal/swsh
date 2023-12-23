@@ -34,13 +34,7 @@ public class FDFileHandle: CustomDebugStringConvertible {
 
     public func close() {
         precondition(!isClosed)
-        #if os(Windows)
-        printOSCall("_close", fileDescriptor.rawValue)
-        _close(fileDescriptor.rawValue)
-        #else
-        printOSCall("close", fileDescriptor.rawValue)
-        Darwin.close(fileDescriptor.rawValue)
-        #endif
+        close_fd(fileDescriptor)
         isClosed = true
         // print("Closed FDFileHandle for \(debugDescription)")
     }
@@ -54,4 +48,14 @@ public class FDFileHandle: CustomDebugStringConvertible {
             close()
         }
     }
+}
+
+fileprivate func close_fd(_ fileDescriptor: FileDescriptor) {
+    #if os(Windows)
+    printOSCall("_close", fileDescriptor.rawValue)
+    _close(fileDescriptor.rawValue)
+    #else
+    printOSCall("close", fileDescriptor.rawValue)
+    close(fileDescriptor.rawValue)
+    #endif
 }
