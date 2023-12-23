@@ -34,11 +34,12 @@ extension Command {
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
-    public func asyncStream() -> FileHandle {
+    public func asyncStream() -> FDFileHandle {
         let pipe = FDPipe()
         _ = async(fdMap: [ .stdout: pipe.fileHandleForWriting.fileDescriptor ])
         pipe.fileHandleForWriting.close()
-        return pipe.fileHandleForReading.handle
+        // TODO: Previously, this returned a FileHandle, but the test using it fails without returning an FDFileHandle, because otherwise, on return, the FDFileHandle is deallocate and calls close(). Can maintain liveness of the FDFileHandle in some way without changing the interface of this call?
+        return pipe.fileHandleForReading
     }
 
     /// Run the command synchronously, and return nothing if successful

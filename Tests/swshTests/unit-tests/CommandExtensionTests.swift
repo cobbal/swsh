@@ -65,7 +65,7 @@ class CommandExtensionTests: XCTestCase {
         res[2].write(data)
         res[1].closeFile()
         res[2].closeFile()
-        XCTAssertEqual(handle.readDataToEndOfFile(), data)
+        XCTAssertEqual(handle.handle.readDataToEndOfFile(), data)
         #endif
     }
 
