@@ -11,33 +11,6 @@ public class FDPipe {
 
     public init() {
         #if os(Windows)
-        /*
-        // the `pipe` system call creates two `fd` in a malloc'ed area
-        let fds = UnsafeMutablePointer<Int32>.allocate(capacity: 2)
-        defer { fds.deallocate() }
-        // If the operating system prevents us from creating file handles, stop
-        printOSCall("_pipe", 0, "_O_BINARY")
-        let ret = _pipe(fds, 0, _O_BINARY)
-        let fileDescriptorForReading: FileDescriptor
-        let fileDescriptorForWriting: FileDescriptor
-        switch (ret, errno) {
-        case (0, _):
-            fileDescriptorForReading = FileDescriptor(fds[0])
-            fileDescriptorForWriting = FileDescriptor(fds[1])
-
-        case (-1, EMFILE), (-1, ENFILE):
-            // Unfortunately this initializer does not throw and isn't failable so this is only
-            // way of handling this situation.
-            fileDescriptorForReading = FileDescriptor(-1)
-            fileDescriptorForWriting = FileDescriptor(-1)
- 
-        default:
-            fatalError("Error calling pipe(): \(errno)")
-        }
-
-        fileHandleForReading = FDFileHandle(fileDescriptor: fileDescriptorForReading, closeOnDealloc: true)
-        fileHandleForWriting = FDFileHandle(fileDescriptor: fileDescriptorForWriting, closeOnDealloc: true)
-        */
         // Adapted from libuv:
         // https://github.com/libuv/libuv/blob/34db4c21b1f3182a74091d927b10bb9830ef6717/src/win/pipe.c#L249
         let uniquePipeName = "\\\\.\\pipe\\swsh-\(UUID().uuidString)-\(GetCurrentProcessId())"
@@ -102,8 +75,8 @@ public class FDPipe {
 
         #else
         let pipe = Pipe()
-        fileHandleForReading = FDFileHandle(handle: pipe.fileHandleForReading, closeOnDealloc: true)
-        fileHandleForWriting = FDFileHandle(handle: pipe.fileHandleForWriting, closeOnDealloc: true)
+        fileHandleForReading = FDFileHandle(fileDescriptor: pipe.fileHandleForReading.fileDescriptor, handle: pipe.fileHandleForReading, closeOnDealloc: true)
+        fileHandleForWriting = FDFileHandle(fileDescriptor: pipe.fileHandleForWriting.fileDescriptor, handle: pipe.fileHandleForWriting, closeOnDealloc: true)
         #endif
     }
 }

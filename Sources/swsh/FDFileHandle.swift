@@ -11,10 +11,10 @@ public class FDFileHandle: CustomDebugStringConvertible {
     public convenience init(fileDescriptor: FileDescriptor, closeOnDealloc: Bool) {
         // Construct the handle around the fd, but do not use closeOnDealloc, as this closes the fd!
         let handle = FileHandle(fileDescriptor: fileDescriptor.rawValue, closeOnDealloc: false)
-        self.init(handle: handle, closeOnDealloc: closeOnDealloc)
+        self.init(fileDescriptor: fileDescriptor, handle: handle, closeOnDealloc: closeOnDealloc)
     }
     
-    public init(handle: FileHandle, closeOnDealloc: Bool) {
+    public init(fileDescriptor: FileDescriptor, handle: FileHandle, closeOnDealloc: Bool) {
         #if os(Windows)
         printOSCall("_get_osfhandle", fileDescriptor.rawValue)
         let osHandle = _get_osfhandle(fileDescriptor.rawValue)
@@ -24,7 +24,7 @@ public class FDFileHandle: CustomDebugStringConvertible {
         let osHandle = 0
         #endif
 
-        self.fileDescriptor = FileDescriptor(handle.fileDescriptor)
+        self.fileDescriptor = fileDescriptor
         self.osHandle = osHandle
         self.handle = handle
         self.closeOnDealloc = closeOnDealloc
