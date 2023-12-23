@@ -41,7 +41,6 @@ public class FDPipe {
         // Adapted from libuv:
         // https://github.com/libuv/libuv/blob/34db4c21b1f3182a74091d927b10bb9830ef6717/src/win/pipe.c#L249
         let uniquePipeName = "\\\\.\\pipe\\swsh-\(UUID().uuidString)-\(GetCurrentProcessId())"
-        print("uniquePipeName: \(uniquePipeName)")
         let pipeName: UnsafeMutablePointer<CChar>? = uniquePipeName.withCString(encodedAs: UTF8.self) { _strdup($0) }
         defer { free(pipeName) }
         let pipeMode = DWORD(PIPE_TYPE_BYTE) | DWORD(PIPE_READMODE_BYTE) | DWORD(PIPE_WAIT)

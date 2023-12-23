@@ -147,7 +147,7 @@ extension Command {
                 do {
                     try pipe.fileHandleForWriting.handle.write(contentsOf: data)
                 } catch {
-                    print("Failed to write input data. Error: \(error)")
+                    print("Failed to write to FD \(pipe.fileHandleForWriting.fileDescriptor.rawValue). Error: \(error)")
                 }
                 pipe.fileHandleForWriting.close()
             }

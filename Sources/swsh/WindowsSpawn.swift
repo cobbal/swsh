@@ -20,7 +20,7 @@ struct WindowsSpawn: ProcessSpawner {
     ) -> SpawnResult {
         let intFDMap = Dictionary(uniqueKeysWithValues: fdMap.map { ($0.key.rawValue, $0.value.rawValue) })
         do {
-            print("Spawning: \(command) \(arguments.joined(separator: " "))")
+            // print("Spawning: \(command) \(arguments.joined(separator: " "))")
             switch WindowsSpawnImpl.spawn(
                 command: command,
                 arguments: arguments,
@@ -37,7 +37,7 @@ struct WindowsSpawn: ProcessSpawner {
                         handle: info.hProcess, 
                         mainThreadHandle: info.hThread
                     )
-                    print("Spawned: \(command) \(arguments.joined(separator: " "))")
+                    // print("Spawned: \(command) \(arguments.joined(separator: " "))")
                     return .success(process)
                 case .failure(let error): 
                     // TODO: Can pass error context string along somehow?
@@ -67,7 +67,7 @@ struct WindowsSpawn: ProcessSpawner {
             CloseHandle(process.mainThreadHandle)
             printOSCall("CloseHandle", process.handle)
             CloseHandle(process.handle)
-            print("Reaped(\(exitCode)): \(process)")
+            // print("Reaped(\(exitCode)): \(process)")
 
             callback(Int32(bitPattern: exitCode))
         }
@@ -185,7 +185,7 @@ public enum WindowsSpawnImpl {
                     if let handle = handle {
                         printOSCall("CloseHandle", handle)
                         CloseHandle(handle)
-                        print("Closed \(handle)")
+                        // print("Closed \(handle)")
                     }
                 }
             }
@@ -245,7 +245,7 @@ public enum WindowsSpawnImpl {
             ) else {
                 return nil
             }
-            print("Duplicated \(String(describing: handle)) to \(String(describing: duplicated))")
+            // print("Duplicated \(String(describing: handle)) to \(String(describing: duplicated))")
             
             return duplicated
         }
@@ -313,7 +313,7 @@ public enum WindowsSpawnImpl {
             case .success(let buffer): childHandleStructure = buffer
             case .failure(let error): return .failure(error)
         }
-        print("childHandleStructure: \((0..<childHandleStructure.count).map { "(parentFD: \(fdMap[Int32($0)]!) childFD: \($0) osHandle: \(childHandleStructure[$0]!))" })")
+        // print("childHandleStructure: \((0..<childHandleStructure.count).map { "(parentFD: \(fdMap[Int32($0)]!) childFD: \($0) osHandle: \(childHandleStructure[$0]!))" })")
         var startup = STARTUPINFOW()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.lpReserved = nil

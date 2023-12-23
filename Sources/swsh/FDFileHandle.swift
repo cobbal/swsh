@@ -20,7 +20,7 @@ public class FDFileHandle: CustomDebugStringConvertible {
         self.handle = handle
         self.closeOnDealloc = closeOnDealloc
         self.isClosed = false
-        print("Created FDFileHandle for \(debugDescription)")
+        // print("Created FDFileHandle for \(debugDescription)")
     }
 
     public func close() {
@@ -28,7 +28,7 @@ public class FDFileHandle: CustomDebugStringConvertible {
         printOSCall("_close", fileDescriptor.rawValue)
         _close(fileDescriptor.rawValue)
         isClosed = true
-        print("Closed FDFileHandle for \(debugDescription)")
+        // print("Closed FDFileHandle for \(debugDescription)")
     }
 
     public var debugDescription: String {
