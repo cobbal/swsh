@@ -1,7 +1,9 @@
 import swsh
 
 ExternalCommand.verbose = true
+#if os(Windows)
 ExternalCommand.supplementaryPath = ";C:\\Program Files\\Git\\usr\\bin"
+#endif
 
 enum Error: Swift.Error {
     case wrongAnswer
@@ -13,7 +15,7 @@ do {
     try cmd("echo", "hiya").run()
     try cmd("echo", "hiya").output(overwritingFile: "foo.txt").run()
     guard try cmd("cat", "foo.txt").runString() == "hiya" else { throw Error.wrongAnswer }
-    guard try cmd("rm", "foo.txt").runBool() else { throw Error.couldNotDelete }
+    guard cmd("rm", "foo.txt").runBool() else { throw Error.couldNotDelete }
     guard try cmd("echo", "hiya").runString() == "hiya" else { throw Error.wrongAnswer }
     guard try cmd("echo", "hi").runString() == "hi" else { throw Error.wrongAnswer }
     guard try cmd("tr", "a-z", "n-za-m").input("secret message").runString() == "frperg zrffntr" else { throw Error.wrongAnswer }

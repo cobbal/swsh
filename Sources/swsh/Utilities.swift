@@ -22,17 +22,7 @@ extension FileManager {
     }
 }
 
-extension FileHandle {
-    func closeIgnoringErrors() {
-        #if os(Windows)
-        try? close()
-        #else
-        close(fileDescriptor)
-        #endif
-    }
-}
-
-public var printOSCalls = false
+public var printOSCalls = true
 func printOSCall(_ name: String, _ args: Any?...) {
     if printOSCalls {
         print("OS Call: \(name)(\(args.map { $0.map { String(describing: $0) } ?? "null" }.joined(separator: ", ")))")

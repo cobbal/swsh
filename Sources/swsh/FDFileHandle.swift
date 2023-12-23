@@ -8,14 +8,23 @@ public class FDFileHandle: CustomDebugStringConvertible {
     private let closeOnDealloc: Bool
     private var isClosed: Bool
     
-    public init(fileDescriptor: FileDescriptor, closeOnDealloc: Bool) {
+    public convenience init(fileDescriptor: FileDescriptor, closeOnDealloc: Bool) {
         // Construct the handle around the fd, but do not use closeOnDealloc, as this closes the fd!
         let handle = FileHandle(fileDescriptor: fileDescriptor.rawValue, closeOnDealloc: false)
+        self.init(handle: handle, closeOnDealloc: closeOnDealloc)
+    }
+    
+    public init(handle: FileHandle, closeOnDealloc: Bool) {
+        #if os(Windows)
         printOSCall("_get_osfhandle", fileDescriptor.rawValue)
         let osHandle = _get_osfhandle(fileDescriptor.rawValue)
         precondition(osHandle != -1/*INVALID_HANDLE_VALUE*/ && osHandle != -2/*special Windows value*/)
+        #else
+        // TODO: OS handle for macOS / Linux?
+        let osHandle = 0
+        #endif
 
-        self.fileDescriptor = fileDescriptor
+        self.fileDescriptor = FileDescriptor(handle.fileDescriptor)
         self.osHandle = osHandle
         self.handle = handle
         self.closeOnDealloc = closeOnDealloc
@@ -25,8 +34,13 @@ public class FDFileHandle: CustomDebugStringConvertible {
 
     public func close() {
         precondition(!isClosed)
+        #if os(Windows)
         printOSCall("_close", fileDescriptor.rawValue)
         _close(fileDescriptor.rawValue)
+        #else
+        printOSCall("close", fileDescriptor.rawValue)
+        Darwin.close(fileDescriptor.rawValue)
+        #endif
         isClosed = true
         // print("Closed FDFileHandle for \(debugDescription)")
     }

@@ -41,7 +41,7 @@ public struct PosixSpawn: ProcessSpawner {
         cArgs.append(nil)
 
         var env = env
-        env["PATH"] = "\(env["PATH"])\(ExternalCommand.supplementaryPath)"
+        env["PATH"] = "\(env["PATH"] ?? "")\(ExternalCommand.supplementaryPath)"
         var cEnv = env.map { "\($0)=\($1)".withCString(strdup) }
         cEnv.append(nil)
 

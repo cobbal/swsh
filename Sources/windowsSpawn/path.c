@@ -1,3 +1,5 @@
+#ifdef _WIN32
+
 /* Path search and command quoting functions from libuv */
 /* https://github.com/libuv/libuv/blob/00357f87328def30a32af82c841e5d1667a2a827/src/win/process.c#L151 */
 
@@ -515,3 +517,5 @@ int env_strncmp(const wchar_t* a, int na, const wchar_t* b) {
     }
   }
 }
+
+#endif

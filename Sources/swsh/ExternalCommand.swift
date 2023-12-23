@@ -1,5 +1,7 @@
 import Foundation
+#if os(Windows)
 import WinSDK
+#endif
 
 /// Represents an external program invocation. It is the lowest-level command, that will spawn a subprocess when run.
 public class ExternalCommand: Command, CustomStringConvertible {
@@ -101,10 +103,6 @@ public class ExternalCommand: Command, CustomStringConvertible {
 
         func kill(signal: Int32) throws {
             #if os(Windows)
-            // TODO: Pull these from signal.h
-            let SIGTERM = 15
-            let SIGSTOP = 19
-            let SIGCONT = 18
             // TODO: figure out how to do this in-executable?
             if signal == SIGTERM || signal == SIGKILL {
                 try cmd("taskkill.exe", "/F", "/pid", "\(process.id)").run()
@@ -118,7 +116,7 @@ public class ExternalCommand: Command, CustomStringConvertible {
                 throw PlatformError.killUnsupportedOnWindows
             }
             #else
-            guard Foundation.kill(pid, signal) == 0 else {
+            guard Foundation.kill(process.id, signal) == 0 else {
                 throw SyscallError(name: "kill", command: command, errno: errno)
             }
             #endif

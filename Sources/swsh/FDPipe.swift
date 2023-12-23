@@ -102,14 +102,8 @@ public class FDPipe {
 
         #else
         let pipe = Pipe()
-        fileHandleForReading = FDFileHandle(
-            fd: FileDescriptor(pipe.fileHandleForReading), 
-            handle: pipe.fileHandleForReading
-        )
-        fileHandleForWriting = FDFileHandle(
-            fd: FileDescriptor(pipe.fileHandleForWriting), 
-            handle: pipe.fileHandleForWriting
-        )
+        fileHandleForReading = FDFileHandle(handle: pipe.fileHandleForReading, closeOnDealloc: true)
+        fileHandleForWriting = FDFileHandle(handle: pipe.fileHandleForWriting, closeOnDealloc: true)
         #endif
     }
 }
