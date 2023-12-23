@@ -40,7 +40,7 @@ public class FDPipe {
         */
         // Adapted from libuv:
         // https://github.com/libuv/libuv/blob/34db4c21b1f3182a74091d927b10bb9830ef6717/src/win/pipe.c#L249
-        let uniquePipeName = "\\\\.\\pipe\\swsh-\(UUID().description)-\(GetCurrentProcessId())"
+        let uniquePipeName = "\\\\.\\pipe\\swsh-\(UUID().uuidString)-\(GetCurrentProcessId())"
         print("uniquePipeName: \(uniquePipeName)")
         let pipeName: UnsafeMutablePointer<CChar>? = uniquePipeName.withCString(encodedAs: UTF8.self) { _strdup($0) }
         defer { free(pipeName) }
@@ -95,9 +95,9 @@ public class FDPipe {
         }
 
         printOSCall("_open_osfhandle", clientPipe, 0)
-        let fileDescriptorForReading = FileDescriptor(_open_osfhandle(.init(bitPattern: clientPipe), 0))
+        let fileDescriptorForReading = FileDescriptor(_open_osfhandle(.init(bitPattern: clientPipe), _O_RDONLY))
         printOSCall("_open_osfhandle", serverPipe, 0)
-        let fileDescriptorForWriting = FileDescriptor(_open_osfhandle(.init(bitPattern: serverPipe), 0))
+        let fileDescriptorForWriting = FileDescriptor(_open_osfhandle(.init(bitPattern: serverPipe), _O_APPEND))
         fileHandleForReading = FDFileHandle(fileDescriptor: fileDescriptorForReading, closeOnDealloc: true)
         fileHandleForWriting = FDFileHandle(fileDescriptor: fileDescriptorForWriting, closeOnDealloc: true)
 

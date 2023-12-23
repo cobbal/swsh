@@ -140,27 +140,41 @@ extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     public func input(_ data: Data, fd: FileDescriptor = .stdin) -> Command {
         FDWrapperCommand(inner: self) { _ in
+            #if os(Windows)
             let pipe = FDPipe()
-            let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
-            print("Made a pipe")
-
-            printOSCall("DispatchIO.write", pipe.fileHandleForWriting.fileDescriptor.rawValue, "<data>", "DispatchQueue.global()")
-            DispatchIO.write(
-                toFileDescriptor: pipe.fileHandleForWriting.fileDescriptor.rawValue,
-                data: dispatchData,
-                runningHandlerOn: DispatchQueue.global()
-            ) { [writeHandle = pipe.fileHandleForWriting] _, error in
-                print("DispatchIO closing. error: \(error)")
-                // writeHandle.handle.write("A few more characters".data(using: .utf8)!)
-                // "TastyData".withCString() {
-                //     _write(pipe.fileHandleForWriting.fileDescriptor.rawValue, $0, UInt32(strlen($0)))
-                // }
-                writeHandle.close()
+            let queue = DispatchQueue(label: "swsh.FDWrapperCommand.input.\(UUID().uuidString)")
+            queue.async {
+                do {
+                    try pipe.fileHandleForWriting.handle.write(contentsOf: data)
+                } catch {
+                    print("Failed to write input data. Error: \(error)")
+                }
+                pipe.fileHandleForWriting.close()
             }
             return .success(
                 fdMap: [fd: pipe.fileHandleForReading.fileDescriptor],
                 ref: pipe.fileHandleForReading
             )
+            #else
+            let pipe = FDPipe()
+            let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
+            
+            printOSCall("DispatchIO.write", pipe.fileHandleForWriting.fileDescriptor.rawValue, data, "DispatchQueue.global()")
+            DispatchIO.write(
+                toFileDescriptor: pipe.fileHandleForWriting.fileDescriptor.rawValue,
+                data: dispatchData,
+                runningHandlerOn: DispatchQueue.global()
+            ) { [pipe = pipe] _, error in
+                if error != 0 {
+                    print("Failed to write to FD \(pipe.fileHandleForWriting.fileDescriptor.rawValue). Error: \(error)")
+                }
+                pipe.fileHandleForWriting.close()
+            }
+            return .success(
+                fdMap: [fd: pipe.fileHandleForReading.fileDescriptor],
+                ref: pipe.fileHandleForReading
+            )
+            #endif
         }
     }
 
