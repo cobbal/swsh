@@ -20,7 +20,7 @@ struct WindowsSpawn: ProcessSpawner {
     ) -> SpawnResult {
         let intFDMap = Dictionary(uniqueKeysWithValues: fdMap.map { ($0.key.rawValue, $0.value.rawValue) })
         do {
-            print("Started spawn: \(command) \(arguments.joined(separator: " "))")
+            print("Spawning: \(command) \(arguments.joined(separator: " "))")
             switch WindowsSpawnImpl.spawn(
                 command: command,
                 arguments: arguments,
@@ -37,6 +37,7 @@ struct WindowsSpawn: ProcessSpawner {
                         handle: info.hProcess, 
                         mainThreadHandle: info.hThread
                     )
+                    print("Spawned: \(command) \(arguments.joined(separator: " "))")
                     return .success(process)
                 case .failure(let error): 
                     // TODO: Can pass error context string along somehow?
@@ -52,15 +53,19 @@ struct WindowsSpawn: ProcessSpawner {
         callback: @escaping (Int32) -> Void
     ) {
         queue.async {
+            printOSCall("WaitForSingleObject", process.handle, "INFINITE")
             WaitForSingleObject(process.handle, INFINITE)
           
             var exitCode: DWORD = 0
+            printOSCall("GetExitCodeProcess", process.handle, "ptr(\(exitCode))")
             guard GetExitCodeProcess(process.handle, &exitCode) != false else {
                 callback(Int32(bitPattern: DWORD(GetLastError()))) // TODO: What should this be if the exit code cannot be determined?
                 return
             }
 
+            printOSCall("CloseHandle", process.mainThreadHandle)
             CloseHandle(process.mainThreadHandle)
+            printOSCall("CloseHandle", process.handle)
             CloseHandle(process.handle)
             print("Reaped(\(exitCode)): \(process)")
 
@@ -71,6 +76,7 @@ struct WindowsSpawn: ProcessSpawner {
     public func resume(
         process: ProcessInformation
     ) throws {
+        printOSCall("ResumeThread", process.mainThreadHandle)
         guard ResumeThread(process.mainThreadHandle) != DWORD(bitPattern: -1) else {
             let err = GetLastError()
             TerminateProcess(process.handle, 1)
@@ -177,6 +183,7 @@ public enum WindowsSpawnImpl {
             if shouldDuplicate {
                 for handle in handles {
                     if let handle = handle {
+                        printOSCall("CloseHandle", handle)
                         CloseHandle(handle)
                         print("Closed \(handle)")
                     }
@@ -189,6 +196,7 @@ public enum WindowsSpawnImpl {
         // https://github.com/libuv/libuv/blob/1479b76310a38d98eda94db2b7f8a40e04b3ff32/src/win/handle-inl.h#L166
         private static func osHandle(for fileDescriptor: Int32) -> HANDLE? {
             // TODO: Can disable assert-in-debug-builds-only nonsense for _get_osfhandle()?
+            printOSCall("_get_osfhandle", fileDescriptor)
             return HANDLE(bitPattern: _get_osfhandle(fileDescriptor))
         }
     
@@ -204,6 +212,7 @@ public enum WindowsSpawnImpl {
             let FDEV: UInt8 = 0x40
             // let FTEXT: UInt8 = 0x80
 
+            printOSCall("GetFileType", handle)
             switch Int32(GetFileType(handle)) {
             case FILE_TYPE_DISK: return FOPEN
             case FILE_TYPE_PIPE: return FOPEN | FPIPE
@@ -221,8 +230,10 @@ public enum WindowsSpawnImpl {
                 return nil
             }
 
+            printOSCall("GetCurrentProcess")
             let currentProcess = GetCurrentProcess()
             var duplicated: HANDLE?
+            printOSCall("DuplicateHandle", currentProcess, handle, currentProcess, "ptr(out)", 0, true, "DUPLICATE_SAME_ACCESS")
             guard DuplicateHandle(
                 /* hSourceProcessHandle: */ currentProcess,
                 /* hSourceHandle: */ handle,
@@ -234,7 +245,7 @@ public enum WindowsSpawnImpl {
             ) else {
                 return nil
             }
-            print("Duplicated \(handle) to \(duplicated)")
+            print("Duplicated \(String(describing: handle)) to \(String(describing: duplicated))")
             
             return duplicated
         }
@@ -258,12 +269,14 @@ public enum WindowsSpawnImpl {
         // print("path: \(path.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Find the current working directory
+        printOSCall("GetCurrentDirectoryW", 0, nil)
         let cwdLength = GetCurrentDirectoryW(0, nil)
         guard cwdLength > 0 else {
             return .failure(Error("Could not find current working directory", systemError: DWORD(GetLastError())))
         }
         let cwd: UnsafeMutablePointer<wchar_t>? = calloc(MemoryLayout<wchar_t>.size, Int(cwdLength)).assumingMemoryBound(to: wchar_t.self)
         defer { free(cwd) }
+        printOSCall("GetCurrentDirectoryW", cwdLength, cwd)
         let r = GetCurrentDirectoryW(cwdLength, cwd)
         guard r != 0 && r < cwdLength else {
             return .failure(Error("Could not load current working directory", systemError: DWORD(GetLastError())))
@@ -271,6 +284,7 @@ public enum WindowsSpawnImpl {
         // print("cwd: \(cwd.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Search the path and working directory for the application that is to be used to execute the command, in a form sutable to use in CreateProcessW()
+        printOSCall("windowsSpawn.search_path", command, cwd, path)
         let applicationPath = command.withCString(encodedAs: UTF16.self) { windowsSpawn.search_path($0, cwd, path) }
         defer { free(applicationPath) }
         guard applicationPath != nil else {
@@ -283,6 +297,7 @@ public enum WindowsSpawnImpl {
         var args = ([command] + arguments).map { _strdup($0) } + [nil]
         defer { args.forEach { free($0) } }
         var commandLine: UnsafeMutablePointer<wchar_t>?
+        printOSCall("windowsSpawn.make_program_args", args, 0, "ptr(out)")
         let makeArgsStatus = windowsSpawn.make_program_args(&args, 0, &commandLine)
         defer { free(commandLine) }
         guard makeArgsStatus == 0 else {
@@ -312,14 +327,16 @@ public enum WindowsSpawnImpl {
         startup.hStdError = childHandleStructure[2]
 
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
+        let creationFlags = DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED)
         var info = PROCESS_INFORMATION()
+        printOSCall("CreateProcessW", applicationPath, commandLine, nil, nil, true, nil, creationFlags, nil, cwd, "ptr(\(startup))", "ptr(\(info))")
         guard CreateProcessW(
             /* lpApplicationName: */ applicationPath,
             /* lpCommandLine: */ commandLine,
             /* lpProcessAttributes: */ nil,
             /* lpThreadAttributes: */ nil,
             /* bInheritHandles: */ true,
-            /* dwCreationFlags: */ DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED),
+            /* dwCreationFlags: */ creationFlags,
             /* lpEnvironment: */ nil, // TODO
             /* lpCurrentDirectory: */ cwd,
             /* lpStartupInfo: */ &startup,
@@ -327,8 +344,6 @@ public enum WindowsSpawnImpl {
         ) else { 
             return .failure(Error("CreateProcessW failed: ", systemError: DWORD(GetLastError())))
         }
-        print("Spawned")
-        
         return .success(info)
     }
 }

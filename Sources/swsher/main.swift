@@ -4,19 +4,20 @@ ExternalCommand.verbose = true
 
 enum Error: Swift.Error {
     case wrongAnswer
+    case couldNotDelete
 }
 
-print("Running command...")
+print("Running commands...")
 do {
-    // try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").run()
-    // try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").output(overwritingFile: "foo.txt").run()
-    // guard try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").runString() == "hiya" else { throw Error.wrongAnswer }
-    // print(try cmd("echo", "hi").runString())
-    // try cmd("tr", "a-z", "n-za-m").input("secret message").run()
-    // print(try cmd("tr", "a-z", "n-za-m").input("secret message").runString())
-    // try cmd("tr", "a-z", "n-za-m").runString()
-    try! Pipeline(cmd("echo", "foo"), cmd("tr", "a-z", "n-za-m")).run()
+    try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").run()
+    try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").output(overwritingFile: "foo.txt").run()
+    guard try cmd("C:\\Program Files\\Git\\usr\\bin\\cat.exe", "foo.txt").runString() == "hiya" else { throw Error.wrongAnswer }
+    guard try cmd("C:\\Program Files\\Git\\usr\\bin\\rm.exe", "foo.txt").runBool() else { throw Error.couldNotDelete }
+    guard try cmd("C:\\Program Files\\Git\\usr\\bin\\echo.exe", "hiya").runString() == "hiya" else { throw Error.wrongAnswer }
+    guard try cmd("echo", "hi").runString() == "hi" else { throw Error.wrongAnswer }
+    // guard try cmd("tr", "a-z", "n-za-m").input("secret message").runString() == "frperg zrffntr" else { throw Error.wrongAnswer }
+    guard try Pipeline(cmd("echo", "secret message"), cmd("tr", "a-z", "n-za-m")).runString() == "frperg zrffntr" else { throw Error.wrongAnswer }
 } catch {
-    print("Error running command: \(error)")
+    fatalError("Error running commands: \(error)")
 }
-print("Finished running command.")
+print("Finished running commands successfully.")

@@ -192,11 +192,11 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testWindowsFalse() throws {
-        XCTAssertFalse(try cmd("C:\\Program Files\\Git\\usr\\bin\\false.exe").runBool())
+        XCTAssertFalse(cmd("C:\\Program Files\\Git\\usr\\bin\\false.exe").runBool())
     }
 
     func testWindowsTrue() throws {
-        XCTAssertTrue(try cmd("C:\\Program Files\\Git\\usr\\bin\\true.exe").runBool())
+        XCTAssertTrue(cmd("C:\\Program Files\\Git\\usr\\bin\\true.exe").runBool())
     }
 
     func testWindowsStringBatchScript() throws {

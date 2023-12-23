@@ -11,6 +11,7 @@ public class FDFileHandle: CustomDebugStringConvertible {
     public init(fileDescriptor: FileDescriptor, closeOnDealloc: Bool) {
         // Construct the handle around the fd, but do not use closeOnDealloc, as this closes the fd!
         let handle = FileHandle(fileDescriptor: fileDescriptor.rawValue, closeOnDealloc: false)
+        printOSCall("_get_osfhandle", fileDescriptor.rawValue)
         let osHandle = _get_osfhandle(fileDescriptor.rawValue)
         precondition(osHandle != -1/*INVALID_HANDLE_VALUE*/ && osHandle != -2/*special Windows value*/)
 
@@ -18,12 +19,13 @@ public class FDFileHandle: CustomDebugStringConvertible {
         self.osHandle = osHandle
         self.handle = handle
         self.closeOnDealloc = closeOnDealloc
-        self.isClosed = false // TODO: Can determine from fd if it is already closed?
+        self.isClosed = false
         print("Created FDFileHandle for \(debugDescription)")
     }
 
     public func close() {
         precondition(!isClosed)
+        printOSCall("_close", fileDescriptor.rawValue)
         _close(fileDescriptor.rawValue)
         isClosed = true
         print("Closed FDFileHandle for \(debugDescription)")

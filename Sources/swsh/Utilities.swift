@@ -31,3 +31,7 @@ extension FileHandle {
         #endif
     }
 }
+
+func printOSCall(_ name: String, _ args: Any?...) {
+    print("OS Call: \(name)(\(args.map { $0.map { String(describing: $0) } ?? "null" }.joined(separator: ", ")))")
+}
