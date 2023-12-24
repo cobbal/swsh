@@ -57,16 +57,12 @@ class CommandExtensionTests: XCTestCase {
     }
 
     func testAsyncStream() {
-        #if os(Windows)
-        XCTFail("Why does FileHandle raise error 512 here on Windows?")
-        #else
         let (res, handle) = withResult(cmd) { cmd.asyncStream() }
         res[1].write(data)
         res[2].write(data)
         res[1].closeFile()
         res[2].closeFile()
         XCTAssertEqual(handle.handle.readDataToEndOfFile(), data)
-        #endif
     }
 
     func testRunSucceeds() {
