@@ -44,9 +44,8 @@ internal class FDWrapperCommand: Command {
         var isRunning: Bool { innerResult.isRunning }
         func exitCode() -> Int32 { innerResult.exitCode() }
         func succeed() throws { try innerResult.succeed() }
-        func _kill(signal: Int32) throws { try innerResult.kill(signal: signal) }
-        func kill(signal: Int32) throws { try _kill(signal: signal) }
-
+        func kill(signal: Int32) throws { try innerResult.kill(signal: signal) }
+        
         #if compiler(>=5.5) && canImport(_Concurrency)
         @available(macOS 10.15, *)
         func asyncFinish() async {

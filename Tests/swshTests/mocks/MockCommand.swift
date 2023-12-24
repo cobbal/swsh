@@ -38,14 +38,10 @@ class MockCommand: Command, Equatable, CustomStringConvertible {
 
         func succeed() throws { try defaultSucceed() }
 
-        func _kill(signal: Int32) throws {
+        func kill(signal: Int32) throws {
             if let error = _command.killResponse {
                 throw error
             }
-        }
-
-        func kill(signal: Int32) throws {
-            try _kill(signal: signal)
         }
     }
 

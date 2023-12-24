@@ -31,7 +31,7 @@ public class Pipeline: Command {
             try results.forEach { try $0.succeed() }
         }
 
-        func _kill(signal: Int32) throws {
+        func kill(signal: Int32) throws {
             var signalError: Error?
             for result in results {
                 do {
@@ -43,9 +43,6 @@ public class Pipeline: Command {
             try signalError.map { throw $0 }
         }
 
-        func kill(signal: Int32) throws {
-            try _kill(signal: signal)
-        }
 
         #if compiler(>=5.5) && canImport(_Concurrency)
         @available(macOS 10.15, *)

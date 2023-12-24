@@ -67,12 +67,8 @@ public class SyscallError: Error, CommandResult, CustomStringConvertible {
         throw self
     }
 
-    public func _kill(signal: Int32) throws {
-        throw self
-    }
-
     public func kill(signal: Int32) throws {
-        try _kill(signal: signal)
+        throw self
     }
 }
 
