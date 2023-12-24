@@ -6,12 +6,126 @@
 #include "include/path.h"
 #include <windows.h>
 #include <assert.h>
+#include <inttypes.h>
 
 /* Macros to map libuv functions to stdlib counterparts */
 #define uv__malloc(size) malloc(size)
 #define uv__free(ptr) free(ptr)
+#define uv_fatal_error(error, call) _exit(error)
 #define alloca(size) _alloca(size)
+#ifndef ssize_t
+#define ssize_t intptr_t
+#endif
+#define UV_ENOMEM -1
 
+/* Table of required environment variables */
+typedef struct env_var {
+  const WCHAR* const wide;
+  const WCHAR* const wide_eq;
+  const size_t len; /* including null or '=' */
+} env_var_t;
+#define E_V(str) { L##str, L##str L"=", sizeof(str) }
+static const env_var_t required_vars[] = { /* keep me sorted */
+  E_V("HOMEDRIVE"),
+  E_V("HOMEPATH"),
+  E_V("LOGONSERVER"),
+  E_V("PATH"),
+  E_V("SYSTEMDRIVE"),
+  E_V("SYSTEMROOT"),
+  E_V("TEMP"),
+  E_V("USERDOMAIN"),
+  E_V("USERNAME"),
+  E_V("USERPROFILE"),
+  E_V("WINDIR"),
+};
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#define ARRAY_END(a)  ((a) + ARRAY_SIZE(a))
+
+/*
+ * String helper functions
+ */
+
+ static int32_t uv__wtf8_decode1(const char** input) {
+  uint32_t code_point;
+  uint8_t b1;
+  uint8_t b2;
+  uint8_t b3;
+  uint8_t b4;
+
+  b1 = **input;
+  if (b1 <= 0x7F)
+    return b1; /* ASCII code point */
+  if (b1 < 0xC2)
+    return -1; /* invalid: continuation byte */
+  code_point = b1;
+
+  b2 = *++*input;
+  if ((b2 & 0xC0) != 0x80)
+    return -1; /* invalid: not a continuation byte */
+  code_point = (code_point << 6) | (b2 & 0x3F);
+  if (b1 <= 0xDF)
+    return 0x7FF & code_point; /* two-byte character */
+
+  b3 = *++*input;
+  if ((b3 & 0xC0) != 0x80)
+    return -1; /* invalid: not a continuation byte */
+  code_point = (code_point << 6) | (b3 & 0x3F);
+  if (b1 <= 0xEF)
+    return 0xFFFF & code_point; /* three-byte character */
+
+  b4 = *++*input;
+  if ((b4 & 0xC0) != 0x80)
+    return -1; /* invalid: not a continuation byte */
+  code_point = (code_point << 6) | (b4 & 0x3F);
+  if (b1 <= 0xF4) {
+    code_point &= 0x1FFFFF;
+    if (code_point <= 0x10FFFF)
+      return code_point; /* four-byte character */
+  }
+
+  /* code point too large */
+  return -1;
+}
+
+ssize_t uv_wtf8_length_as_utf16(const char* source_ptr) {
+  size_t w_target_len = 0;
+  int32_t code_point;
+
+  do {
+    code_point = uv__wtf8_decode1(&source_ptr);
+    if (code_point < 0)
+      return -1;
+    if (code_point > 0xFFFF)
+      w_target_len++;
+    w_target_len++;
+  } while (*source_ptr++);
+
+  return w_target_len;
+}
+
+void uv_wtf8_to_utf16(const char* source_ptr,
+                      uint16_t* w_target,
+                      size_t w_target_len) {
+  int32_t code_point;
+
+  do {
+    code_point = uv__wtf8_decode1(&source_ptr);
+    /* uv_wtf8_length_as_utf16 should have been called and checked first. */
+    assert(code_point >= 0);
+    if (code_point > 0x10000) {
+      assert(code_point < 0x10FFFF);
+      *w_target++ = (((code_point - 0x10000) >> 10) + 0xD800);
+      *w_target++ = ((code_point - 0x10000) & 0x3FF) + 0xDC00;
+      w_target_len -= 2;
+    } else {
+      *w_target++ = code_point;
+      w_target_len -= 1;
+    }
+  } while (*source_ptr++);
+
+  (void)w_target_len;
+  assert(w_target_len == 0);
+}
 
 /*
  * Path search functions
@@ -248,14 +362,16 @@ static WCHAR* search_path(const WCHAR *file,
   } else {
     dir_end = path;
 
-    /* The file is really only a name; look in cwd first, then scan path */
-    result = path_search_walk_ext(L"", 0,
-                                  file, file_len,
-                                  cwd, cwd_len,
-                                  name_has_ext);
+    if (NeedCurrentDirectoryForExePathW(L"")) {
+      /* The file is really only a name; look in cwd first, then scan path */
+      result = path_search_walk_ext(L"", 0,
+                                    file, file_len,
+                                    cwd, cwd_len,
+                                    name_has_ext);
+    }
 
     while (result == NULL) {
-      if (*dir_end == L'\0') {
+      if (dir_end == NULL || *dir_end == L'\0') {
         break;
       }
 
@@ -380,7 +496,7 @@ WCHAR* quote_cmd_arg(const WCHAR *source, WCHAR *target) {
     }
   }
   target[0] = L'\0';
-  wcsrev(start);
+  _wcsrev(start);
   *(target++) = L'"';
   return target;
 }
@@ -398,21 +514,15 @@ int make_program_args(char** args, int verbatim_arguments, WCHAR** dst_ptr) {
 
   /* Count the required size. */
   for (arg = args; *arg; arg++) {
-    DWORD arg_len;
+    ssize_t arg_len;
 
-    arg_len = MultiByteToWideChar(CP_UTF8,
-                                  0,
-                                  *arg,
-                                  -1,
-                                  NULL,
-                                  0);
-    if (arg_len == 0) {
-      return GetLastError();
-    }
+    arg_len = uv_wtf8_length_as_utf16(*arg);
+    if (arg_len < 0)
+      return arg_len;
 
     dst_len += arg_len;
 
-    if (arg_len > temp_buffer_len)
+    if ((size_t) arg_len > temp_buffer_len)
       temp_buffer_len = arg_len;
 
     arg_count++;
@@ -423,34 +533,28 @@ int make_program_args(char** args, int verbatim_arguments, WCHAR** dst_ptr) {
   dst_len = dst_len * 2 + arg_count * 2;
 
   /* Allocate buffer for the final command line. */
-  dst = (WCHAR*) uv__malloc(dst_len * sizeof(WCHAR));
+  dst = uv__malloc(dst_len * sizeof(WCHAR));
   if (dst == NULL) {
-    err = ERROR_OUTOFMEMORY;
+    err = UV_ENOMEM;
     goto error;
   }
 
   /* Allocate temporary working buffer. */
-  temp_buffer = (WCHAR*) uv__malloc(temp_buffer_len * sizeof(WCHAR));
+  temp_buffer = uv__malloc(temp_buffer_len * sizeof(WCHAR));
   if (temp_buffer == NULL) {
-    err = ERROR_OUTOFMEMORY;
+    err = UV_ENOMEM;
     goto error;
   }
 
   pos = dst;
   for (arg = args; *arg; arg++) {
-    DWORD arg_len;
+    ssize_t arg_len;
 
     /* Convert argument to wide char. */
-    arg_len = MultiByteToWideChar(CP_UTF8,
-                                  0,
-                                  *arg,
-                                  -1,
-                                  temp_buffer,
-                                  (int) (dst + dst_len - pos));
-    if (arg_len == 0) {
-      err = GetLastError();
-      goto error;
-    }
+    arg_len = uv_wtf8_length_as_utf16(*arg);
+    assert(arg_len > 0);
+    assert(temp_buffer_len >= (size_t) arg_len);
+    uv_wtf8_to_utf16(*arg, temp_buffer, arg_len);
 
     if (verbatim_arguments) {
       /* Copy verbatim. */
@@ -462,6 +566,7 @@ int make_program_args(char** args, int verbatim_arguments, WCHAR** dst_ptr) {
     }
 
     *pos++ = *(arg + 1) ? L' ' : L'\0';
+    assert(pos <= dst + dst_len);
   }
 
   uv__free(temp_buffer);
@@ -495,8 +600,8 @@ int env_strncmp(const wchar_t* a, int na, const wchar_t* b) {
   assert(b_eq);
   nb = b_eq - b;
 
-  A = alloca((na+1) * sizeof(wchar_t));
-  B = alloca((nb+1) * sizeof(wchar_t));
+  A = _alloca((na+1) * sizeof(wchar_t));
+  B = _alloca((nb+1) * sizeof(wchar_t));
 
   r = LCMapStringW(LOCALE_INVARIANT, LCMAP_UPPERCASE, a, na, A, na);
   assert(r==na);
@@ -516,6 +621,161 @@ int env_strncmp(const wchar_t* a, int na, const wchar_t* b) {
       return 0;
     }
   }
+}
+
+
+static int qsort_wcscmp(const void *a, const void *b) {
+  wchar_t* astr = *(wchar_t* const*)a;
+  wchar_t* bstr = *(wchar_t* const*)b;
+  return env_strncmp(astr, -1, bstr);
+}
+
+
+/*
+ * The way windows takes environment variables is different than what C does;
+ * Windows wants a contiguous block of null-terminated strings, terminated
+ * with an additional null.
+ *
+ * Windows has a few "essential" environment variables. winsock will fail
+ * to initialize if SYSTEMROOT is not defined; some APIs make reference to
+ * TEMP. SYSTEMDRIVE is probably also important. We therefore ensure that
+ * these get defined if the input environment block does not contain any
+ * values for them.
+ *
+ * Also add variables known to Cygwin to be required for correct
+ * subprocess operation in many cases:
+ * https://github.com/Alexpux/Cygwin/blob/b266b04fbbd3a595f02ea149e4306d3ab9b1fe3d/winsup/cygwin/environ.cc#L955
+ *
+ */
+int make_program_env(char* env_block[], WCHAR** dst_ptr) {
+  WCHAR* dst;
+  WCHAR* ptr;
+  char** env;
+  size_t env_len = 0;
+  size_t len;
+  size_t i;
+  size_t var_size;
+  size_t env_block_count = 1; /* 1 for null-terminator */
+  WCHAR* dst_copy;
+  WCHAR** ptr_copy;
+  WCHAR** env_copy;
+  size_t required_vars_value_len[ARRAY_SIZE(required_vars)];
+
+  /* first pass: determine size in UTF-16 */
+  for (env = env_block; *env; env++) {
+    ssize_t len;
+    if (strchr(*env, '=')) {
+      len = uv_wtf8_length_as_utf16(*env);
+      if (len < 0)
+        return len;
+      env_len += len;
+      env_block_count++;
+    }
+  }
+
+  /* second pass: copy to UTF-16 environment block */
+  dst_copy = uv__malloc(env_len * sizeof(WCHAR));
+  if (dst_copy == NULL && env_len > 0) {
+    return UV_ENOMEM;
+  }
+  env_copy = _alloca(env_block_count * sizeof(WCHAR*));
+
+  ptr = dst_copy;
+  ptr_copy = env_copy;
+  for (env = env_block; *env; env++) {
+    ssize_t len;
+    if (strchr(*env, '=')) {
+      len = uv_wtf8_length_as_utf16(*env);
+      assert(len > 0);
+      assert((size_t) len <= env_len - (ptr - dst_copy));
+      uv_wtf8_to_utf16(*env, ptr, len);
+      *ptr_copy++ = ptr;
+      ptr += len;
+    }
+  }
+  *ptr_copy = NULL;
+  assert(env_len == 0 || env_len == (size_t) (ptr - dst_copy));
+
+  /* sort our (UTF-16) copy */
+  qsort(env_copy, env_block_count-1, sizeof(wchar_t*), qsort_wcscmp);
+
+  /* third pass: check for required variables */
+  for (ptr_copy = env_copy, i = 0; i < ARRAY_SIZE(required_vars); ) {
+    int cmp;
+    if (!*ptr_copy) {
+      cmp = -1;
+    } else {
+      cmp = env_strncmp(required_vars[i].wide_eq,
+                        required_vars[i].len,
+                        *ptr_copy);
+    }
+    if (cmp < 0) {
+      /* missing required var */
+      var_size = GetEnvironmentVariableW(required_vars[i].wide, NULL, 0);
+      required_vars_value_len[i] = var_size;
+      if (var_size != 0) {
+        env_len += required_vars[i].len;
+        env_len += var_size;
+      }
+      i++;
+    } else {
+      ptr_copy++;
+      if (cmp == 0)
+        i++;
+    }
+  }
+
+  /* final pass: copy, in sort order, and inserting required variables */
+  dst = uv__malloc((1+env_len) * sizeof(WCHAR));
+  if (!dst) {
+    uv__free(dst_copy);
+    return UV_ENOMEM;
+  }
+
+  for (ptr = dst, ptr_copy = env_copy, i = 0;
+       *ptr_copy || i < ARRAY_SIZE(required_vars);
+       ptr += len) {
+    int cmp;
+    if (i >= ARRAY_SIZE(required_vars)) {
+      cmp = 1;
+    } else if (!*ptr_copy) {
+      cmp = -1;
+    } else {
+      cmp = env_strncmp(required_vars[i].wide_eq,
+                        required_vars[i].len,
+                        *ptr_copy);
+    }
+    if (cmp < 0) {
+      /* missing required var */
+      len = required_vars_value_len[i];
+      if (len) {
+        wcscpy(ptr, required_vars[i].wide_eq);
+        ptr += required_vars[i].len;
+        var_size = GetEnvironmentVariableW(required_vars[i].wide,
+                                           ptr,
+                                           (int) (env_len - (ptr - dst)));
+        if (var_size != (DWORD) (len - 1)) { /* TODO: handle race condition? */
+          uv_fatal_error(GetLastError(), "GetEnvironmentVariableW");
+        }
+      }
+      i++;
+    } else {
+      /* copy var from env_block */
+      len = wcslen(*ptr_copy) + 1;
+      wmemcpy(ptr, *ptr_copy, len);
+      ptr_copy++;
+      if (cmp == 0)
+        i++;
+    }
+  }
+
+  /* Terminate with an extra NULL. */
+  assert(env_len == (size_t) (ptr - dst));
+  *ptr = L'\0';
+
+  uv__free(dst_copy);
+  *dst_ptr = dst;
+  return 0;
 }
 
 #endif

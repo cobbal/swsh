@@ -260,12 +260,15 @@ public enum WindowsSpawnImpl {
         fdMap: [Int32: Int32],
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
-        // Find the path environment variable, checking the passed environment first, then the system environment
-        guard var envPath = env.keys.first(where: { $0.uppercased == "PATH" }).map({ env[$0]! }) else {
+        // Find the path environment variable and append the supplementary path to it
+        var env = env
+        guard let envPathKey = env.keys.first(where: { $0.uppercased == "PATH" }) else {
             return .failure(Error.envPathUnset)
         }
-        envPath += ExternalCommand.supplementaryPath 
-        let path: UnsafeMutablePointer<wchar_t>? = envPath.withCString(encodedAs: UTF16.self, _wcsdup)
+        if !env[envPathKey]!.contains(ExternalCommand.supplementaryPath) {
+            env[envPathKey] = "\(env[envPathKey]!)\(ExternalCommand.supplementaryPath)"
+        }
+        let path: UnsafeMutablePointer<wchar_t>? = env[envPathKey]!.withCString(encodedAs: UTF16.self, _wcsdup)
         defer { free(path) }
         // print("path: \(path.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
@@ -298,13 +301,27 @@ public enum WindowsSpawnImpl {
         var args = ([command] + arguments).map { _strdup($0) } + [nil]
         defer { args.forEach { free($0) } }
         var commandLine: UnsafeMutablePointer<wchar_t>?
-        printOSCall("windowsSpawn.make_program_args", args, 0, "ptr(out)")
+        printOSCall("windowsSpawn.make_program_args", "ptr(\(args))", 0, "ptr(commandLine)")
         let makeArgsStatus = windowsSpawn.make_program_args(&args, 0, &commandLine)
         defer { free(commandLine) }
         guard makeArgsStatus == 0 else {
-            return .failure(Error("Unable to convert command arguments", systemError: DWORD(makeArgsStatus)))
+            return .failure(Error("Unable to convert command arguments. Error: ", systemError: DWORD(makeArgsStatus)))
         }
         // print("commandLine: \(commandLine.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        
+        // Convert the environment variable keys and values to a null-terminated list of null-terminated UTF8 strings,
+        // then process them into properly quoted wide strings suitable for use in CreateProcessW()
+        let envVarStrings = env.map { "\($0)=\($1)" }
+        var vars = envVarStrings.map { _strdup($0) } + [nil]
+        defer { vars.forEach { free($0) } }
+        var environment: UnsafeMutablePointer<wchar_t>?
+        printOSCall("windowsSpawn.make_program_env", "ptr(\(vars))", "ptr(environment)")
+        let makeEnvStatus = windowsSpawn.make_program_env(&vars, &environment)
+        defer { free(environment) }
+        guard makeEnvStatus == 0 else {
+            return .failure(Error("Unable to convert environment. Error: ", systemError: DWORD(makeArgsStatus)))
+        }
+        print("environment: \(environment.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Package the file descriptors map as a list of handles, 
         // then process them into a form suitable for use in the startup information object passed to CreateProcessW()
@@ -338,7 +355,7 @@ public enum WindowsSpawnImpl {
             /* lpThreadAttributes: */ nil,
             /* bInheritHandles: */ true,
             /* dwCreationFlags: */ creationFlags,
-            /* lpEnvironment: */ nil, // TODO
+            /* lpEnvironment: */ environment,
             /* lpCurrentDirectory: */ cwd,
             /* lpStartupInfo: */ &startup,
             /* lpProcessInformation: */ &info
