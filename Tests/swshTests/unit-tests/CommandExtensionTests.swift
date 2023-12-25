@@ -48,12 +48,9 @@ class CommandExtensionTests: XCTestCase {
     }
 
     func testAsync() throws {
-        #if os(Windows)
-        XCTFail("Succeeds on Windows from PowerShell, but fails from VSCode. Why?")
-        #else
+        // TODO: Succeeds on Windows from PowerShell, but fails from VSCode test system. Why?
         let res = try unwrap(cmd.async(stdin: 4, stdout: 5, stderr: 6) as? MockCommand.Result)
         XCTAssertEqual(res.fdMap, [0: 4, 1: 5, 2: 6])
-        #endif
     }
 
     func testAsyncStream() {
