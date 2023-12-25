@@ -106,15 +106,11 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testIsRunning() throws {
-        #if os(Windows)
-        XCTFail("TODO: proc.isRunning blocks on Windows. Why?!?")
-        #else
         let pipe = FDPipe()
         let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fileDescriptor)
         XCTAssertTrue(proc.isRunning)
         pipe.fileHandleForWriting.close()
         try proc.succeed()
-        #endif
     }
 
     func testOverwriteEnv() throws {

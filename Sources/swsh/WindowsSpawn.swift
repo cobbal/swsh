@@ -52,24 +52,22 @@ struct WindowsSpawn: ProcessSpawner {
         queue: DispatchQueue,
         callback: @escaping (Int32) -> Void
     ) {
-        queue.async {
-            printOSCall("WaitForSingleObject", process.handle, "INFINITE")
-            WaitForSingleObject(process.handle, INFINITE)
-          
-            var exitCode: DWORD = 0
-            printOSCall("GetExitCodeProcess", process.handle, "ptr(\(exitCode))")
-            guard GetExitCodeProcess(process.handle, &exitCode) != false else {
-                callback(Int32(bitPattern: DWORD(GetLastError()))) // TODO: What should this be if the exit code cannot be determined?
-                return
-            }
-
-            printOSCall("CloseHandle", process.mainThreadHandle)
-            CloseHandle(process.mainThreadHandle)
-            printOSCall("CloseHandle", process.handle)
-            CloseHandle(process.handle)
-            // print("Reaped(\(exitCode)): \(process)")
-
-            callback(Int32(bitPattern: exitCode))
+        // Setup notifications for when the child process exits
+        var waitHandle: HANDLE? = INVALID_HANDLE_VALUE
+        let context = exit_wait_context(process: process, queue: queue, callback: callback)
+        let contextUnmanaged = Unmanaged.passRetained(context)
+        let flags = DWORD(WT_EXECUTEINWAITTHREAD) | DWORD(WT_EXECUTEONLYONCE)
+        printOSCall("RegisterWaitForSingleObject", "ptr(waitHandle)", process.handle, exit_wait_callback, "ptr(\(context))", "INFINITE", flags)
+        let succeeded = RegisterWaitForSingleObject(
+            /* phNewWaitObject */ &waitHandle,
+            /* hObject */ process.handle,
+            /* Callback */ exit_wait_callback,
+            /* Context */ contextUnmanaged.toOpaque(),
+            /* dwMilliseconds */ INFINITE,
+            /* dwFlags */ flags
+        )
+        guard succeeded else {
+            fatalError("RegisterWaitForSingleObject error: \(WindowsSpawnImpl.Error(systemError: GetLastError()))");
         }
     }
 
@@ -82,6 +80,43 @@ struct WindowsSpawn: ProcessSpawner {
             TerminateProcess(process.handle, 1)
             throw Error.systemError("Resuming process failed: ", err)
         }
+    }
+}
+
+class exit_wait_context {
+    let process: ProcessInformation
+    let queue: DispatchQueue
+    let callback: (Int32) -> Void
+
+    public init(process: ProcessInformation, queue: DispatchQueue, callback: @escaping (Int32) -> Void) {
+        self.process = process
+        self.queue = queue
+        self.callback = callback
+    }
+}
+
+@_cdecl("exit_wait_callback")
+func exit_wait_callback(data: UnsafeMutableRawPointer!, didTimeout: UInt8) {
+    let context: exit_wait_context = Unmanaged.fromOpaque(data!).takeUnretainedValue()
+    let process = context.process
+    let queue = context.queue
+    let callback = context.callback
+    
+    queue.sync {
+        var exitCode: DWORD = 0
+        printOSCall("GetExitCodeProcess", process.handle, "ptr(\(exitCode))")
+        guard GetExitCodeProcess(process.handle, &exitCode) != false else {
+            callback(Int32(bitPattern: DWORD(GetLastError()))) // TODO: What should this be if the exit code cannot be determined?
+            return
+        }
+
+        printOSCall("CloseHandle", process.mainThreadHandle)
+        CloseHandle(process.mainThreadHandle)
+        printOSCall("CloseHandle", process.handle)
+        CloseHandle(process.handle)
+        // print("Reaped(\(exitCode)): \(process)")
+
+        callback(Int32(bitPattern: exitCode))
     }
 }
 

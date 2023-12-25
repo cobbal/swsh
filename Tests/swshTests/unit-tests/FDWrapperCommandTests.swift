@@ -133,6 +133,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     }
 
     func testOutputAppendingNoCreateSuccess() throws {
+        // TODO: On Windows, it appears that the O_APPEND flag is being ignored. No idea why...
         try succeed(inner.append(toFile: tmpPath, createFile: false))
         handle?.write("Hiya".data(using: .utf8)!)
         close()
