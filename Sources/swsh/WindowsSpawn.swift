@@ -117,6 +117,7 @@ func exit_wait_callback(data: UnsafeMutableRawPointer!, didTimeout: UInt8) {
         // print("Reaped(\(exitCode)): \(process)")
 
         callback(Int32(bitPattern: exitCode))
+        Unmanaged<exit_wait_context>.fromOpaque(data!).release()
     }
 }
 
