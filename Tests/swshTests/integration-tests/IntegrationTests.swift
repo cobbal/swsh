@@ -138,15 +138,11 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testKillStop() throws {
-        #if os(Windows)
-        XCTFail("TODO: SIGSTOP for windows")
-        #else
         let res = try (cmd("bash", "-c", "while true; do sleep 1; done") | cmd("cat") | cmd("cat")).input("").async()
         try res.kill(signal: SIGSTOP)
         XCTAssert(res.isRunning)
         try res.kill(signal: SIGKILL)
         XCTAssertEqual(res.exitCode(), 1)
-        #endif
     }
 
     func testCombineOutput() throws {

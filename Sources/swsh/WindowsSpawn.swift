@@ -356,7 +356,7 @@ public enum WindowsSpawnImpl {
         guard makeEnvStatus == 0 else {
             return .failure(Error("Unable to convert environment. Error: ", systemError: DWORD(makeArgsStatus)))
         }
-        print("environment: \(environment.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
+        // print("environment: \(environment.map { String(utf16CodeUnits: $0, count: wcslen($0)) } ?? "")")
         
         // Package the file descriptors map as a list of handles, 
         // then process them into a form suitable for use in the startup information object passed to CreateProcessW()

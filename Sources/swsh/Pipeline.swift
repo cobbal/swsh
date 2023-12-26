@@ -33,7 +33,7 @@ public class Pipeline: Command {
 
         func kill(signal: Int32) throws {
             var signalError: Error?
-            for result in results {
+            for result in results.reversed() {
                 do {
                     try result.kill(signal: signal)
                 } catch let error {
