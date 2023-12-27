@@ -7,9 +7,7 @@ final class FDWrapperCommandTests: XCTestCase {
     lazy var invalidCmd = FDWrapperCommand( inner: inner, opening: "\(UUID())", toHandle: 0, oflag: O_RDONLY)
 
     func result() throws -> (outer: FDWrapperCommand.Result, inner: MockCommand.Result) {
-        let resultT = cmd.coreAsync(fdMap: [5: 3]) as? FDWrapperCommand.Result
-        print(resultT)
-        let result = try unwrap(resultT)
+        let result = try unwrap(cmd.coreAsync(fdMap: [5: 3]) as? FDWrapperCommand.Result)
         // let result = try unwrap(cmd.coreAsync(fdMap: [5: 3]) as? FDWrapperCommand.Result)
         let innerResult = try unwrap(result.innerResult as? MockCommand.Result)
         return (outer: result, inner: innerResult)
