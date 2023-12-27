@@ -28,6 +28,7 @@ public class FDPipe {
             // DWORD(GENERIC_WRITE) |
             DWORD(FILE_WRITE_ATTRIBUTES) |
             DWORD(WRITE_DAC)
+        
         printOSCall("CreateNamedPipeA", pipeName, serverAccess, pipeMode, 1, 65536, 65536, 0, nil)
         let serverPipe = CreateNamedPipeA(
             /* lpName */ pipeName,

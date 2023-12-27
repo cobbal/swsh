@@ -151,12 +151,10 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testRemapCycle() throws {
-        #if os(Windows)
-        XCTFail("Not even sure what is going on here on Windows...")
-        #else
+        // TODO: Not even sure what is going on here on Windows...")
         let pipes = [FDPipe(), FDPipe()]
         let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
-        let res = cmd("bash", "-c", "echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
+        let res = cmd("bash", "-c", "ls -la /proc/$$/fd/; echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],
         ])
@@ -166,7 +164,6 @@ final class IntegrationTests: XCTestCase {
         }
         try res.succeed()
         XCTAssertEqual(output, ["thing2\n", "thing1\n"])
-        #endif
     }
 
     func testCdSuccess() throws {

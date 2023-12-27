@@ -269,7 +269,7 @@ public enum WindowsSpawnImpl {
             printOSCall("GetCurrentProcess")
             let currentProcess = GetCurrentProcess()
             var duplicated: HANDLE?
-            printOSCall("DuplicateHandle", currentProcess, handle, currentProcess, "ptr(out)", 0, true, "DUPLICATE_SAME_ACCESS")
+            printOSCall("DuplicateHandle", currentProcess, handle, currentProcess, "ptr(duplicated)", 0, true, "DUPLICATE_SAME_ACCESS")
             guard DuplicateHandle(
                 /* hSourceProcessHandle: */ currentProcess,
                 /* hSourceHandle: */ handle,
@@ -367,7 +367,7 @@ public enum WindowsSpawnImpl {
             case .success(let buffer): childHandleStructure = buffer
             case .failure(let error): return .failure(error)
         }
-        // print("childHandleStructure: \((0..<childHandleStructure.count).map { "(parentFD: \(fdMap[Int32($0)]!) childFD: \($0) osHandle: \(childHandleStructure[$0]!))" })")
+        // print("childHandleStructure: \((0..<childHandleStructure.count).map { "(childFD: \($0) parentFD: \(fdMap[Int32($0)]) osHandle: \(childHandleStructure[$0]))" })")
         var startup = STARTUPINFOW()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.lpReserved = nil
@@ -383,7 +383,7 @@ public enum WindowsSpawnImpl {
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         let creationFlags = DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED)
         var info = PROCESS_INFORMATION()
-        printOSCall("CreateProcessW", applicationPath, commandLine, nil, nil, true, nil, creationFlags, nil, cwd, "ptr(\(startup))", "ptr(\(info))")
+        printOSCall("CreateProcessW", applicationPath, commandLine, nil, nil, true, creationFlags, environment, cwd, "ptr(\(startup))", "ptr(info)")
         guard CreateProcessW(
             /* lpApplicationName: */ applicationPath,
             /* lpCommandLine: */ commandLine,

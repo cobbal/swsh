@@ -154,7 +154,7 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
 
     func testDuplicateFd() throws {
         #if os(Windows)
-        XCTFail("Fails on Windows with 42 -> 35, but works fine for 2 -> 1. Why should this ever work? Neither 42 nor 45 are open...")
+        XCTFail("Fails on Windows with 42 -> 35, but works fine for 2 -> 1. Why should this ever work? Neither 42 nor 35 are open...")
         #else
         try succeed(inner.duplicateFd(source: 42, destination: 35))
         XCTAssertEqual(innerResult.fdMap[35], 42)
