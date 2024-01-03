@@ -383,38 +383,42 @@ public enum WindowsSpawnImpl {
         var startupPtr = UnsafeMutablePointer<STARTUPINFOW>(&startup)
         var creationFlags = DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED)
         
-        // var nonNilHandles = childHandleStructure.handles.compactMap { $0 }
-        // var inheritedHandles = UnsafeMutableRawBufferPointer.allocate(byteCount: nonNilHandles.count * MemoryLayout<HANDLE?>.size, alignment: 16)
-        // defer { inheritedHandles.deallocate() }
-        // nonNilHandles.enumerated().forEach { inheritedHandles.storeBytes(of: $0.1, toByteOffset: $0.0 * MemoryLayout<HANDLE?>.size, as: HANDLE?.self) }
-        // print("inheritedHandles: \(inheritedHandles.count) bytes: \(inheritedHandles.map { $0 })")
-        // var attributeListSize: SIZE_T = 0
-        // InitializeProcThreadAttributeList(nil, 1, 0, &attributeListSize)
-        // var startupEx = STARTUPINFOEXW()
-        // startupEx.StartupInfo = startup
-        // startupEx.StartupInfo.cb = DWORD(MemoryLayout<STARTUPINFOEXW>.size)
-        // startupEx.lpAttributeList = .init(HeapAlloc(GetProcessHeap(), 0, attributeListSize))
-        // defer { HeapFree(GetProcessHeap(), 0, .init(startupEx.lpAttributeList)) }
-        // guard InitializeProcThreadAttributeList(startupEx.lpAttributeList, 1, 0, &attributeListSize) else {
-        //     return .failure(Error("InitializeProcThreadAttributeList failed: ", systemError: DWORD(GetLastError())))
-        // }
-        // let PROC_THREAD_ATTRIBUTE_HANDLE_LIST = DWORD_PTR(ProcThreadAttributeHandleList.rawValue | PROC_THREAD_ATTRIBUTE_INPUT)
-        // guard UpdateProcThreadAttribute(
-        //     /* lpAttributeList */ startupEx.lpAttributeList, 
-        //     /* dwFlags */ 0, 
-        //     /* Attribute */ PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
-        //     /* lpValue */ inheritedHandles.baseAddress, 
-        //     /* cbSize */ SIZE_T(inheritedHandles.count), 
-        //     /* lpPreviousValue */ nil, 
-        //     /* lpReturnSize */ nil
-        // ) else {
-        //     return .failure(Error("UpdateProcThreadAttribute failed: ", systemError: DWORD(GetLastError())))
-        // }
-        // defer { DeleteProcThreadAttributeList(startupEx.lpAttributeList) }
-        // var startupExPtr = UnsafeMutableRawPointer(UnsafeMutablePointer<STARTUPINFOEXW>(&startupEx))
-        // startupPtr = startupExPtr.bindMemory(to: STARTUPINFOW.self, capacity: 1)
-        // creationFlags |= UInt32(EXTENDED_STARTUPINFO_PRESENT)
-
+        // Restrict the handles inherited by the child process to only those specified here
+        let restrictInheritance = true
+        if restrictInheritance {
+            var nonNilHandles = childHandleStructure.handles.compactMap { $0 }
+            var inheritedHandles = UnsafeMutableRawBufferPointer.allocate(byteCount: nonNilHandles.count * MemoryLayout<HANDLE?>.size, alignment: 16)
+            defer { inheritedHandles.deallocate() }
+            nonNilHandles.enumerated().forEach { inheritedHandles.storeBytes(of: $0.1, toByteOffset: $0.0 * MemoryLayout<HANDLE?>.size, as: HANDLE?.self) }
+            print("inheritedHandles: \(inheritedHandles.count) bytes: \(inheritedHandles.map { $0 })")
+            var attributeListSize: SIZE_T = 0
+            InitializeProcThreadAttributeList(nil, 1, 0, &attributeListSize)
+            var startupEx = STARTUPINFOEXW()
+            startupEx.StartupInfo = startup
+            startupEx.StartupInfo.cb = DWORD(MemoryLayout<STARTUPINFOEXW>.size)
+            startupEx.lpAttributeList = .init(HeapAlloc(GetProcessHeap(), 0, attributeListSize))
+            defer { HeapFree(GetProcessHeap(), 0, .init(startupEx.lpAttributeList)) }
+            guard InitializeProcThreadAttributeList(startupEx.lpAttributeList, 1, 0, &attributeListSize) else {
+                return .failure(Error("InitializeProcThreadAttributeList failed: ", systemError: DWORD(GetLastError())))
+            }
+            let PROC_THREAD_ATTRIBUTE_HANDLE_LIST = DWORD_PTR(ProcThreadAttributeHandleList.rawValue | PROC_THREAD_ATTRIBUTE_INPUT)
+            guard UpdateProcThreadAttribute(
+                /* lpAttributeList */ startupEx.lpAttributeList, 
+                /* dwFlags */ 0, 
+                /* Attribute */ PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+                /* lpValue */ inheritedHandles.baseAddress, 
+                /* cbSize */ SIZE_T(inheritedHandles.count), 
+                /* lpPreviousValue */ nil, 
+                /* lpReturnSize */ nil
+            ) else {
+                return .failure(Error("UpdateProcThreadAttribute failed: ", systemError: DWORD(GetLastError())))
+            }
+            defer { DeleteProcThreadAttributeList(startupEx.lpAttributeList) }
+            var startupExPtr = UnsafeMutableRawPointer(UnsafeMutablePointer<STARTUPINFOEXW>(&startupEx))
+            startupPtr = startupExPtr.bindMemory(to: STARTUPINFOW.self, capacity: 1)
+            creationFlags |= UInt32(EXTENDED_STARTUPINFO_PRESENT)
+        }
+        
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()
         printOSCall("CreateProcessW", applicationPath, commandLine, nil, nil, true, creationFlags, environment, cwd, "ptr(\(startup))", "ptr(info)")
