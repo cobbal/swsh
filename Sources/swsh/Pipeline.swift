@@ -32,20 +32,18 @@ public class Pipeline: Command {
         }
 
         func kill(signal: Int32) throws {
-            var signalError: Error?
-            #if os(Windows)
-            let reverseOrder = true
-            #else
-            let reverseOrder = false
-            #endif
-            for result in reverseOrder ? results.reversed() : results {
+            var signalErrors: [Error?] = []
+            for result in results {
                 do {
                     try result.kill(signal: signal)
+                    signalErrors.append(nil)
                 } catch let error {
-                    signalError = signalError ?? error
+                    signalErrors.append(error)
                 }
             }
-            try signalError.map { throw $0 }
+            if !signalErrors.contains(where: { $0 == nil }) {
+                try signalErrors.first?.map { throw $0 }
+            }
         }
 
 

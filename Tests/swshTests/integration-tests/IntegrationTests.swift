@@ -151,10 +151,13 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testRemapCycle() throws {
-        // TODO: Not even sure what is going on here on Windows...")
+        // #if os(Windows)
+        // try XCTSkip("TODO: Not even sure what is going on here on Windows...")
+        // #endif
         let pipes = [FDPipe(), FDPipe()]
         let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
         let res = cmd("bash", "-c", "ls -la /proc/$$/fd/; echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
+            3: 1,
             write[0]: write[1],
             write[1]: write[0],
         ])

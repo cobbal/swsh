@@ -171,7 +171,7 @@ public enum WindowsSpawnImpl {
     */
     class ChildHandleBuffer {
         private let shouldDuplicate = true
-        private let intSize = MemoryLayout<Int>.size
+        private let intSize = MemoryLayout<Int32>.size
         private let byteSize = MemoryLayout<UInt8>.size
         private let ptrSize = MemoryLayout<UnsafeRawPointer>.size
 
@@ -198,7 +198,7 @@ public enum WindowsSpawnImpl {
             let byteLength = intSize + byteSize * count + ptrSize * count
             guard byteLength < UInt16.max else { return nil }
             buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: byteLength, alignment: 16)
-            buffer.storeBytes(of: count, toByteOffset: 0, as: Int.self)
+            buffer.storeBytes(of: Int32(count), toByteOffset: 0, as: Int32.self)
             for i in 0..<count {
                 let handle = handles[i]
                 let flags = Self.flags(for: handle)
@@ -368,6 +368,7 @@ public enum WindowsSpawnImpl {
             case .failure(let error): return .failure(error)
         }
         // print("childHandleStructure: \((0..<childHandleStructure.count).map { "(childFD: \($0) parentFD: \(fdMap[Int32($0)]) osHandle: \(childHandleStructure[$0]))" })")
+        // print("childHandleStructure count: \(childHandleStructure.buffer.count) bytes: \((0..<childHandleStructure.buffer.count).map {childHandleStructure.buffer[$0]})")
         var startup = STARTUPINFOW()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.lpReserved = nil

@@ -71,20 +71,36 @@ class PipelineTests: XCTestCase {
         try pipeline.async().kill()
     }
 
-    class AnError: Error, Equatable {
+    class AnError: Error, Equatable, CustomStringConvertible {
         static func == (lhs: AnError, rhs: AnError) -> Bool { lhs.id == rhs.id }
         let id = UUID()
+
+        public var description: String {
+            "AnError id: \(id)"
+        }
     }
 
     func testPipeKillFailure() throws {
+        let err0 = AnError()
         let err1 = AnError()
         let err2 = AnError()
+        cmd0.killResponse = err0
         cmd1.killResponse = err1
         cmd2.killResponse = err2
 
         XCTAssertThrowsError(try pipeline.async().kill()) { error in
-            XCTAssertEqual(error as? AnError, err1)
+            XCTAssertEqual(error as? AnError, err0)
         }
+    }
+
+    func testPipeKillPartialSuccess() throws {
+        let err0 = AnError()
+        let err2 = AnError()
+        cmd0.killResponse = err0
+        cmd1.killResponse = nil
+        cmd2.killResponse = err2
+
+        try pipeline.async().kill()
     }
 
     func testPipeDescription() throws {
