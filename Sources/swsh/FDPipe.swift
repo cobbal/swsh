@@ -18,15 +18,15 @@ public class FDPipe {
         defer { free(pipeName) }
         let pipeMode = DWORD(PIPE_TYPE_BYTE) | DWORD(PIPE_READMODE_BYTE) | DWORD(PIPE_WAIT)
         let serverAccess = 
-            // DWORD(PIPE_ACCESS_INBOUND) | 
+            DWORD(PIPE_ACCESS_INBOUND) | 
             DWORD(PIPE_ACCESS_OUTBOUND) | 
             DWORD(WRITE_DAC) | 
             DWORD(FILE_FLAG_FIRST_PIPE_INSTANCE)
         let clientAccess = 
             DWORD(GENERIC_READ) | 
             // DWORD(FILE_READ_ATTRIBUTES) |
-            // DWORD(GENERIC_WRITE) |
-            DWORD(FILE_WRITE_ATTRIBUTES) |
+            DWORD(GENERIC_WRITE) |
+            // DWORD(FILE_WRITE_ATTRIBUTES) |
             DWORD(WRITE_DAC)
         
         printOSCall("CreateNamedPipeA", pipeName, serverAccess, pipeMode, 1, 65536, 65536, 0, nil)
@@ -68,7 +68,7 @@ public class FDPipe {
         }
 
         printOSCall("_open_osfhandle", clientPipe, 0)
-        let fileDescriptorForReading = FileDescriptor(_open_osfhandle(.init(bitPattern: clientPipe), _O_RDONLY))
+        let fileDescriptorForReading = FileDescriptor(_open_osfhandle(.init(bitPattern: clientPipe), _O_APPEND))
         printOSCall("_open_osfhandle", serverPipe, 0)
         let fileDescriptorForWriting = FileDescriptor(_open_osfhandle(.init(bitPattern: serverPipe), _O_APPEND))
         fileHandleForReading = FDFileHandle(fileDescriptor: fileDescriptorForReading, closeOnDealloc: true)

@@ -80,6 +80,11 @@ internal class FDWrapperCommand: Command {
             guard fd >= 0 else {
                 return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, errno: errno))
             }
+            #if os(Windows)
+            if oflag & O_APPEND != 0 {
+                _lseek(fd, 0, SEEK_END)
+            }
+            #endif
             let io = FDFileHandle(fileDescriptor: FileDescriptor(fd), closeOnDealloc: true)
             return .success(fdMap: [dstFd: io.fileDescriptor], ref: io)
             // #endif

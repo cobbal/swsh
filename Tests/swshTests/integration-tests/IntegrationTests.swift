@@ -156,8 +156,7 @@ final class IntegrationTests: XCTestCase {
         // #endif
         let pipes = [FDPipe(), FDPipe()]
         let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
-        let res = cmd("bash", "-c", "ls -la /proc/$$/fd/; echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
-            3: 1,
+        let res = try cmd("bash", "-c", "ls -la /proc/$$/fd/; echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],
         ])
