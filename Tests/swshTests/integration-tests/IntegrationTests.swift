@@ -165,7 +165,7 @@ final class IntegrationTests: XCTestCase {
             }
 
             """
-        let cProgramFile = "main.c"
+        let cProgramFile = "writer.c"
         let cProgramExecutable = "writer.exe"
         try cmd("cat").input(cProgram).output(overwritingFile: cProgramFile).run()
         try cmd("clang", "-o", cProgramExecutable, cProgramFile).run()
