@@ -165,8 +165,13 @@ final class IntegrationTests: XCTestCase {
             }
 
             """
-        let cProgramFile = "writer.c"
-        let cProgramExecutable = "writer.exe"
+        let id = UUID().uuidString
+        let cProgramFile = "writer-\(id).c"
+        #if os(Windows)
+        let cProgramExecutable = "writer-\(id).exe"
+        #else
+        let cProgramExecutable = "writer-\(id)"
+        #endif
         try cmd("cat").input(cProgram).output(overwritingFile: cProgramFile).run()
         try cmd("clang", "-o", cProgramExecutable, cProgramFile).run()
 
