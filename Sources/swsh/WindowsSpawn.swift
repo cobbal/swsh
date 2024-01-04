@@ -367,8 +367,8 @@ public enum WindowsSpawnImpl {
             case .success(let buffer): childHandleStructure = buffer
             case .failure(let error): return .failure(error)
         }
-        // print("childHandleStructure: \((0..<childHandleStructure.count).map { "(childFD: \($0) parentFD: \(fdMap[Int32($0)]) osHandle: \(childHandleStructure[$0]))" })")
-        // print("childHandleStructure.buffer: \(childHandleStructure.buffer) bytes: \(childHandleStructure.buffer.map { $0 })")
+        print("childHandleStructure: \((0..<childHandleStructure.count).map { "(childFD: \($0) parentFD: \(fdMap[Int32($0)]) osHandle: \(childHandleStructure[$0]))" })")
+        print("childHandleStructure.buffer: \(childHandleStructure.buffer) bytes: \(childHandleStructure.buffer.map { $0 })")
         var startup = STARTUPINFOW()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.lpReserved = nil
@@ -384,8 +384,7 @@ public enum WindowsSpawnImpl {
         var creationFlags = DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED)
         
         // Restrict the handles inherited by the child process to only those specified here
-        let restrictInheritance = true
-        if restrictInheritance {
+        #if true /* restrictInheritance */
             var nonNilHandles = childHandleStructure.handles.compactMap { $0 }
             var inheritedHandles = UnsafeMutableRawBufferPointer.allocate(byteCount: nonNilHandles.count * MemoryLayout<HANDLE?>.size, alignment: 16)
             defer { inheritedHandles.deallocate() }
@@ -417,7 +416,7 @@ public enum WindowsSpawnImpl {
             var startupExPtr = UnsafeMutableRawPointer(UnsafeMutablePointer<STARTUPINFOEXW>(&startupEx))
             startupPtr = startupExPtr.bindMemory(to: STARTUPINFOW.self, capacity: 1)
             creationFlags |= UInt32(EXTENDED_STARTUPINFO_PRESENT)
-        }
+        #endif
         
         // Spawn a child process to execute the desired command, requesting that it be in a suspended state to be resumed later
         var info = PROCESS_INFORMATION()

@@ -151,12 +151,26 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testRemapCycle() throws {
-        // #if os(Windows)
-        // try XCTSkip("TODO: Not even sure what is going on here on Windows...")
-        // #endif
         let pipes = [FDPipe(), FDPipe()]
         let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
-        let res = try cmd("bash", "-c", "ls -la /proc/$$/fd/; echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
+        
+        let cProgram = """
+            #include <io.h>
+            #include <string.h>
+
+            int main(int argc, char** argv) {
+                _write(\(write[0]), "stuff-to-a", strlen("stuff-to-a"));
+                _write(\(write[1]), "stuff-to-b", strlen("stuff-to-b"));
+                return 0;
+            }
+
+            """
+        let cProgramFile = "main.c"
+        let cProgramExecutable = "writer.exe"
+        try cmd("cat").input(cProgram).output(overwritingFile: cProgramFile).run()
+        try cmd("clang", "-o", cProgramExecutable, cProgramFile).run()
+
+        let res = try cmd("\(cProgramExecutable)").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],
         ])
@@ -165,7 +179,10 @@ final class IntegrationTests: XCTestCase {
             String(data: $0.fileHandleForReading.handle.readDataToEndOfFile(), encoding: .utf8)
         }
         try res.succeed()
-        XCTAssertEqual(output, ["thing2\n", "thing1\n"])
+        XCTAssertEqual(output, ["stuff-to-b", "stuff-to-a"])
+
+        try cmd("rm", cProgramFile).run()
+        try cmd("rm", cProgramExecutable).run()
     }
 
     func testCdSuccess() throws {
