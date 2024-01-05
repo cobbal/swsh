@@ -29,52 +29,6 @@ internal class FDWrapperCommand: Command {
 
     convenience init(inner: Command, opening path: String, toHandle dstFd: FileDescriptor, oflag: Int32) {
         self.init(inner: inner) { command in
-            /*
-            #if os(Windows)
-            let path = path == "/dev/null" ? "NUL" : path
-            let fileName = path.withCString(encodedAs: UTF8.self) { _strdup($0) }
-            defer { free(fileName) }
-            var access = DWORD(0)
-            access |= (oflag & O_RDONLY) == 0 ? 0 : DWORD(GENERIC_READ)
-            access |= (oflag & O_WRONLY) == 0 ? 0 : DWORD(GENERIC_WRITE)
-            access |= (oflag & O_RDWR) == 0 ? 0 : DWORD(GENERIC_READ) | DWORD(GENERIC_WRITE)
-            let share = DWORD(FILE_SHARE_READ)
-            var securityAttributes = SECURITY_ATTRIBUTES()
-            securityAttributes.nLength = DWORD(MemoryLayout<SECURITY_ATTRIBUTES>.size)
-            securityAttributes.lpSecurityDescriptor = nil
-            securityAttributes.bInheritHandle = true
-            let creationDisposition =
-                (oflag & (O_CREAT | O_TRUNC)) != 0 ? DWORD(CREATE_ALWAYS) :
-                (oflag & O_EXCL) != 0 ? DWORD(CREATE_NEW) :
-                (oflag & O_CREAT) != 0 ? DWORD(OPEN_ALWAYS) :
-                (oflag & O_TRUNC) != 0 ? DWORD(TRUNCATE_EXISTING) :
-                DWORD(OPEN_EXISTING)
-            let flags = DWORD(FILE_ATTRIBUTE_NORMAL)
-            printOSCall("CreateFileA", fileName, access, share, "ptr(\(securityAttributes))", creationDisposition, flags, nil)
-            let osHandle = CreateFileA(
-                /* lpFileName */ fileName,
-                /* dwDesiredAccess */ access,
-                /* dwShareMode */ share,
-                /* lpSecurityAttributes */ &securityAttributes,
-                /* dwCreationDisposition */ creationDisposition,
-                /* dwFlagsAndAttributes */ flags,
-                /* hTemplateFile */ nil
-            )
-            guard osHandle != INVALID_HANDLE_VALUE else {
-                return .failure(SyscallError(name: "CreateFileA(\"\(path)\", ...)", command: command, errno: errno))
-            }
-            printOSCall("_open_osfhandle", osHandle, 0)
-            let fd = _open_osfhandle(.init(bitPattern: osHandle), 0)
-            guard fd >= 0 else {
-                return .failure(SyscallError(name: "_open_osfhandle(\"\(osHandle)\", ...)", command: command, errno: errno))
-            }
-            let io = FDFileHandle(fileDescriptor: FileDescriptor(fd), closeOnDealloc: true)
-            return .success(fdMap: [dstFd: io.fileDescriptor], ref: io)
-            #else
-            */
-            #if os(Windows)
-            let path = path == "/dev/null" ? "NUL" : path
-            #endif
             printOSCall("open", path, oflag, 0o666)
             let fd = open(path, oflag, 0o666)
             guard fd >= 0 else {
@@ -89,6 +43,10 @@ internal class FDWrapperCommand: Command {
             return .success(fdMap: [dstFd: io.fileDescriptor], ref: io)
             // #endif
         }
+    }
+
+    convenience init(inner: Command, openingNullDeviceToHandle dstFd: FileDescriptor, oflag: Int32) {
+        self.init(inner: inner, opening: FileManager.nullDevicePath, toHandle: dstFd, oflag: oflag)
     }
 
     struct Result: CommandResult, AsyncCommandResult {

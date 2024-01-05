@@ -20,6 +20,15 @@ extension FileManager {
         defer { _ = changeCurrentDirectoryPath(oldPath) }
         return try body()
     }
+
+    /// Path to a file representing the `nullDevice` for use when a `FileHandle` is insufficient
+    public static var nullDevicePath: String {
+        #if os(Windows)
+        return "NUL"
+        #else
+        return "/dev/null"
+        #endif
+    }
 }
 
 public var printOSCalls = false

@@ -391,16 +391,19 @@ public enum WindowsSpawnImpl {
             nonNilHandles.enumerated().forEach { inheritedHandles.storeBytes(of: $0.1, toByteOffset: $0.0 * MemoryLayout<HANDLE?>.size, as: HANDLE?.self) }
             // print("inheritedHandles: \(inheritedHandles.count) bytes: \(inheritedHandles.map { $0 })")
             var attributeListSize: SIZE_T = 0
+            printOSCall("InitializeProcThreadAttributeList", nil, 1, 0, "ptr(attributeListSize)")
             InitializeProcThreadAttributeList(nil, 1, 0, &attributeListSize)
             var startupEx = STARTUPINFOEXW()
             startupEx.StartupInfo = startup
             startupEx.StartupInfo.cb = DWORD(MemoryLayout<STARTUPINFOEXW>.size)
             startupEx.lpAttributeList = .init(HeapAlloc(GetProcessHeap(), 0, attributeListSize))
             defer { HeapFree(GetProcessHeap(), 0, .init(startupEx.lpAttributeList)) }
+            printOSCall("InitializeProcThreadAttributeList", startupEx.lpAttributeList, 1, 0, "ptr(\(attributeListSize))")
             guard InitializeProcThreadAttributeList(startupEx.lpAttributeList, 1, 0, &attributeListSize) else {
                 return .failure(Error("InitializeProcThreadAttributeList failed: ", systemError: DWORD(GetLastError())))
             }
             let PROC_THREAD_ATTRIBUTE_HANDLE_LIST = DWORD_PTR(ProcThreadAttributeHandleList.rawValue | PROC_THREAD_ATTRIBUTE_INPUT)
+            printOSCall("UpdateProcThreadAttribute", startupEx.lpAttributeList, 0, "PROC_THREAD_ATTRIBUTE_HANDLE_LIST", inheritedHandles.baseAddress, inheritedHandles.count, nil, nil)
             guard UpdateProcThreadAttribute(
                 /* lpAttributeList */ startupEx.lpAttributeList, 
                 /* dwFlags */ 0, 
