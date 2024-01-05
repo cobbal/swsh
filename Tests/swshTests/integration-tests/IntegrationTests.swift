@@ -154,6 +154,8 @@ final class IntegrationTests: XCTestCase {
         let pipes = [FDPipe(), FDPipe()]
         let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
         
+        let id = UUID().uuidString
+        #if os(Windows)
         let cProgram = """
             #include <io.h>
             #include <string.h>
@@ -165,17 +167,28 @@ final class IntegrationTests: XCTestCase {
             }
 
             """
-        let id = UUID().uuidString
         let cProgramFile = "writer-\(id).c"
-        #if os(Windows)
         let cProgramExecutable = "writer-\(id).exe"
         #else
+        let cProgram = """
+            #include <unistd.h>
+            #include <string.h>
+
+            int main(int argc, char** argv) {
+                write(\(write[0]), "stuff-to-a", strlen("stuff-to-a"));
+                write(\(write[1]), "stuff-to-b", strlen("stuff-to-b"));
+                return 0;
+            }
+
+            """
+        let cProgramFile = "writer-\(id).c"
         let cProgramExecutable = "writer-\(id)"
         #endif
+        
         try cmd("cat").input(cProgram).output(overwritingFile: cProgramFile).run()
         try cmd("clang", "-o", cProgramExecutable, cProgramFile).run()
 
-        let res = try cmd("\(cProgramExecutable)").async(fdMap: [
+        let res = cmd("./\(cProgramExecutable)").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],
         ])
