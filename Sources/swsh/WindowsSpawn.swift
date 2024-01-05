@@ -367,8 +367,8 @@ public enum WindowsSpawnImpl {
             case .success(let buffer): childHandleStructure = buffer
             case .failure(let error): return .failure(error)
         }
-        print("childHandleStructure: \((0..<childHandleStructure.count).map { "(childFD: \($0) parentFD: \(fdMap[Int32($0)]) osHandle: \(childHandleStructure[$0]))" })")
-        print("childHandleStructure.buffer: \(childHandleStructure.buffer) bytes: \(childHandleStructure.buffer.map { $0 })")
+        // print("childHandleStructure: \((0..<childHandleStructure.count).map { "(childFD: \($0) parentFD: \(fdMap[Int32($0)]) osHandle: \(childHandleStructure[$0]))" })")
+        // print("childHandleStructure.buffer: \(childHandleStructure.buffer) bytes: \(childHandleStructure.buffer.map { $0 })")
         var startup = STARTUPINFOW()
         startup.cb = DWORD(MemoryLayout<STARTUPINFOW>.size)
         startup.lpReserved = nil
@@ -385,11 +385,11 @@ public enum WindowsSpawnImpl {
         
         // Restrict the handles inherited by the child process to only those specified here
         #if true /* restrictInheritance */
-            var nonNilHandles = childHandleStructure.handles.compactMap { $0 }
-            var inheritedHandles = UnsafeMutableRawBufferPointer.allocate(byteCount: nonNilHandles.count * MemoryLayout<HANDLE?>.size, alignment: 16)
+            let nonNilHandles = childHandleStructure.handles.compactMap { $0 }
+            let inheritedHandles = UnsafeMutableRawBufferPointer.allocate(byteCount: nonNilHandles.count * MemoryLayout<HANDLE?>.size, alignment: 16)
             defer { inheritedHandles.deallocate() }
             nonNilHandles.enumerated().forEach { inheritedHandles.storeBytes(of: $0.1, toByteOffset: $0.0 * MemoryLayout<HANDLE?>.size, as: HANDLE?.self) }
-            print("inheritedHandles: \(inheritedHandles.count) bytes: \(inheritedHandles.map { $0 })")
+            // print("inheritedHandles: \(inheritedHandles.count) bytes: \(inheritedHandles.map { $0 })")
             var attributeListSize: SIZE_T = 0
             InitializeProcThreadAttributeList(nil, 1, 0, &attributeListSize)
             var startupEx = STARTUPINFOEXW()

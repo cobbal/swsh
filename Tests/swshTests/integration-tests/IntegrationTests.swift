@@ -121,6 +121,7 @@ final class IntegrationTests: XCTestCase {
 
     func testKillRunningProcess() throws {
         let res = cmd("bash", "-c", "while true; do sleep 1; done").async()
+        Thread.sleep(forTimeInterval: 0.5)
         try res.kill()
         XCTAssertEqual(res.exitCode(), 1)
     }
@@ -139,6 +140,7 @@ final class IntegrationTests: XCTestCase {
 
     func testKillStop() throws {
         let res = try (cmd("bash", "-c", "while true; do sleep 1; done") | cmd("cat") | cmd("cat")).input("").async()
+        Thread.sleep(forTimeInterval: 0.5)
         try res.kill(signal: SIGSTOP)
         XCTAssert(res.isRunning)
         try res.kill(signal: SIGKILL)
