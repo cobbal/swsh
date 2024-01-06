@@ -7,10 +7,6 @@ let package = Package(
         .macOS(.v10_14),
     ],
     products: [
-        .executable(
-            name: "swsher",
-            targets: ["swsher"]
-        ),
         .library(
             name: "swsh",
             targets: ["swsh"]
@@ -18,10 +14,6 @@ let package = Package(
     ],
     dependencies: [],
     targets: [
-        .target(
-            name: "swsher",
-            dependencies: ["swsh"]
-        ),
         .target(
             name: "swsh",
             dependencies: [
