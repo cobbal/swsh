@@ -9,11 +9,11 @@ private let empty_spawnattrs: posix_spawnattr_t? = nil
 /// A process spawned with `posix_spawn`
 public struct PosixSpawn: ProcessSpawner {
     public func spawn(
-      command: String,
-      arguments: [String],
-      env: [String: String],
-      fdMap: FDMap,
-      pathResolve: Bool
+        command: String,
+        arguments: [String],
+        env: [String: String],
+        fdMap: FDMap,
+        pathResolve: Bool
     ) -> SpawnResult {
         var fileActions = empty_file_actions
         posix_spawn_file_actions_init(&fileActions)
@@ -73,9 +73,9 @@ public struct PosixSpawn: ProcessSpawner {
     private static func WIFSIGNALED(_ status: Int32) -> Bool { _WSTATUS(status) != _WSTOPPED && _WSTATUS(status) != 0 }
 
     public func reapAsync(
-      process: ProcessInformation,
-      queue: DispatchQueue,
-      callback: @escaping (Int32) -> Void
+        process: ProcessInformation,
+        queue: DispatchQueue,
+        callback: @escaping (Int32) -> Void
     ) {
         let processSource = DispatchSource.makeProcessSource(identifier: process.id, eventMask: .exit, queue: queue)
         processSource.setEventHandler { [processSource] in
@@ -93,7 +93,7 @@ public struct PosixSpawn: ProcessSpawner {
     }
 
     public func resume(
-      process: ProcessInformation
+        process: ProcessInformation
     ) throws {
         kill(process.id, SIGCONT)
     }

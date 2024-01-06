@@ -58,7 +58,7 @@ internal class FDWrapperCommand: Command {
         func exitCode() -> Int32 { innerResult.exitCode() }
         func succeed() throws { try innerResult.succeed() }
         func kill(signal: Int32) throws { try innerResult.kill(signal: signal) }
-        
+
         #if compiler(>=5.5) && canImport(_Concurrency)
         @available(macOS 10.15, *)
         func asyncFinish() async {

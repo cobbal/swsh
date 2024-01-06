@@ -73,7 +73,7 @@ public class ExternalCommand: Command, CustomStringConvertible {
             self.command = command
             self.name = command.command
             self.process = process
-            
+
             command.spawner.reapAsync(process: process, queue: Result.reaperQueue) { [weak self] exitCode in
                 self?._exitCode = exitCode
                 self?._exitSemaphore.signal()

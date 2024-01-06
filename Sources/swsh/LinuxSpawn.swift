@@ -7,11 +7,11 @@ import linuxSpawn
 /// A process spawned with something less nice than `posix_spawn`
 public struct LinuxSpawn: ProcessSpawner {
     public func spawn(
-      command: String,
-      arguments: [String],
-      env: [String: String],
-      fdMap: FDMap,
-      pathResolve: Bool
+        command: String,
+        arguments: [String],
+        env: [String: String],
+        fdMap: FDMap,
+        pathResolve: Bool
     ) -> SpawnResult {
         var cFdMap = [Int32]()
         for op in fdMap.createFdOperations() {
@@ -57,9 +57,9 @@ public struct LinuxSpawn: ProcessSpawner {
     }
 
     public func reapAsync(
-      process: ProcessInformation,
-      queue: DispatchQueue,
-      callback: @escaping (Int32) -> Void
+        process: ProcessInformation,
+        queue: DispatchQueue,
+        callback: @escaping (Int32) -> Void
     ) {
         Thread.detachNewThread {
             let status = spawnWait(process.id)
@@ -70,7 +70,7 @@ public struct LinuxSpawn: ProcessSpawner {
     }
 
     public func resume(
-      process: ProcessInformation
+        process: ProcessInformation
     ) throws {
         kill(process.id, SIGCONT)
     }
