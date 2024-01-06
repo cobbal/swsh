@@ -15,7 +15,7 @@ class MockCommand: Command, Equatable, CustomStringConvertible {
             self.fdMap = fdMap
             handles = [FileDescriptor: FDFileHandle]()
             for (dst, src) in fdMap {
-                handles[dst] = handles[src] ?? FDFileHandle(fileDescriptor: FileDescriptor(dup(src.rawValue)), closeOnDealloc: true)
+                handles[dst] = handles[src] ?? FDFileHandle(fileDescriptor: duplicate(src), closeOnDealloc: true)
             }
         }
 
@@ -42,6 +42,14 @@ class MockCommand: Command, Equatable, CustomStringConvertible {
             if let error = _command.killResponse {
                 throw error
             }
+        }
+
+        private func duplicate(_ fd: FileDescriptor) -> FileDescriptor {
+            #if os(Windows)
+            return FileDescriptor(_dup(fd.rawValue))
+            #else
+            return FileDescriptor(dup(fd.rawValue))
+            #endif
         }
     }
 

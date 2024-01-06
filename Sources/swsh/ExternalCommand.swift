@@ -109,9 +109,9 @@ public class ExternalCommand: Command, CustomStringConvertible {
             } else if signal == SIGSTOP {
                 // Method borrowed from https://github.com/giampaolo/psutil/blob/a7e70bb66d5823f2cdcdf0f950bdbf26875058b4/psutil/arch/windows/proc.c#L539
                 // See also https://ntopcode.wordpress.com/2018/01/16/anatomy-of-the-thread-suspension-mechanism-in-windows-windows-internals/
-                Self.NtSuspendProcess(process)
+                _ = Self.NtSuspendProcess(process)
             } else if signal == SIGCONT {
-                Self.NtResumeProcess(process)
+                _ = Self.NtResumeProcess(process)
             } else {
                 throw PlatformError.killUnsupportedOnWindows
             }

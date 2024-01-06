@@ -380,7 +380,10 @@ public enum WindowsSpawnImpl {
         startup.hStdInput = childHandleStructure[0]
         startup.hStdOutput = childHandleStructure[1]
         startup.hStdError = childHandleStructure[2]
-        var startupPtr = UnsafeMutablePointer<STARTUPINFOW>(&startup)
+        let startupNonExBuffer = UnsafeMutableRawBufferPointer.allocate(byteCount: MemoryLayout<STARTUPINFOW>.size, alignment: 16)
+        defer { startupNonExBuffer.deallocate() }
+        startupNonExBuffer.storeBytes(of: startup, toByteOffset: 0, as: STARTUPINFOW.self)
+        var startupPtr: LPSTARTUPINFOW = startupNonExBuffer.baseAddress!.bindMemory(to: STARTUPINFOW.self, capacity: 1)
         var creationFlags = DWORD(CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED)
         
         // Restrict the handles inherited by the child process to only those specified here
@@ -416,8 +419,10 @@ public enum WindowsSpawnImpl {
                 return .failure(Error("UpdateProcThreadAttribute failed: ", systemError: DWORD(GetLastError())))
             }
             defer { DeleteProcThreadAttributeList(startupEx.lpAttributeList) }
-            var startupExPtr = UnsafeMutableRawPointer(UnsafeMutablePointer<STARTUPINFOEXW>(&startupEx))
-            startupPtr = startupExPtr.bindMemory(to: STARTUPINFOW.self, capacity: 1)
+            let startupExBuffer = UnsafeMutableRawBufferPointer.allocate(byteCount: MemoryLayout<STARTUPINFOEXW>.size, alignment: 16)
+            defer { startupExBuffer.deallocate() }
+            startupExBuffer.storeBytes(of: startupEx, toByteOffset: 0, as: STARTUPINFOEXW.self)
+            startupPtr = startupExBuffer.baseAddress!.bindMemory(to: STARTUPINFOW.self, capacity: 1)
             creationFlags |= UInt32(EXTENDED_STARTUPINFO_PRESENT)
         #endif
         
