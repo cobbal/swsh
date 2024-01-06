@@ -15,9 +15,6 @@ public class ExternalCommand: Command, CustomStringConvertible {
     /// Like "set -x", this will cause all external commands to print themselves when they run
     public static var verbose: Bool = false
 
-    /// Adds to the path variable when modifying the environment directly is impossible
-    public static var supplementaryPath: String = ""
-
     internal var spawner: ProcessSpawner
 
     internal static let safeCharacters = CharacterSet(
