@@ -8,9 +8,6 @@ final class IntegrationTests: XCTestCase {
     override func setUp() {
         super.setUp()
         ExternalCommand.verbose = true
-        #if os(Windows)
-        ExternalCommand.supplementaryPath = ";C:\\Program Files\\Git\\usr\\bin"
-        #endif
     }
 
     func testReadmeExamples() {

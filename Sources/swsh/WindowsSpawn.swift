@@ -296,13 +296,9 @@ public enum WindowsSpawnImpl {
         fdMap: [Int32: Int32],
         pathResolve: Bool
     ) -> Result<PROCESS_INFORMATION, Error> {
-        // Find the path environment variable and append the supplementary path to it
-        var env = env
+        // Find the path environment variable
         guard let envPathKey = env.keys.first(where: { $0.uppercased == "PATH" }) else {
             return .failure(Error.envPathUnset)
-        }
-        if !env[envPathKey]!.contains(ExternalCommand.supplementaryPath) {
-            env[envPathKey] = "\(env[envPathKey]!)\(ExternalCommand.supplementaryPath)"
         }
         let path: UnsafeMutablePointer<wchar_t>? = env[envPathKey]!.withCString(encodedAs: UTF16.self, _wcsdup)
         defer { free(path) }
