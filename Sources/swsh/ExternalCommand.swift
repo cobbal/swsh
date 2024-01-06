@@ -1,4 +1,7 @@
 import Foundation
+#if os(Windows)
+import WinSDK
+#endif
 
 /// Represents an external program invocation. It is the lowest-level command, that will spawn a subprocess when run.
 public class ExternalCommand: Command, CustomStringConvertible {
@@ -9,7 +12,7 @@ public class ExternalCommand: Command, CustomStringConvertible {
 
     public let description: String
 
-    /// like "set -x", this will cause all external commands to print themselves when they run
+    /// Like "set -x", this will cause all external commands to print themselves when they run
     public static var verbose: Bool = false
 
     internal var spawner: ProcessSpawner
@@ -50,6 +53,8 @@ public class ExternalCommand: Command, CustomStringConvertible {
         self.spawner = PosixSpawn()
         #elseif canImport(Glibc)
         self.spawner = LinuxSpawn()
+        #elseif canImport(ucrt)
+        self.spawner = WindowsSpawn()
         #endif
     }
 
@@ -58,34 +63,60 @@ public class ExternalCommand: Command, CustomStringConvertible {
 
         let name: String
         var command: Command
-        let pid: pid_t
+        let process: ProcessInformation
+        
         private var _exitCode: Int32?
         private var _exitSemaphore = DispatchSemaphore(value: 0)
         private var _exitContinuations: [() -> Void] = []
 
-        init(command: ExternalCommand, pid: pid_t) {
+        init(command: ExternalCommand, process: ProcessInformation) {
             self.command = command
             self.name = command.command
-            self.pid = pid
+            self.process = process
 
-            command.spawner.reapAsync(pid: pid, queue: Result.reaperQueue) { [weak self] exitCode in
+            command.spawner.reapAsync(process: process, queue: Result.reaperQueue) { [weak self] exitCode in
                 self?._exitCode = exitCode
                 self?._exitSemaphore.signal()
                 self?._exitContinuations.forEach { $0() }
                 self?._exitContinuations = []
             }
 
-            try? kill(signal: SIGCONT)
+            try? command.spawner.resume(process: process)
         }
 
         var isRunning: Bool {
             Result.reaperQueue.sync { _exitCode == nil }
         }
+        
+        static let NtSuspendProcess: (ProcessInformation) -> Int32 = {
+            // TODO: Tie into (undocumented) NtSuspendProcess() syscall
+            return { _ in 0 }
+        }()
+
+        static let NtResumeProcess: (ProcessInformation) -> Int32 = {
+            // TODO: Tie into (undocumented) NtResumeProcess() syscall
+            return { _ in 0 }
+        }()
 
         func kill(signal: Int32) throws {
-            guard Foundation.kill(pid, signal) == 0 else {
+            #if os(Windows)
+            // TODO: figure out how to do this in-executable?
+            if signal == SIGTERM || signal == SIGKILL {
+                try cmd("taskkill.exe", "/F", "/pid", "\(process.id)").run()
+            } else if signal == SIGSTOP {
+                // Method borrowed from https://github.com/giampaolo/psutil/blob/a7e70bb66d5823f2cdcdf0f950bdbf26875058b4/psutil/arch/windows/proc.c#L539
+                // See also https://ntopcode.wordpress.com/2018/01/16/anatomy-of-the-thread-suspension-mechanism-in-windows-windows-internals/
+                _ = Self.NtSuspendProcess(process)
+            } else if signal == SIGCONT {
+                _ = Self.NtResumeProcess(process)
+            } else {
+                throw PlatformError.killUnsupportedOnWindows
+            }
+            #else
+            guard Foundation.kill(process.id, signal) == 0 else {
                 throw SyscallError(name: "kill", command: command, errno: errno)
             }
+            #endif
         }
 
         func succeed() throws { try defaultSucceed(name: name) }
@@ -125,22 +156,22 @@ public class ExternalCommand: Command, CustomStringConvertible {
           fdMap: fdMap,
           pathResolve: true
         ) {
-        case .success(let pid):
-            return Result(command: self, pid: pid)
+        case .success(let process):
+            return Result(command: self, process: process)
         case .error(let err):
             return SyscallError(name: "launching \"\(command)\"", command: self, errno: err)
         }
     }
 }
 
-/// Convenience function for creating an extternal command. Does **not** run the command.
+/// Convenience function for creating an external command. Does **not** run the command.
 /// - Parameter command: The executable to run
 /// - Parameter arguments: The command line arguments to pass. No substitution is performed
 public func cmd(_ command: String, arguments: [String], addEnv: [String: String] = [:]) -> Command {
     ExternalCommand(command, arguments: arguments, addEnv: addEnv)
 }
 
-/// Convenience function for creating an extternal command. Does **not** run the command.
+/// Convenience function for creating an external command. Does **not** run the command.
 /// - Parameter command: The executable to run
 /// - Parameter arguments: The command line arguments to pass. No substitution is performed
 public func cmd(_ command: String, _ arguments: String..., addEnv: [String: String] = [:]) -> Command {

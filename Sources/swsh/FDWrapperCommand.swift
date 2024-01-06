@@ -6,6 +6,9 @@
 //
 
 import Foundation
+#if os(Windows)
+import WinSDK
+#endif
 
 /// Wraps an inner command with file handle manipulation
 internal class FDWrapperCommand: Command {
@@ -26,13 +29,24 @@ internal class FDWrapperCommand: Command {
 
     convenience init(inner: Command, opening path: String, toHandle dstFd: FileDescriptor, oflag: Int32) {
         self.init(inner: inner) { command in
+            printOSCall("open", path, oflag, 0o666)
             let fd = open(path, oflag, 0o666)
             guard fd >= 0 else {
                 return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, errno: errno))
             }
-            let handle = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
-            return .success(fdMap: [dstFd: FileDescriptor(fd)], ref: handle)
+            #if os(Windows)
+            if oflag & O_APPEND != 0 {
+                _lseek(fd, 0, SEEK_END)
+            }
+            #endif
+            let io = FDFileHandle(fileDescriptor: FileDescriptor(fd), closeOnDealloc: true)
+            return .success(fdMap: [dstFd: io.fileDescriptor], ref: io)
+            // #endif
         }
+    }
+
+    convenience init(inner: Command, openingNullDeviceToHandle dstFd: FileDescriptor, oflag: Int32) {
+        self.init(inner: inner, opening: FileManager.nullDevicePath, toHandle: dstFd, oflag: oflag)
     }
 
     struct Result: CommandResult, AsyncCommandResult {
@@ -138,17 +152,41 @@ extension Command {
     /// - Parameter fd: File descriptor to bind. Defaults to stdin
     public func input(_ data: Data, fd: FileDescriptor = .stdin) -> Command {
         FDWrapperCommand(inner: self) { _ in
-            let pipe = Pipe()
+            #if os(Windows)
+            let pipe = FDPipe()
+            let queue = DispatchQueue(label: "swsh.FDWrapperCommand.input.\(UUID().uuidString)")
+            queue.async {
+                do {
+                    try pipe.fileHandleForWriting.handle.write(contentsOf: data)
+                } catch {
+                    print("Failed to write to FD \(pipe.fileHandleForWriting.fileDescriptor.rawValue). Error: \(error)")
+                }
+                pipe.fileHandleForWriting.close()
+            }
+            return .success(
+                fdMap: [fd: pipe.fileHandleForReading.fileDescriptor],
+                ref: pipe.fileHandleForReading
+            )
+            #else
+            let pipe = FDPipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
-            let writeHandle = pipe.fileHandleForWriting
+            
+            printOSCall("DispatchIO.write", pipe.fileHandleForWriting.fileDescriptor.rawValue, data, "DispatchQueue.global()")
             DispatchIO.write(
-                toFileDescriptor: writeHandle.fileDescriptor,
+                toFileDescriptor: pipe.fileHandleForWriting.fileDescriptor.rawValue,
                 data: dispatchData,
                 runningHandlerOn: DispatchQueue.global()
-            ) { [weak writeHandle] _, _ in
-                writeHandle?.closeFile()
+            ) { [pipe = pipe] _, error in
+                if error != 0 {
+                    print("Failed to write to FD \(pipe.fileHandleForWriting.fileDescriptor.rawValue). Error: \(error)")
+                }
+                pipe.fileHandleForWriting.close()
             }
-            return .success(fdMap: [fd: pipe.fileHandleForReading.fd], ref: pipe)
+            return .success(
+                fdMap: [fd: pipe.fileHandleForReading.fileDescriptor],
+                ref: pipe.fileHandleForReading
+            )
+            #endif
         }
     }
 

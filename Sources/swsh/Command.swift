@@ -34,11 +34,11 @@ extension Command {
     }
 
     /// Run the command asynchronously, and return a stream open on process's stdout
-    public func asyncStream() -> FileHandle {
-        let pipe = Pipe()
-        let write = pipe.fileHandleForWriting
-        _ = async(fdMap: [ .stdout: write.fd ])
-        close(write.fileDescriptor)
+    public func asyncStream() -> FDFileHandle {
+        let pipe = FDPipe()
+        _ = async(fdMap: [ .stdout: pipe.fileHandleForWriting.fileDescriptor ])
+        pipe.fileHandleForWriting.close()
+        // TODO: Previously, this returned a FileHandle, but the test using it fails without returning an FDFileHandle, because otherwise, on return, the FDFileHandle is deallocate and calls close(). Can maintain liveness of the FDFileHandle in some way without changing the interface of this call?
         return pipe.fileHandleForReading
     }
 
@@ -68,11 +68,10 @@ extension Command {
     /// - Throws: if command fails
     /// - Returns: output as Data
     public func runData() throws -> Data {
-        let pipe = Pipe()
-        let write = pipe.fileHandleForWriting
-        let result = async(fdMap: [ .stdout: write.fd ])
-        close(write.fileDescriptor)
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let pipe = FDPipe()
+        let result = async(fdMap: [ .stdout: pipe.fileHandleForWriting.fileDescriptor ])
+        pipe.fileHandleForWriting.close()
+        let data = pipe.fileHandleForReading.handle.readDataToEndOfFile()
         try result.succeed()
         return data
     }
@@ -89,6 +88,7 @@ extension Command {
             throw InvalidString(data: data, encoding: encoding)
         }
         guard let trimStop = string.lastIndex(where: { $0 != "\n" }) else {
+            // TODO: Shoudn't this return `string`?
             return ""
         }
         return String(string[...trimStop])

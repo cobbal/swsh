@@ -3,7 +3,7 @@ import XCTest
 
 final class FDWrapperCommandTests: XCTestCase {
     let inner = MockCommand(description: "inner")
-    lazy var cmd = FDWrapperCommand( inner: inner, opening: "/dev/null", toHandle: 0, oflag: O_RDONLY)
+    lazy var cmd = FDWrapperCommand(inner: inner, openingNullDeviceToHandle: 0, oflag: O_RDONLY)
     lazy var invalidCmd = FDWrapperCommand( inner: inner, opening: "\(UUID())", toHandle: 0, oflag: O_RDONLY)
 
     func result() throws -> (outer: FDWrapperCommand.Result, inner: MockCommand.Result) {
@@ -149,8 +149,9 @@ final class FDWrapperCommandExtensionsTests: XCTestCase {
     }
 
     func testDuplicateFd() throws {
-        try succeed(inner.duplicateFd(source: 42, destination: 35))
-        XCTAssertEqual(innerResult.fdMap[35], 42)
+        let pipe = FDPipe()
+        try succeed(inner.duplicateFd(source: pipe.fileHandleForReading.fileDescriptor, destination: 35))
+        XCTAssertEqual(innerResult.fdMap[35], pipe.fileHandleForReading.fileDescriptor)
     }
 
     func testCombineError() throws {

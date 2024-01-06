@@ -32,16 +32,20 @@ public class Pipeline: Command {
         }
 
         func kill(signal: Int32) throws {
-            var signalError: Error?
+            var signalErrors: [Error?] = []
             for result in results {
                 do {
                     try result.kill(signal: signal)
+                    signalErrors.append(nil)
                 } catch let error {
-                    signalError = signalError ?? error
+                    signalErrors.append(error)
                 }
             }
-            try signalError.map { throw $0 }
+            if !signalErrors.contains(where: { $0 == nil }) {
+                try signalErrors.first?.map { throw $0 }
+            }
         }
+
 
         #if compiler(>=5.5) && canImport(_Concurrency)
         @available(macOS 10.15, *)
@@ -54,9 +58,9 @@ public class Pipeline: Command {
     }
 
     public func coreAsync(fdMap baseFDMap: FDMap) -> CommandResult {
-        let pipes = rest.map { _ in Pipe() }
-        let inputs = [.stdin] + pipes.map { $0.fileHandleForReading.fd }
-        let outputs = pipes.map { $0.fileHandleForWriting.fd } + [.stdout]
+        let pipes = rest.map { _ in FDPipe() }
+        let inputs = [FileDescriptor.stdin] + pipes.map(\.fileHandleForReading.fileDescriptor)
+        let outputs = pipes.map(\.fileHandleForWriting.fileDescriptor) + [FileDescriptor.stdout]
         var results = [CommandResult]()
         for (command, (input, output)) in zip([first] + rest, zip(inputs, outputs)) {
             var fdMap = baseFDMap

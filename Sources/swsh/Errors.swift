@@ -48,7 +48,19 @@ public class SyscallError: Error, CommandResult, CustomStringConvertible {
     }
 
     public var description: String {
-        "\(name) failed with error code \(errno): \(String(cString: strerror(errno)))"
+        let errorMessage: String
+        #if os(Windows)
+        let errlen = 1024 // Is this enough? Windows is badly designed and poorly documented
+        errorMessage = withUnsafeTemporaryAllocation(of: CChar.self, capacity: errlen + 1) { buffer in
+            strerror_s(buffer.baseAddress, errlen, errno)
+            // Ensure we have at least 1 null terminator, not sure if this is needed
+            buffer[errlen] = 0
+            return String(cString: buffer.baseAddress!)
+        }
+        #else
+        errorMessage = String(cString: strerror(errno))
+        #endif
+        return "\(name) failed with error code \(errno): \(errorMessage)"
     }
 
     public func succeed() throws {
@@ -58,4 +70,8 @@ public class SyscallError: Error, CommandResult, CustomStringConvertible {
     public func kill(signal: Int32) throws {
         throw self
     }
+}
+
+enum PlatformError: Error {
+    case killUnsupportedOnWindows
 }
