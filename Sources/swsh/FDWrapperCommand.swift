@@ -29,8 +29,13 @@ internal class FDWrapperCommand: Command {
 
     convenience init(inner: Command, opening path: String, toHandle dstFd: FileDescriptor, oflag: Int32) {
         self.init(inner: inner) { command in
-            printOSCall("open", path, oflag, 0o666)
-            let fd = open(path, oflag, 0o666)
+            #if os(Windows)
+            let pmode: Int32 = _S_IREAD | _S_IWRITE
+            #else
+            let pmode: mode_t = 0o666
+            #endif
+            printOSCall("open", path, oflag, pmode)
+            let fd = open(path, oflag, pmode)
             guard fd >= 0 else {
                 return .failure(SyscallError(name: "open(\"\(path)\", ...)", command: command, errno: errno))
             }
@@ -170,7 +175,7 @@ extension Command {
             #else
             let pipe = FDPipe()
             let dispatchData = data.withUnsafeBytes { DispatchData(bytes: $0) }
-            
+
             printOSCall("DispatchIO.write", pipe.fileHandleForWriting.fileDescriptor.rawValue, data, "DispatchQueue.global()")
             DispatchIO.write(
                 toFileDescriptor: pipe.fileHandleForWriting.fileDescriptor.rawValue,
