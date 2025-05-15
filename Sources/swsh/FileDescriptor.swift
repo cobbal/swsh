@@ -27,6 +27,7 @@ extension FileDescriptor: Hashable, Equatable, CustomStringConvertible {
 
 extension FileHandle {
     /// The underlying FD number
+    @available(Windows, unavailable)
     public var fd: FileDescriptor {
         FileDescriptor(fileDescriptor)
     }

@@ -1,5 +1,8 @@
 import swsh
 import XCTest
+#if os(Windows)
+import WinSDK
+#endif
 
 final class IntegrationTests: XCTestCase {
     override func setUp() {
@@ -63,7 +66,11 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testAbsPath() {
+        #if os(Windows)
+        XCTAssertEqual(try? cmd("C:\\Windows\\System32\\cmd.exe", "/C", "ECHO 1").runString(), "1\r\n")
+        #else
         XCTAssertTrue(cmd("/bin/sh", "-c", "true").runBool())
+        #endif
     }
 
     func testNonExistantProgram() {
@@ -96,10 +103,10 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testIsRunning() throws {
-        let pipe = Pipe()
-        let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fd)
+        let pipe = FDPipe()
+        let proc = cmd("cat").async(stdin: pipe.fileHandleForReading.fileDescriptor)
         XCTAssertTrue(proc.isRunning)
-        pipe.fileHandleForWriting.closeFile()
+        pipe.fileHandleForWriting.close()
         try proc.succeed()
     }
 
@@ -111,6 +118,7 @@ final class IntegrationTests: XCTestCase {
 
     func testKillRunningProcess() throws {
         let res = cmd("bash", "-c", "while true; do sleep 1; done").async()
+        Thread.sleep(forTimeInterval: 0.5)
         try res.kill()
         XCTAssertEqual(res.exitCode(), 1)
     }
@@ -119,12 +127,17 @@ final class IntegrationTests: XCTestCase {
         let res = cmd("true").async()
         try res.succeed()
         XCTAssertThrowsError(try res.kill()) { error in
+            #if os(Windows)
+            XCTAssertEqual("\(error)", "command \"taskkill.exe\" failed with exit code 128")
+            #else
             XCTAssertEqual("\(error)", "kill failed with error code 3: No such process")
+            #endif
         }
     }
 
     func testKillStop() throws {
         let res = try (cmd("bash", "-c", "while true; do sleep 1; done") | cmd("cat") | cmd("cat")).input("").async()
+        Thread.sleep(forTimeInterval: 0.5)
         try res.kill(signal: SIGSTOP)
         XCTAssert(res.isRunning)
         try res.kill(signal: SIGKILL)
@@ -137,18 +150,56 @@ final class IntegrationTests: XCTestCase {
     }
 
     func testRemapCycle() throws {
-        let pipes = [Pipe(), Pipe()]
-        let write = pipes.map { $0.fileHandleForWriting.fd }
-        let res = cmd("bash", "-c", "echo thing1 >&\(write[0]); echo thing2 >&\(write[1])").async(fdMap: [
+        let pipes = [FDPipe(), FDPipe()]
+        let write = pipes.map { $0.fileHandleForWriting.fileDescriptor }
+        
+        let id = UUID().uuidString
+        #if os(Windows)
+        let cProgram = """
+            #include <io.h>
+            #include <string.h>
+
+            int main(int argc, char** argv) {
+                _write(\(write[0]), "stuff-to-a", strlen("stuff-to-a"));
+                _write(\(write[1]), "stuff-to-b", strlen("stuff-to-b"));
+                return 0;
+            }
+
+            """
+        let cProgramFile = "writer-\(id).c"
+        let cProgramExecutable = "writer-\(id).exe"
+        #else
+        let cProgram = """
+            #include <unistd.h>
+            #include <string.h>
+
+            int main(int argc, char** argv) {
+                write(\(write[0]), "stuff-to-a", strlen("stuff-to-a"));
+                write(\(write[1]), "stuff-to-b", strlen("stuff-to-b"));
+                return 0;
+            }
+
+            """
+        let cProgramFile = "writer-\(id).c"
+        let cProgramExecutable = "writer-\(id)"
+        #endif
+        
+        try cmd("cat").input(cProgram).output(overwritingFile: cProgramFile).run()
+        try cmd("clang", "-o", cProgramExecutable, cProgramFile).run()
+
+        let res = cmd("./\(cProgramExecutable)").async(fdMap: [
             write[0]: write[1],
             write[1]: write[0],
         ])
-        pipes.forEach { $0.fileHandleForWriting.closeFile() }
+        pipes.forEach { $0.fileHandleForWriting.close() }
         let output = pipes.map {
-            String(data: $0.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)
+            String(data: $0.fileHandleForReading.handle.readDataToEndOfFile(), encoding: .utf8)
         }
         try res.succeed()
-        XCTAssertEqual(output, ["thing2\n", "thing1\n"])
+        XCTAssertEqual(output, ["stuff-to-b", "stuff-to-a"])
+
+        try cmd("rm", cProgramFile).run()
+        try cmd("rm", cProgramExecutable).run()
     }
 
     func testCdSuccess() throws {

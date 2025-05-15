@@ -20,4 +20,20 @@ extension FileManager {
         defer { _ = changeCurrentDirectoryPath(oldPath) }
         return try body()
     }
+
+    /// Path to a file representing the `nullDevice` for use when a `FileHandle` is insufficient
+    public static var nullDevicePath: String {
+        #if os(Windows)
+        return "NUL"
+        #else
+        return "/dev/null"
+        #endif
+    }
+}
+
+public var printOSCalls = false
+func printOSCall(_ name: String, _ args: Any?...) {
+    if printOSCalls {
+        print("OS Call: \(name)(\(args.map { $0.map { String(describing: $0) } ?? "null" }.joined(separator: ", ")))")
+    }
 }

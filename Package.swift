@@ -18,6 +18,7 @@ let package = Package(
             name: "swsh",
             dependencies: [
                 .target(name: "linuxSpawn", condition: .when(platforms: [.linux])),
+                .target(name: "windowsSpawn", condition: .when(platforms: [.windows])),
             ]
         ),
         .testTarget(
@@ -26,6 +27,10 @@ let package = Package(
         ),
         .target(
             name: "linuxSpawn",
+            dependencies: []
+        ),
+        .target(
+            name: "windowsSpawn",
             dependencies: []
         ),
     ]

@@ -48,6 +48,7 @@ class CommandExtensionTests: XCTestCase {
     }
 
     func testAsync() throws {
+        // TODO: Succeeds on Windows from PowerShell, but fails from VSCode test system. Why?
         let res = try unwrap(cmd.async(stdin: 4, stdout: 5, stderr: 6) as? MockCommand.Result)
         XCTAssertEqual(res.fdMap, [0: 4, 1: 5, 2: 6])
     }
@@ -58,7 +59,7 @@ class CommandExtensionTests: XCTestCase {
         res[2].write(data)
         res[1].closeFile()
         res[2].closeFile()
-        XCTAssertEqual(handle.readDataToEndOfFile(), data)
+        XCTAssertEqual(handle.handle.readDataToEndOfFile(), data)
     }
 
     func testRunSucceeds() {
